@@ -18,7 +18,7 @@
         std::string      type;
     } alpha_tok;
     
-    #define YY_DECL int alpha_yylex()
+    #define YY_DECL int alpha_yylex(void* yylval)
 
     int tokenCounter = 0;
 
@@ -45,6 +45,10 @@ IDENT [a-zA-Z][a-zA-Z_0-9]*
 WHITESPACE [ \n\t\r]+
 
 SCOMMENT "//".*
+
+MCOMMENT "/*"
+
+UNDEFINEDCHAR ("$")|("_d")|("~")|("?")|("#")|("&&")|("||")|("!")
 
 %%
 
@@ -159,6 +163,57 @@ SCOMMENT "//".*
     alpha_token_list.push_back(temp);
 }
 
+{MCOMMENT} {
+    char parse;
+    int state = 0; // 0 = normal,1 = read "/",2 = read "*"
+    int commentCounter=0;
+    int tempCounter = 0;
+    int errorFlag = 0;
+    int startingLine=yylineno;
+    while((parse=yyinput())){
+        if( parse == '*'){
+            if(state == 1){
+                //opens new comment
+                tempCounter++;
+                commentCounter++;
+                state = 0;
+            }else{
+                state = 2;
+            }
+        }
+        else if(parse == '/'){
+            if((state == 0 ) || (state == 1)){
+                state = 1;
+            }else if(state == 2){
+                //closes comment
+                if(tempCounter == 0){
+                    break;
+                }
+                tempCounter--;
+                state = 0;
+            }
+        }else{
+            state = 0;
+        }
+        if(parse == EOF){
+            errorFlag = 1;
+            break;
+        }
+    }
+    if(errorFlag){
+        printf("this is an error message\n");
+        
+    }else if(commentCounter == 0){
+        printf("Simple multiline comment at line %d\n", startingLine);
+    }else{
+        printf("Nested multiline comment %d (in total,not depth) at line %d\n",commentCounter, startingLine);
+    }
+    
+}
+
+{UNDEFINEDCHAR} {
+    std::cout<<"Undefined character "<<yytext<<" at line "<<yylineno<<std::endl;
+}
 {WHITESPACE} {}
 
 <<EOF>> {return 0;}
@@ -176,7 +231,7 @@ int main(int argc, char** argv){
     else
         yyin = stdin;
 
-    alpha_yylex();
+    alpha_yylex(NULL);
 
     for(int i = 0; i < alpha_token_list.size(); i++) {
         std::cout << alpha_token_list[i].numline << ": #"
