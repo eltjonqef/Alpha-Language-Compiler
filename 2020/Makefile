@@ -2,8 +2,8 @@ flex: scanner.l
 	flex --outfile=scanner.c scanner.l
 
 scanner: scanner.c
-	gcc -o scanner.c scanner
+	g++ -o scanner scanner.c
 
-all: scanner.l scanner.c
+all: scanner.l
 	make flex
 	make scanner
