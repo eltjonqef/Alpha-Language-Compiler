@@ -15,7 +15,9 @@
         unsigned int     numline;
         unsigned int     numToken;
         std::string      content;
-        std::string      type;
+        std::string      category;
+        std::string      formalContent;
+        std::string      tokenType;
     } alpha_tok;
     
     #define YY_DECL int alpha_yylex(void* yylval)
@@ -38,7 +40,7 @@ INTCONST [0-9]+
 
 DOUBLECONST [0-9]+\.[0-9]+
 
-PUNMRKS (\;)|(\,)|(\:)|(\:\:)|(\.)|(\.\.)|(\{)|(\})|(\[)|(\])|(\()|(\))
+PUNMRKS (";")|(",")|(":")|("::")|(".")|("..")|("{")|("}")|("[")|("]")|("(")|(")")
 
 IDENT [a-zA-Z][a-zA-Z_0-9]*
 
@@ -57,7 +59,13 @@ UNDEFINEDCHAR ("$")|("_d")|("~")|("?")|("#")|("&&")|("||")|("!")
     temp.numline = yylineno;
     temp.numToken = ++tokenCounter;
     temp.content = yytext;
-    temp.type = "KEYWORD";
+    temp.category = "KEYWORD";
+    std::string yytextTemp=yytext;
+    temp.formalContent="";
+    for(int i=0; i<yytextTemp.size(); i++){
+        temp.formalContent+=toupper(yytext[i]);
+    }
+    temp.tokenType = "enumerated";
     alpha_token_list.push_back(temp);
 }
 
@@ -66,7 +74,8 @@ UNDEFINEDCHAR ("$")|("_d")|("~")|("?")|("#")|("&&")|("||")|("!")
     temp.numline = yylineno;
     temp.numToken = ++tokenCounter;
     temp.content = yytext;
-    temp.type = "OPERATOR";
+    temp.category = "OPERATOR";
+    temp.tokenType = "enumerated";
     alpha_token_list.push_back(temp);
 }
 
@@ -75,7 +84,9 @@ UNDEFINEDCHAR ("$")|("_d")|("~")|("?")|("#")|("&&")|("||")|("!")
     temp.numline = yylineno;
     temp.numToken = ++tokenCounter;
     temp.content = yytext;
-    temp.type = "INTCONST";
+    temp.category = "INTCONST";
+    temp.formalContent=yytext;
+    temp.tokenType = "int";
     alpha_token_list.push_back(temp);
 }
 
@@ -84,7 +95,9 @@ UNDEFINEDCHAR ("$")|("_d")|("~")|("?")|("#")|("&&")|("||")|("!")
     temp.numline = yylineno;
     temp.numToken = ++tokenCounter;
     temp.content = yytext;
-    temp.type = "DOUBLECONST";
+    temp.category = "DOUBLECONST";
+    temp.formalContent=yytext;
+    temp.tokenType = "double";
     alpha_token_list.push_back(temp);
 }
 
@@ -93,7 +106,9 @@ UNDEFINEDCHAR ("$")|("_d")|("~")|("?")|("#")|("&&")|("||")|("!")
     temp.numline = yylineno;
     temp.numToken = ++tokenCounter;
     temp.content = yytext;
-    temp.type = "PUNMRKS";
+    temp.category = "PUNMRKS";
+    temp.formalContent=yytext;
+    temp.tokenType = "enumerated";
     alpha_token_list.push_back(temp);
 }
 
@@ -102,7 +117,11 @@ UNDEFINEDCHAR ("$")|("_d")|("~")|("?")|("#")|("&&")|("||")|("!")
     temp.numline = yylineno;
     temp.numToken = ++tokenCounter;
     temp.content = yytext;
-    temp.type = "IDENT";
+    temp.category = "IDENT";
+    temp.formalContent="\"";
+    temp.formalContent+=yytext;
+    temp.formalContent+="\"";
+    temp.tokenType = "char*";
     alpha_token_list.push_back(temp);
 }
 
@@ -111,7 +130,9 @@ UNDEFINEDCHAR ("$")|("_d")|("~")|("?")|("#")|("&&")|("||")|("!")
     temp.numline = yylineno;
     temp.numToken = ++tokenCounter;
     temp.content = yytext;
-    temp.type = "SCOMMENT";
+    temp.category = "SCOMMENT";
+    temp.formalContent="LINE_COMMENT";
+    temp.tokenType = "enumerated";
     alpha_token_list.push_back(temp);
 }
 
@@ -159,7 +180,9 @@ UNDEFINEDCHAR ("$")|("_d")|("~")|("?")|("#")|("&&")|("||")|("!")
     temp.numline = yylineno;
     temp.numToken = ++tokenCounter;
     temp.content = tmp.c_str();
-    temp.type = "STRING";
+    temp.category = "STRING";
+    temp.formalContent=tmp.c_str();
+    temp.tokenType = "char*";
     alpha_token_list.push_back(temp);
 }
 
@@ -237,7 +260,9 @@ int main(int argc, char** argv){
         std::cout << alpha_token_list[i].numline << ": #"
         << alpha_token_list[i].numToken << " \""
         << alpha_token_list[i].content << "\" "
-        << alpha_token_list[i].type << "\n";
+        << alpha_token_list[i].category << " "
+        << alpha_token_list[i].formalContent <<" <-"
+        << alpha_token_list[i].tokenType <<std::endl;
     }
 
     return 0;
