@@ -91,7 +91,7 @@ INTCONST [0-9]+
 
 DOUBLECONST [0-9]+\.[0-9]+
 
-PUNMRKS (";")|(",")|(":")|("::")|(".")|("..")|("{")|("}")|("[")|("]")|("(")|(")")
+PUNMARKS (";")|(",")|(":")|("::")|(".")|("..")|("{")|("}")|("[")|("]")|("(")|(")")
 
 IDENT [a-zA-Z][a-zA-Z_0-9]*
 
@@ -149,12 +149,12 @@ UNDEFINEDCHAR ("$")|("_d")|("~")|("?")|("#")|("&&")|("||")|("!")
     alpha_token_list.push_back(temp);
 }
 
-{PUNMRKS} {
+{PUNMARKS} {
     alpha_tok temp;
     temp.numline = yylineno;
     temp.numToken = ++tokenCounter;
     temp.content = yytext;
-    temp.category = "PUNMRKS";
+    temp.category = "PUNMARKS";
     temp.formalContent = enumMap[yytext];
     temp.tokenType = "enumerated";
     alpha_token_list.push_back(temp);
@@ -186,20 +186,19 @@ UNDEFINEDCHAR ("$")|("_d")|("~")|("?")|("#")|("&&")|("||")|("!")
 
 \" {
     std::string tmp = "";
-    char hia;
+    char parse;
+    while ((parse = yyinput())){
+        if (parse == '\"') break;
 
-    while ((hia = yyinput())){
-        if (hia == '\"') break;
-
-        else if (hia == EOF) {
+        else if (parse == EOF) {
             fprintf(stderr, "Unclosed string in line %d\n", yylineno);
             return -1;
         }
-        else if (hia != '\\' && hia != '\"') tmp += hia;
+        else if (parse != '\\' && parse != '\"') tmp += parse;
         
-        else if (hia == '\\') {
-            hia = yyinput();
-            switch(hia){
+        else if (parse == '\\') {
+            parse = yyinput();
+            switch(parse){
                 case 'n' : 
                     tmp += '\n';
                     break;
@@ -229,7 +228,9 @@ UNDEFINEDCHAR ("$")|("_d")|("~")|("?")|("#")|("&&")|("||")|("!")
     temp.numToken = ++tokenCounter;
     temp.content = tmp.c_str();
     temp.category = "STRING";
-    temp.formalContent=tmp.c_str();
+    temp.formalContent="\"";
+    temp.formalContent+=tmp.c_str();
+    temp.formalContent+="\"";
     temp.tokenType = "char*";
     alpha_token_list.push_back(temp);
 }
@@ -272,7 +273,7 @@ UNDEFINEDCHAR ("$")|("_d")|("~")|("?")|("#")|("&&")|("||")|("!")
         }
     }
     if(errorFlag){
-        printf("this is an error message\n");
+        printf("Comment starting in line %d is not closed properly.\n", startingLine);
         
     }else if(commentCounter == 0){
         printf("Simple multiline comment at line %d\n", startingLine);
