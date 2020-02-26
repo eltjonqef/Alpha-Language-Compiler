@@ -4,6 +4,7 @@
     #include <string.h>
     #include <iostream>
     #include <vector>
+    #include <map>
     
     #ifdef _cplusplus
         static int yyinput(void);
@@ -25,6 +26,56 @@
     int tokenCounter = 0;
 
     std::vector<alpha_tok> alpha_token_list;
+
+    std::map<std::string,std::string> enumMap;
+
+    void initEnumMap(){
+
+        enumMap["="] = "ASSIGN";
+        enumMap["+"] = "PLUS";
+        enumMap["-"] = "MINUS";
+        enumMap["*"] = "MULTIPLY";
+        enumMap["/"] = "DIVIDE";
+        enumMap["%"] = "MOD";
+        enumMap["=="]= "EQUAL";
+        enumMap["!="]= "NOT EQUAL";
+        enumMap["++"]= "PLUS_PLUS";
+        enumMap["--"]= "MINUS_MINUS";
+        enumMap[">"] = "GREATER";
+        enumMap["<"] = "LESS";
+        enumMap[">="]= "GREATER_EQUAL";
+        enumMap["<="]= "LESS_EQUAL";
+
+        enumMap["if"] = "IF";
+        enumMap["else"] = "ELSE";
+        enumMap["while"] = "WHILE";
+        enumMap["for"] = "FOR";
+        enumMap["function"] = "FUNCTION";
+        enumMap["return"] = "RETURN";
+        enumMap["break"] = "BREAK";
+        enumMap["continue"] = "CONTINUE";
+        enumMap["and"] = "AND";
+        enumMap["not"] = "NOT";
+        enumMap["or"] = "OR";
+        enumMap["local"] = "LOCAL";
+        enumMap["true"] = "TRUE";
+        enumMap["false"] = "FALSE";
+        enumMap["nil"] = "NIL";
+
+        enumMap[";"] = "SEMICOLON";
+        enumMap[","] = "COMMA";
+        enumMap[":"] = "COLON";
+        enumMap["::"] = "COLON_COLON";
+        enumMap["."] = "DOT";
+        enumMap[".."] = "DOT_DOT";
+        enumMap["{"] = "LEFT_BRACE";
+        enumMap["}"] = "RIGHT_BRACE";
+        enumMap["["] = "LEFT_BRACKET";
+        enumMap["]"] = "RIGHT_BRACKET";
+        enumMap["("] = "LEFT_PARENTHESIS";
+        enumMap[")"] = "RIGHT_PARENTHESIS";
+    }
+    
     
 %}
 
@@ -60,11 +111,7 @@ UNDEFINEDCHAR ("$")|("_d")|("~")|("?")|("#")|("&&")|("||")|("!")
     temp.numToken = ++tokenCounter;
     temp.content = yytext;
     temp.category = "KEYWORD";
-    std::string yytextTemp=yytext;
-    temp.formalContent="";
-    for(int i=0; i<yytextTemp.size(); i++){
-        temp.formalContent+=toupper(yytext[i]);
-    }
+    temp.formalContent = enumMap[yytext];
     temp.tokenType = "enumerated";
     alpha_token_list.push_back(temp);
 }
@@ -75,6 +122,7 @@ UNDEFINEDCHAR ("$")|("_d")|("~")|("?")|("#")|("&&")|("||")|("!")
     temp.numToken = ++tokenCounter;
     temp.content = yytext;
     temp.category = "OPERATOR";
+    temp.formalContent = enumMap[yytext];
     temp.tokenType = "enumerated";
     alpha_token_list.push_back(temp);
 }
@@ -107,7 +155,7 @@ UNDEFINEDCHAR ("$")|("_d")|("~")|("?")|("#")|("&&")|("||")|("!")
     temp.numToken = ++tokenCounter;
     temp.content = yytext;
     temp.category = "PUNMRKS";
-    temp.formalContent=yytext;
+    temp.formalContent = enumMap[yytext];
     temp.tokenType = "enumerated";
     alpha_token_list.push_back(temp);
 }
@@ -253,6 +301,8 @@ int main(int argc, char** argv){
     }
     else
         yyin = stdin;
+
+    initEnumMap();
 
     alpha_yylex(NULL);
 
