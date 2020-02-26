@@ -187,11 +187,12 @@ UNDEFINEDCHAR ("$")|("_d")|("~")|("?")|("#")|("&&")|("||")|("!")
 \" {
     std::string tmp = "";
     char parse;
+    int startingLine=yylineno;
     while ((parse = yyinput())){
         if (parse == '\"') break;
 
         else if (parse == EOF) {
-            fprintf(stderr, "Unclosed string in line %d\n", yylineno);
+            fprintf(stderr, "Unclosed string in line %d\n", startingLine);
             return -1;
         }
         else if (parse != '\\' && parse != '\"') tmp += parse;
