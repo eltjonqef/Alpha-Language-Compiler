@@ -1,5 +1,5 @@
 %{
-    #include "parser.h"
+    #include "parser.hpp"
     #include <string>
     #include <stdlib.h>
     #include <string.h>
@@ -22,62 +22,59 @@
         std::string      tokenType;
     } alpha_tok;
     
-    #define YY_DECL int alpha_yylex(void* yylval)
+    #define YY_DECL int yylex(void* yylval)
 
     int tokenCounter = 0;
 
     std::vector<alpha_tok> alpha_token_list;
 
-    std::map<std::string,std::string> enumMap;
+    std::map<std::string, int> enumMap;
 
     void initEnumMap(){
+        enumMap["="] = ASSIGN;
+        enumMap["+"] = PLUS;
+        enumMap["-"] = MINUS;
+        enumMap["*"] = MULTIPLY;
+        enumMap["/"] = DIVIDE;
+        enumMap["%"] = MOD;
+        enumMap["=="]= EQUAL;
+        enumMap["!="]= NOT_EQUAL;
+        enumMap["++"]= PLUS_PLUS;
+        enumMap["--"]= MINUS_MINUS;
+        enumMap[">"] = GREATER;
+        enumMap["<"] = LESS;
+        enumMap[">="]= GREATER_EQUAL;
+        enumMap["<="]= LESS_EQUAL;
 
-        enumMap["="] = "=";
-        enumMap["+"] = "PLUS";
-        enumMap["-"] = "MINUS";
-        enumMap["*"] = "MULTIPLY";
-        enumMap["/"] = "DIVIDE";
-        enumMap["%"] = "MOD";
-        enumMap["=="]= "EQUAL";
-        enumMap["!="]= "NOT EQUAL";
-        enumMap["++"]= "PLUS_PLUS";
-        enumMap["--"]= "MINUS_MINUS";
-        enumMap[">"] = "GREATER";
-        enumMap["<"] = "LESS";
-        enumMap[">="]= "GREATER_EQUAL";
-        enumMap["<="]= "LESS_EQUAL";
+        enumMap["if"] = IF;
+        enumMap["else"] = ELSE;
+        enumMap["while"] = WHILE;
+        enumMap["for"] = FOR;
+        enumMap["function"] = FUNCTION;
+        enumMap["return"] = RETURN;
+        enumMap["break"] = BREAK;
+        enumMap["continue"] = CONTINUE;
+        enumMap["and"] = AND;
+        enumMap["not"] = NOT;
+        enumMap["or"] = OR;
+        enumMap["local"] = LOCAL;
+        enumMap["true"] = TRUE;
+        enumMap["false"] = FALSE;
+        enumMap["nil"] = NIL;
 
-        enumMap["if"] = "IF";
-        enumMap["else"] = "ELSE";
-        enumMap["while"] = "WHILE";
-        enumMap["for"] = "FOR";
-        enumMap["function"] = "FUNCTION";
-        enumMap["return"] = "RETURN";
-        enumMap["break"] = "BREAK";
-        enumMap["continue"] = "CONTINUE";
-        enumMap["and"] = "AND";
-        enumMap["not"] = "NOT";
-        enumMap["or"] = "OR";
-        enumMap["local"] = "LOCAL";
-        enumMap["true"] = "TRUE";
-        enumMap["false"] = "FALSE";
-        enumMap["nil"] = "NIL";
-
-        enumMap[";"] = "SEMICOLON";
-        enumMap[","] = "COMMA";
-        enumMap[":"] = "COLON";
-        enumMap["::"] = "COLON_COLON";
-        enumMap["."] = "DOT";
-        enumMap[".."] = "DOT_DOT";
-        enumMap["{"] = "LEFT_BRACE";
-        enumMap["}"] = "RIGHT_BRACE";
-        enumMap["["] = "LEFT_BRACKET";
-        enumMap["]"] = "RIGHT_BRACKET";
-        enumMap["("] = "LEFT_PARENTHESIS";
-        enumMap[")"] = "RIGHT_PARENTHESIS";
+        enumMap[";"] = SEMICOLON;
+        enumMap[","] = COMMA;
+        enumMap[":"] = COLON;
+        enumMap["::"] = COLON_COLON;
+        enumMap["."] = DOT;
+        enumMap[".."] = DOT_DOT;
+        enumMap["{"] = LEFT_BRACE;
+        enumMap["}"] = RIGHT_BRACE;
+        enumMap["["] = LEFT_BRACKET;
+        enumMap["]"] = RIGHT_BRACKET;
+        enumMap["("] = LEFT_PARENTHESIS;
+        enumMap[")"] = RIGHT_PARENTHESIS;
     }
-    
-    
 %}
 
 %option header-file = "./scanner.h"
@@ -106,19 +103,19 @@ UNDEFINEDCHAR ("$")|("_d")|("~")|("?")|("#")|("&&")|("||")|("!")
 
 %%
 
-{KEYWORD} { return yytext; }
+{KEYWORD} { return enumMap[yytext]; }
 
-{OPERATOR} { return yytext; }
+{OPERATOR} { return enumMap[yytext]; }
 
 {INTCONST} { return INTCONST; }
 
 {DOUBLECONST} { return DOUBLECONST; }
 
-{PUNMARKS} { return yytext; }
+{PUNMARKS} { return enumMap[yytext]; }
 
 {IDENT} { return IDENT;}
 
-{SCOMMENT} { return yytext; }
+{SCOMMENT} { int rewrwer =2;}
 
 \" {
     std::string tmp = "";
@@ -219,7 +216,7 @@ UNDEFINEDCHAR ("$")|("_d")|("~")|("?")|("#")|("&&")|("||")|("!")
 <<EOF>> {return 0;}
 
 %%
-
+/*
 int main(int argc, char** argv){
         
     if (argc > 1){
@@ -245,4 +242,4 @@ int main(int argc, char** argv){
     }
 
     return 0;
-}
+}*/
