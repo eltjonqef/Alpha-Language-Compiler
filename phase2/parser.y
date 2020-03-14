@@ -34,10 +34,10 @@
 %right ASSIGN
 
 %%
-program:        stmt {std::cout<<"program>>>stmt\n";}
+program:          stmt {std::cout<<"program>>>stmt\n";}
                 ;
 
-stmt:           expr SEMICOLON {std::cout<<"stmt>>>expr SEMICOLON\n";}
+stmt:             expr SEMICOLON {std::cout<<"stmt>>>expr SEMICOLON\n";}
                 | ifstmt {std::cout<<"stmt>>>IF\n";}
                 | whilestmt {std::cout<<"stmt>>>WHILE\n";}
                 | forstmt {std::cout<<"stmt>>>FOR\n";}
@@ -49,14 +49,24 @@ stmt:           expr SEMICOLON {std::cout<<"stmt>>>expr SEMICOLON\n";}
                 | SEMICOLON {std::cout<<"stmt>>>SEMICOLON\n";}
                 ;
 
-expr:           assignexpr {std::cout<<"expr>>>assignexpr\n";}
-                | expr op expr {std::cout<<"expr>>>expr op expr\n";}
+expr:             assignexpr {std::cout<<"expr>>>assignexpr\n";}
+                | expr PLUS expr {std::cout<<"expr>>>expr plus expr\n";}
+                | expr MINUS expr {std::cout<<"expr>>>expr minus expr\n";}
+                | expr MULTIPLY expr {std::cout<<"expr>>>expr MULTIPLY expr\n";}
+                | expr DIVIDE expr {std::cout<<"expr>>>expr divide expr\n";}
+                | expr MOD expr {std::cout<<"expr>>>expr MOD expr\n";}
+                | expr GREATER expr {std::cout<<"expr>>>expr GREATER expr\n";}
+                | expr GREATER_EQUAL expr {std::cout<<"expr>>>expr GREATER expr\n";}
+                | expr LESS expr {std::cout<<"expr>>>expr less expr\n";}
+                | expr LESS_EQUAL expr {std::cout<<"expr>>>expr less equal expr\n";}
+                | expr EQUAL expr {std::cout<<"expr>>>expr equal expr\n";}
+                | expr NOT_EQUAL expr {std::cout<<"expr>>>expr not equal expr\n";}
+                | expr AND expr {std::cout<<"expr>>>expr AND expr\n";}
+                | expr OR expr {std::cout<<"expr>>>expr o expr\n";}
                 | term {std::cout<<"expr>>>term\n";}
                 ;
-
-op:             PLUS {std::cout<<"op>>>PLUS\n";}
-                | MINUS {std::cout<<"op>>>MINUS\n";}
-                | MULTIPLY {std::cout<<"op>>>MULTIPLY\n";}
+/*
+op:               MULTIPLY {std::cout<<"op>>>MULTIPLY\n";}
                 | DIVIDE {std::cout<<"op>>>DIVIDE\n";}
                 | MOD {std::cout<<"op>>>MOD\n";}
                 | GREATER {std::cout<<"op>>>GREATER\n";}
@@ -68,8 +78,9 @@ op:             PLUS {std::cout<<"op>>>PLUS\n";}
                 | AND {std::cout<<"op>>>AND\n";}
                 | OR {std::cout<<"op>>>or\n";}
                 ;
+*/
 
-term:           LEFT_PARENTHESIS expr RIGHT_PARENTHESIS {std::cout<<"term>>>LEFT_PARENTHESIS expr RIGHT_PARENTHESIS\n";}
+term:             LEFT_PARENTHESIS expr RIGHT_PARENTHESIS {std::cout<<"term>>>LEFT_PARENTHESIS expr RIGHT_PARENTHESIS\n";}
                 | UMINUS expr {std::cout<<"term>>>UMINUS expr\n";}
                 | NOT expr {std::cout<<"term>>>NOT expr\n";}
                 | PLUS_PLUS lvalue {std::cout<<"term>>>PLUS_PLUS lvalue\n";}
@@ -79,68 +90,68 @@ term:           LEFT_PARENTHESIS expr RIGHT_PARENTHESIS {std::cout<<"term>>>LEFT
                 | primary {std::cout<<"term>>>primary\n";}
                 ;
 
-assignexpr:     lvalue ASSIGN expr {std::cout<<"assignexpr>>>lvalue ASSIGN expr\n";}
+assignexpr:       lvalue ASSIGN expr {std::cout<<"assignexpr>>>lvalue ASSIGN expr\n";}
                 ;
 
-primary:        lvalue {std::cout<<"primary>>>lvalue\n";}
+primary:          lvalue {std::cout<<"primary>>>lvalue\n";}
                 | call {std::cout<<"primary>>>call\n";}
                 | objectdef {std::cout<<"primary>>>objectdef\n";}
                 | LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS {std::cout<<"primary>>>LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS\n";}
                 | const {std::cout<<"primary>>>const\n";}
                 ;
 
-lvalue:         IDENT {std::cout<<"lvalue>>>IDENT\n";}
+lvalue:           IDENT {std::cout<<"lvalue>>>IDENT\n";}
                 | LOCAL IDENT {std::cout<<"lvalue>>>LOCAL IDENT\n";}
                 | COLON_COLON IDENT {std::cout<<"lvalue>>>COLON_COLON IDENT\n";}
                 | member {std::cout<<"lvalue>>>member\n";}
                 ;
 
-member:         lvalue DOT IDENT {std::cout<<"member>>>lvalue DOT IDENT\n";}
+member:           lvalue DOT IDENT {std::cout<<"member>>>lvalue DOT IDENT\n";}
                 | lvalue LEFT_BRACKET expr RIGHT_BRACKET{std::cout<<"member>>>lvalue LEFT_BRACKET expr RIGHT_BRACKET\n";}
                 | call DOT IDENT {std::cout<<"member>>>call DOT IDENT\n";}
                 | call LEFT_BRACKET expr RIGHT_BRACKET{std::cout<<"member>>>call LEFT_BRACKET expr RIGHT_BRACKET \n";}
                 ;
 
-call:           call LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {std::cout<<"call>>>call LEFT_PARENTHESIS elist RIGHT_PARENTHESIS\n";}
+call:             call LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {std::cout<<"call>>>call LEFT_PARENTHESIS elist RIGHT_PARENTHESIS\n";}
                 | lvalue callsuffix {std::cout<<"call>>>lvalue callsuffix\n";}
                 | LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {std::cout<<"call>>>LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS LEFT_PARENTHESIS elist RIGHT_PARENTHESIS\n";}
                 ;
 
-callsuffix:     normcall {std::cout<<"callsuffix>>>normcall\n";}
+callsuffix:       normcall {std::cout<<"callsuffix>>>normcall\n";}
                 | methodcall {std::cout<<"callsuffix>>>methodcall\n";}
                 ;
 
-normcall:       LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {std::cout<<"normcall>>>LEFT_PARENTHESIS elist RIGHT_PARENTHESIS\n";}
+normcall:         LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {std::cout<<"normcall>>>LEFT_PARENTHESIS elist RIGHT_PARENTHESIS\n";}
                 ;
 
-methodcall:     DOT_DOT IDENT LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {std::cout<<"methodcall>>>DOT_DOT IDENT LEFT_PARENTHESIS elist RIGHT_PARENTHESIS\n";}
+methodcall:       DOT_DOT IDENT LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {std::cout<<"methodcall>>>DOT_DOT IDENT LEFT_PARENTHESIS elist RIGHT_PARENTHESIS\n";}
                 ;
 
-elist:          expr {std::cout<<"elist>>>expr\n";}
+elist:            expr {std::cout<<"elist>>>expr\n";}
                 | COMMA expr {std::cout<<"elist>>>COMMA expr\n";}
                 ;
 
-objectdef:      LEFT_BRACKET elist RIGHT_BRACKET {std::cout<<"objectdef>>>LEFT_BRACKET elist RIGHT_BRACKET\n";}
+objectdef:        LEFT_BRACKET elist RIGHT_BRACKET {std::cout<<"objectdef>>>LEFT_BRACKET elist RIGHT_BRACKET\n";}
                 | LEFT_BRACKET indexed RIGHT_BRACKET{std::cout<<"objectdef>>>LEFT_BRACKET indexed RIGHT_BRACKET\n";}
                 | LEFT_BRACKET RIGHT_BRACKET{std::cout<<"objectdef>>>LEFT_BRACKET RIGHT_BRACKET\n";}
                 ;
 
-indexed:        indexedelem {std::cout<<"indexed>>>indexedelem\n";}
+indexed:          indexedelem {std::cout<<"indexed>>>indexedelem\n";}
                 | COMMA indexedelem {std::cout<<"indexed>>>COMMA indexedelem\n";}
                 ;
 
-indexedelem:    LEFT_BRACE expr COLON expr RIGHT_BRACE {std::cout<<"indexedelem>>>LEFT_BRACE expr COLON expr RIGHT_BRACE\n";}
+indexedelem:      LEFT_BRACE expr COLON expr RIGHT_BRACE {std::cout<<"indexedelem>>>LEFT_BRACE expr COLON expr RIGHT_BRACE\n";}
                 ;
 
-block:          LEFT_BRACE RIGHT_BRACE {std::cout<<"block>>>LEFT_BRACE RIGHT_BRACE\n";}
+block:            LEFT_BRACE RIGHT_BRACE {std::cout<<"block>>>LEFT_BRACE RIGHT_BRACE\n";}
                 | LEFT_BRACE stmt RIGHT_BRACE {std::cout<<"block>>>LEFT_BRACE stmt RIGHT_BRACE\n";}
                 ;
 
-funcdef:        FUNCTION LEFT_PARENTHESIS idlist RIGHT_PARENTHESIS block {std::cout<<"funcdef>>>FUNCTION LEFT_PARENTHESIS idlist RIGHT_PARENTHESIS block\n";}
+funcdef:          FUNCTION LEFT_PARENTHESIS idlist RIGHT_PARENTHESIS block {std::cout<<"funcdef>>>FUNCTION LEFT_PARENTHESIS idlist RIGHT_PARENTHESIS block\n";}
                 | FUNCTION IDENT LEFT_PARENTHESIS idlist RIGHT_PARENTHESIS block {std::cout<<"funcdef>>>FUNCTION IDENT LEFT_PARENTHESIS idlist RIGHT_PARENTHESIS block\n";}
                 ;
 
-const:          INTCONST {std::cout<<"const>>>INTCONST\n";}
+const:            INTCONST {std::cout<<"const>>>INTCONST\n";}
                 | DOUBLECONST {std::cout<<"const>>>DOUBLECONST\n";}
                 | STRING {std::cout<<"const>>>STRING\n";}
                 | NIL{std::cout<<"const>>>NIL\n";}
@@ -148,21 +159,21 @@ const:          INTCONST {std::cout<<"const>>>INTCONST\n";}
                 | FALSE{std::cout<<"const>>>FALSE\n";}
                 ;
 
-idlist:         IDENT {std::cout<<"idlist>>>IDENT\n";}
+idlist:           IDENT {std::cout<<"idlist>>>IDENT\n";}
                 | COMMA IDENT {std::cout<<"idlist>>>COMMA IDENT\n";}
                 ;
 
-ifstmt:         IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt {std::cout<<"ifstmt>>>IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt\n";}
+ifstmt:           IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt {std::cout<<"ifstmt>>>IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt\n";}
                 | IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt ELSE stmt {std::cout<<"ifstmt>>>IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt ELSE stmt\n";}
                 ;
 
-whilestmt:      WHILE LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt {std::cout<<"whilestmt>>> WHILE LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt\n";}
+whilestmt:        WHILE LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt {std::cout<<"whilestmt>>> WHILE LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt\n";}
                 ;
 
-forstmt:        FOR LEFT_PARENTHESIS elist SEMICOLON expr SEMICOLON elist RIGHT_PARENTHESIS stmt {std::cout<<"forstmt>>>FOR LEFT_PARENTHESIS elist SEMICOLON expr SEMICOLON elist RIGHT_PARENTHESIS stmt\n";}
+forstmt:          FOR LEFT_PARENTHESIS elist SEMICOLON expr SEMICOLON elist RIGHT_PARENTHESIS stmt {std::cout<<"forstmt>>>FOR LEFT_PARENTHESIS elist SEMICOLON expr SEMICOLON elist RIGHT_PARENTHESIS stmt\n";}
                 ;
 
-returnstmt:     RETURN SEMICOLON {std::cout<<"returnstmt>>>RETURN SEMICOLON\n";}
+returnstmt:       RETURN SEMICOLON {std::cout<<"returnstmt>>>RETURN SEMICOLON\n";}
                 | RETURN expr SEMICOLON {std::cout<<"returnstmt>>>RETURN expr SEMICOLON\n";}
                 ;
             
