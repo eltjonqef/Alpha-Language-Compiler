@@ -4,10 +4,12 @@
     #include <string>
     int yyerror(std::string yaccProvideMessage);
     int yylex(void* yylval);
+    extern void initEnumMap();
     extern int yylineno;
     extern char* yytext;
     extern FILE* yyin;
 %}
+
 %lex-param {NULL}
 %start program
 
@@ -18,11 +20,13 @@
 %token UMINUS
 
 %left LEFT_PARENTHESIS RIGHT_PARENTHESIS
+%nonassoc ELSE
+%nonassoc IF
 %left LEFT_BRACKET RIGHT_BRACKET
 %left DOT DOT_DOT
 %right NOT PLUS_PLUS MINUS_MINUS UMINUS
 %left MULTIPLY DIVIDE MOD
-%right PLUS MINUS 
+%left PLUS MINUS 
 %nonassoc GREATER GREATER_EQUAL LESS LESS_EQUAL
 %nonassoc EQUAL NOT_EQUAL
 %left AND
@@ -30,158 +34,136 @@
 %right ASSIGN
 
 %%
-program     :    
-                stmt*
+program:        stmt {std::cout<<"program>>>stmt\n";}
                 ;
 
-stmt        :
-                  expr SEMICOLON
-                | IF
-                | WHILE
-                | FOR
-                | RETURN
-                | BREAK SEMICOLON
-                | CONTINUE SEMICOLON
-                | block
-                | funcdef
-                | SEMICOLON
+stmt:           expr SEMICOLON {std::cout<<"stmt>>>expr SEMICOLON\n";}
+                | ifstmt {std::cout<<"stmt>>>IF\n";}
+                | whilestmt {std::cout<<"stmt>>>WHILE\n";}
+                | forstmt {std::cout<<"stmt>>>FOR\n";}
+                | returnstmt {std::cout<<"stmt>>>RETURN\n";}
+                | BREAK SEMICOLON {std::cout<<"stmt>>>BREAK SEMICOLON\n";}
+                | CONTINUE SEMICOLON {std::cout<<"stmt>>>CONTINUE SEMICOLON\n";}
+                | block {std::cout<<"stmt>>>block\n";}
+                | funcdef {std::cout<<"stmt>>>funcdef\n";}
+                | SEMICOLON {std::cout<<"stmt>>>SEMICOLON\n";}
                 ;
 
-expr        :
-                  assignexpr
-                | expr op expr
-                | term
-
-op          :
-                  PLUS
-                | MINUS
-                | MULTIPLY
-                | DIVIDE
-                | MOD
-                | GREATER
-                | GREATER_EQUAL
-                | LESS
-                | LESS_EQUAL
-                | EQUAL
-                | NOT_EQUAL
-                | AND
-                | OR
+expr:           assignexpr {std::cout<<"expr>>>assignexpr\n";}
+                | expr op expr {std::cout<<"expr>>>expr op expr\n";}
+                | term {std::cout<<"expr>>>term\n";}
                 ;
 
-term        :
-                  LEFT_PARENTHESIS expr RIGHT_PARENTHESIS
-                | MINUS expr
-                | not expr
-                | PLUS_PLUS lvalue
-                | lvalue PLUS_PLUS
-                | MINUS_MINUS lvalue
-                | lvalue MINUS_MINUS
-                | primary
+op:             PLUS {std::cout<<"op>>>PLUS\n";}
+                | MINUS {std::cout<<"op>>>MINUS\n";}
+                | MULTIPLY {std::cout<<"op>>>MULTIPLY\n";}
+                | DIVIDE {std::cout<<"op>>>DIVIDE\n";}
+                | MOD {std::cout<<"op>>>MOD\n";}
+                | GREATER {std::cout<<"op>>>GREATER\n";}
+                | GREATER_EQUAL {std::cout<<"op>>>GREATER_EQUAL\n";}
+                | LESS {std::cout<<"op>>>LESS\n";}
+                | LESS_EQUAL {std::cout<<"op>>>LESS_EQUAL\n";}
+                | EQUAL {std::cout<<"op>>>EQUAL\n";}
+                | NOT_EQUAL {std::cout<<"op>>>NOT_EQUAL\n";}
+                | AND {std::cout<<"op>>>AND\n";}
+                | OR {std::cout<<"op>>>or\n";}
                 ;
 
-assignexpr  :
-                  lvalue ASSIGN expr
+term:           LEFT_PARENTHESIS expr RIGHT_PARENTHESIS {std::cout<<"term>>>LEFT_PARENTHESIS expr RIGHT_PARENTHESIS\n";}
+                | UMINUS expr {std::cout<<"term>>>UMINUS expr\n";}
+                | NOT expr {std::cout<<"term>>>NOT expr\n";}
+                | PLUS_PLUS lvalue {std::cout<<"term>>>PLUS_PLUS lvalue\n";}
+                | lvalue PLUS_PLUS {std::cout<<"term>>>lvalue PLUS_PLUS\n";}
+                | MINUS_MINUS lvalue {std::cout<<"term>>>MINUS_MINUS lvalue\n";}
+                | lvalue MINUS_MINUS {std::cout<<"term>>>lvalue MINUS_MINUS\n";}
+                | primary {std::cout<<"term>>>primary\n";}
                 ;
 
-primary     :
-                  lvalue
-                | call
-                | objectdef
-                | LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS
-                | const
-
-lvalue      :
-                  IDENT
-                | local IDENT
-                | COLON_COLON IDENT
-                | member
+assignexpr:     lvalue ASSIGN expr {std::cout<<"assignexpr>>>lvalue ASSIGN expr\n";}
                 ;
 
-member      :
-                  lvalue DOT IDENT
-                | lvalue LEFT_BRACKET expr RIGHT_BRACKET
-                | call DOT IDENT
-                | call LEFT_BRACKET expr RIGHT_BRACKET
+primary:        lvalue {std::cout<<"primary>>>lvalue\n";}
+                | call {std::cout<<"primary>>>call\n";}
+                | objectdef {std::cout<<"primary>>>objectdef\n";}
+                | LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS {std::cout<<"primary>>>LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS\n";}
+                | const {std::cout<<"primary>>>const\n";}
                 ;
 
-call        :
-                  call LEFT_PARENTHESIS elist RIGHT_PARENTHESIS
-                | lvalue callsuffix
-                | LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS LEFT_PARENTHESIS elist RIGHT_PARENTHESIS
+lvalue:         IDENT {std::cout<<"lvalue>>>IDENT\n";}
+                | LOCAL IDENT {std::cout<<"lvalue>>>LOCAL IDENT\n";}
+                | COLON_COLON IDENT {std::cout<<"lvalue>>>COLON_COLON IDENT\n";}
+                | member {std::cout<<"lvalue>>>member\n";}
                 ;
 
-callsuffix  :
-                  normcall
-                | methodcall
+member:         lvalue DOT IDENT {std::cout<<"member>>>lvalue DOT IDENT\n";}
+                | lvalue LEFT_BRACKET expr RIGHT_BRACKET{std::cout<<"member>>>lvalue LEFT_BRACKET expr RIGHT_BRACKET\n";}
+                | call DOT IDENT {std::cout<<"member>>>call DOT IDENT\n";}
+                | call LEFT_BRACKET expr RIGHT_BRACKET{std::cout<<"member>>>call LEFT_BRACKET expr RIGHT_BRACKET \n";}
                 ;
 
-normcall    :
-                  LEFT_PARENTHESIS elist RIGHT_PARENTHESIS
+call:           call LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {std::cout<<"call>>>call LEFT_PARENTHESIS elist RIGHT_PARENTHESIS\n";}
+                | lvalue callsuffix {std::cout<<"call>>>lvalue callsuffix\n";}
+                | LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {std::cout<<"call>>>LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS LEFT_PARENTHESIS elist RIGHT_PARENTHESIS\n";}
                 ;
 
-methodcall  :
-                  DOT_DOT IDENT LEFT_PARENTHESIS elist RIGHT_PARENTHESIS
-                | lvalue DOT IDENT LEFT_PARENTHESIS lvalue COMMA elist RIGHT_PARENTHESIS
+callsuffix:     normcall {std::cout<<"callsuffix>>>normcall\n";}
+                | methodcall {std::cout<<"callsuffix>>>methodcall\n";}
                 ;
 
-elist       :
-                  [expr [COMMA expr]*]
+normcall:       LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {std::cout<<"normcall>>>LEFT_PARENTHESIS elist RIGHT_PARENTHESIS\n";}
                 ;
 
-objectdef   :
-                  LEFT_BRACKET [elist | indexed] RIGHT_BRACKET
+methodcall:     DOT_DOT IDENT LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {std::cout<<"methodcall>>>DOT_DOT IDENT LEFT_PARENTHESIS elist RIGHT_PARENTHESIS\n";}
                 ;
 
-indexed     :
-                  [indexedelem [COMMA indexedelem]*]
+elist:          expr {std::cout<<"elist>>>expr\n";}
+                | COMMA expr {std::cout<<"elist>>>COMMA expr\n";}
                 ;
 
-indexedelem :
-                  LEFT_BRACE expr COLON expr RIGHT_BRACE
+objectdef:      LEFT_BRACKET elist RIGHT_BRACKET {std::cout<<"objectdef>>>LEFT_BRACKET elist RIGHT_BRACKET\n";}
+                | LEFT_BRACKET indexed RIGHT_BRACKET{std::cout<<"objectdef>>>LEFT_BRACKET indexed RIGHT_BRACKET\n";}
+                | LEFT_BRACKET RIGHT_BRACKET{std::cout<<"objectdef>>>LEFT_BRACKET RIGHT_BRACKET\n";}
                 ;
 
-block       :
-                  LEFT_BRACE [stmt*] RIGHT_BRACE
+indexed:        indexedelem {std::cout<<"indexed>>>indexedelem\n";}
+                | COMMA indexedelem {std::cout<<"indexed>>>COMMA indexedelem\n";}
                 ;
 
-funcdef     :
-                  FUNCTION LEFT_PARENTHESIS idlist RIGHT_PARENTHESIS block
-                | FUNCTION IDENT LEFT_PARENTHESIS idlist RIGHT_PARENTHESIS block
+indexedelem:    LEFT_BRACE expr COLON expr RIGHT_BRACE {std::cout<<"indexedelem>>>LEFT_BRACE expr COLON expr RIGHT_BRACE\n";}
                 ;
 
-const       :
-                  INTCONST
-                | DOUBLECONST
-                | STRING
-                | NIL
-                | TRUE
-                | FALSE
+block:          LEFT_BRACE RIGHT_BRACE {std::cout<<"block>>>LEFT_BRACE RIGHT_BRACE\n";}
+                | LEFT_BRACE stmt RIGHT_BRACE {std::cout<<"block>>>LEFT_BRACE stmt RIGHT_BRACE\n";}
                 ;
 
-idlist      :
-                  [IDENT [COMMA IDENT]*]
+funcdef:        FUNCTION LEFT_PARENTHESIS idlist RIGHT_PARENTHESIS block {std::cout<<"funcdef>>>FUNCTION LEFT_PARENTHESIS idlist RIGHT_PARENTHESIS block\n";}
+                | FUNCTION IDENT LEFT_PARENTHESIS idlist RIGHT_PARENTHESIS block {std::cout<<"funcdef>>>FUNCTION IDENT LEFT_PARENTHESIS idlist RIGHT_PARENTHESIS block\n";}
                 ;
 
-ifstmt      :
-                  IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt
-                | IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS block
-                | IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS block ELSE stmt
-                | IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt ELSE block
-                | IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt ELSE stmt
-                | IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS block ELSE block
+const:          INTCONST {std::cout<<"const>>>INTCONST\n";}
+                | DOUBLECONST {std::cout<<"const>>>DOUBLECONST\n";}
+                | STRING {std::cout<<"const>>>STRING\n";}
+                | NIL{std::cout<<"const>>>NIL\n";}
+                | TRUE{std::cout<<"const>>>TRUE\n";}
+                | FALSE{std::cout<<"const>>>FALSE\n";}
                 ;
 
-whilestmt   :
-                  WHILE LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt
+idlist:         IDENT {std::cout<<"idlist>>>IDENT\n";}
+                | COMMA IDENT {std::cout<<"idlist>>>COMMA IDENT\n";}
                 ;
 
-forstmt     :
-                  FOR LEFT_PARENTHESIS elist SEMICOLON expr SEMICOLON elist RIGHT_PARENTHESIS stmt
+ifstmt:         IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt {std::cout<<"ifstmt>>>IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt\n";}
+                | IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt ELSE stmt {std::cout<<"ifstmt>>>IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt ELSE stmt\n";}
                 ;
 
-returnstmt  :
-                  RETURN SEMICOLON
-                | RETURN expr SEMICOLON
+whilestmt:      WHILE LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt {std::cout<<"whilestmt>>> WHILE LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt\n";}
+                ;
+
+forstmt:        FOR LEFT_PARENTHESIS elist SEMICOLON expr SEMICOLON elist RIGHT_PARENTHESIS stmt {std::cout<<"forstmt>>>FOR LEFT_PARENTHESIS elist SEMICOLON expr SEMICOLON elist RIGHT_PARENTHESIS stmt\n";}
+                ;
+
+returnstmt:     RETURN SEMICOLON {std::cout<<"returnstmt>>>RETURN SEMICOLON\n";}
+                | RETURN expr SEMICOLON {std::cout<<"returnstmt>>>RETURN expr SEMICOLON\n";}
                 ;
             
 %%
@@ -204,7 +186,7 @@ main(int argc, char** argv){
     }
     else
         yyin = stdin;
-
+    initEnumMap();
     yyparse();
     return 0;
 }
