@@ -20,8 +20,6 @@
 %token UMINUS
 
 %left LEFT_PARENTHESIS RIGHT_PARENTHESIS
-%nonassoc ELSE
-%nonassoc IF
 %left LEFT_BRACKET RIGHT_BRACKET
 %left DOT DOT_DOT
 %right NOT PLUS_PLUS MINUS_MINUS UMINUS
@@ -32,6 +30,7 @@
 %left AND
 %left OR
 %right ASSIGN
+
 
 %%
 program:          stmt {std::cout<<"program>>>stmt\n";}
@@ -128,16 +127,17 @@ methodcall:       DOT_DOT IDENT LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {std::c
                 ;
 
 elist:            expr {std::cout<<"elist>>>expr\n";}
-                | COMMA expr {std::cout<<"elist>>>COMMA expr\n";}
+                | expr COMMA elist {std::cout<<"elist>>>COMMA expr\n";}
+                |
                 ;
 
 objectdef:        LEFT_BRACKET elist RIGHT_BRACKET {std::cout<<"objectdef>>>LEFT_BRACKET elist RIGHT_BRACKET\n";}
                 | LEFT_BRACKET indexed RIGHT_BRACKET{std::cout<<"objectdef>>>LEFT_BRACKET indexed RIGHT_BRACKET\n";}
-                | LEFT_BRACKET RIGHT_BRACKET{std::cout<<"objectdef>>>LEFT_BRACKET RIGHT_BRACKET\n";}
                 ;
 
-indexed:          indexedelem {std::cout<<"indexed>>>indexedelem\n";}
-                | COMMA indexedelem {std::cout<<"indexed>>>COMMA indexedelem\n";}
+indexed:          indexedelem {std::cout<<"indexed>>>COMMA indexedelem\n";}
+                | indexedelem COMMA indexed
+                |
                 ;
 
 indexedelem:      LEFT_BRACE expr COLON expr RIGHT_BRACE {std::cout<<"indexedelem>>>LEFT_BRACE expr COLON expr RIGHT_BRACE\n";}
@@ -160,8 +160,10 @@ const:            INTCONST {std::cout<<"const>>>INTCONST\n";}
                 ;
 
 idlist:           IDENT {std::cout<<"idlist>>>IDENT\n";}
-                | COMMA IDENT {std::cout<<"idlist>>>COMMA IDENT\n";}
+                | IDENT COMMA idlist
+                |
                 ;
+
 
 ifstmt:           IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt {std::cout<<"ifstmt>>>IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt\n";}
                 | IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt ELSE stmt {std::cout<<"ifstmt>>>IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt ELSE stmt\n";}
