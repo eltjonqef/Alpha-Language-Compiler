@@ -5,6 +5,7 @@
     #include <string>
     #include <map>
     #include <vector>
+    #include <assert.h>
     int yyerror(std::string yaccProvideMessage);
     int yylex(void* yylval);
     extern void initEnumMap();
@@ -12,58 +13,106 @@
     extern char* yytext;
     extern FILE* yyin;
 
-    enum SymbolType 
-    {
+    unsigned int currentScope = 0;
+
+    enum SymbolType {
       GLOB, LOCL, FORMAL, USERFUNC, LIBFUNC  
     };
 
-    typedef struct Variable{
-        std::string name;
-        unsigned int scope;
-        unsigned int line;
-    } variable;
+    class Variable {
+        private:
+            std::string name;
+            unsigned int scope;
+            unsigned int line;
+        public:
+            Variable(std::string _name, unsigned int _scope, unsigned int _line) {
+                name = _name;
+                scope = _scope;
+                line = _line;
+            }
 
-    typedef struct Function{
-        std::string name;
-        unsigned int scope;
-        unsigned int line;
-    } function;
+            std::string getName() { return name; }
+            unsigned int getScope() { return scope; }
+            unsigned int getLine() { return line; }
+    };
 
-    typedef struct SymbolTableEntry{
-        bool isActive;
-        union{
-            Variable *varValue;
-            Function *funcValue;
-        } value;
-        SymbolType type;
-    } symbol_table_entry;
+    class Function {
+        private:
+            std::string name;
+            unsigned int scope;
+            unsigned int line;
+        public:
+            Function(std::string _name, unsigned int _scope, unsigned int _line) {
+                name = _name;
+                scope = _scope;
+                line = _line;
+            }
+            
+            std::string getName() { return name; }
+            unsigned int getScope() { return scope; }
+            unsigned int getLine() { return line; }
+    };
 
-    std::map <std::string,std::vector<SymbolTableEntry> > SymbolTable;
+    //meant to be called from addToSymbolTableOnly
+    class SymbolTableEntry {
+        private:
+            bool enabled;
+            union {
+                Variable *varValue;
+                Function *funcValue;
+            } value;
+            SymbolType type;
+        public:
+            SymbolTableEntry(std::string _name, int _scope, int _line, SymbolType _type) {
+                if(_type == 3 || _type == 4) {
+                    Function *temp = new Function(_name, _scope, _line);
+                } 
+                else {
+                    Variable *temp = new Variable(_name, _scope, _line);
+                }
+                type = _type;
+            }
+
+            bool isActive() { return enabled; }
+
+            void activate() { enabled = true; }
+            void deactivate() { enabled = false; }
+            int getType(){
+                return type;
+            }
+            
+    };
+
+    std::map <std::string,std::vector<SymbolTableEntry*> > SymbolTable;
     std::map <int,std::vector<SymbolTableEntry*> > ScopeTable;
     
-    void addToSymbolTable(std::string Name,int Scope,int Line,SymbolType Type){
-        symbol_table_entry newEntry;
-        if(Type == 3 || Type ==4){
-            struct Function *temp=(struct Function*)malloc(sizeof(struct Function));
-            newEntry.value.funcValue->name = Name;
-            newEntry.value.funcValue->scope = Scope;
-            newEntry.value.funcValue->line = Line;
-        }
-        else{
-            struct Variable *temp=(struct Variable*)malloc(sizeof(struct Variable));
-            //temp->name = Name; 
-            //NEED TO CHANGE THIS SHIT...CANNOT ASSIGN STRING
-            //LETS USE NEW AND FREE
-            //I GUESS WE NEED TO USE CLASSES
-            temp->scope=Scope;
-            temp->line=Line;
-            newEntry.value.varValue=temp;
-        }
-        newEntry.type = Type;
-        newEntry.isActive = 1;
 
-        SymbolTable[Name].push_back(newEntry);
+    /*Symbol table Functions*/
+    
+    void addToSymbolTable(std::string _name, int _scope, int _line, SymbolType _type) {
+        SymbolTableEntry *newEntry = new SymbolTableEntry(_name,_scope,_line,_type);
+        SymbolTable[_name].push_back(newEntry);
+        ScopeTable[_scope].push_back(newEntry);
     }
+
+    void InitilizeLibraryFunctions(){
+        SymbolType t = LIBFUNC;
+        addToSymbolTable("print",0,0,t);
+        addToSymbolTable("input",0,0,t);
+        addToSymbolTable("objectmemberkeys",0,0,t);
+        addToSymbolTable("objecttotalmembers",0,0,t);
+        addToSymbolTable("objectcopy",0,0,t);
+        addToSymbolTable("totalarguments",0,0,t);
+        addToSymbolTable("argument",0,0,t);
+        addToSymbolTable("typeof",0,0,t);
+        addToSymbolTable("strtonum",0,0,t);
+        addToSymbolTable("sqrt",0,0,t);
+        addToSymbolTable("cos",0,0,t);
+        addToSymbolTable("sin ",0,0,t);
+    }
+
+
+    
 %}
 
 
@@ -257,11 +306,12 @@ main(int argc, char** argv){
         yyin = stdin;
     initEnumMap();
     yyparse();
-    addToSymbolTable("eltion", 0, 0, GLOB);
     std::cout<<"redre"<<std::endl;
     addToSymbolTable("eltion", 0, 0, LOCL);
-    addToSymbolTable("sdsa", 0, 0, GLOB);
+    std::cout<<SymbolTable["eltion"][0]->getType()<<std::endl;
+    std::cout<<ScopeTable[0][0]->getType()<<std::endl;
+    /*addToSymbolTable("sdsa", 0, 0, GLOB);
     std::cout<<SymbolTable.size()<<std::endl;
-    std::cout<<SymbolTable["eltion"][1].type<<std::endl;
+    std::cout<<SymbolTable["eltion"][1].type<<std::endl;*/
     return 0;
 }
