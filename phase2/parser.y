@@ -6,7 +6,10 @@
     #include <map>
     #include <vector>
     #include <assert.h>
-    int yyerror(std::string yaccProvideMessage);
+
+    using namespace std;
+
+    int yyerror(string yaccProvideMessage);
     int yylex(void* yylval);
     extern void initEnumMap();
     extern int yylineno;
@@ -21,34 +24,34 @@
 
     class Variable {
         private:
-            std::string name;
+            string name;
             unsigned int scope;
             unsigned int line;
         public:
-            Variable(std::string _name, unsigned int _scope, unsigned int _line) {
+            Variable(string _name, unsigned int _scope, unsigned int _line) {
                 name = _name;
                 scope = _scope;
                 line = _line;
             }
 
-            std::string getName() { return name; }
+            string getName() { return name; }
             unsigned int getScope() { return scope; }
             unsigned int getLine() { return line; }
     };
 
     class Function {
         private:
-            std::string name;
+            string name;
             unsigned int scope;
             unsigned int line;
         public:
-            Function(std::string _name, unsigned int _scope, unsigned int _line) {
+            Function(string _name, unsigned int _scope, unsigned int _line) {
                 name = _name;
                 scope = _scope;
                 line = _line;
             }
             
-            std::string getName() { return name; }
+            string getName() { return name; }
             unsigned int getScope() { return scope; }
             unsigned int getLine() { return line; }
     };
@@ -63,56 +66,101 @@
             } value;
             SymbolType type;
         public:
-            SymbolTableEntry(std::string _name, int _scope, int _line, SymbolType _type) {
+            SymbolTableEntry(string _name, int _scope, int _line, SymbolType _type) {
                 if(_type == 3 || _type == 4) {
                     Function *temp = new Function(_name, _scope, _line);
+                    value.funcValue=temp;
                 } 
                 else {
                     Variable *temp = new Variable(_name, _scope, _line);
+                    value.varValue=temp;
                 }
+                enabled=true;
                 type = _type;
+            }
+
+            string getName(){ 
+                if(type == 3 || type ==4){
+                    return value.funcValue->getName();
+                }
+                else{
+                    return value.varValue->getName();
+                }
+            }
+
+            unsigned int getScope(){
+                if(type == 3 || type ==4){
+                    return value.funcValue->getScope();
+                }
+                else{
+                    return value.varValue->getScope();
+                }
+            }
+
+            unsigned int getLine(){
+                if(type == 3 || type ==4){
+                    return value.funcValue->getLine();
+                }
+                else{
+                    return value.varValue->getLine();
+                }
+            }
+
+            int getType(){
+                return type;
             }
 
             bool isActive() { return enabled; }
 
             void activate() { enabled = true; }
             void deactivate() { enabled = false; }
-            int getType(){
-                return type;
-            }
+            
             
     };
 
-    std::map <std::string,std::vector<SymbolTableEntry*> > SymbolTable;
-    std::map <int,std::vector<SymbolTableEntry*> > ScopeTable;
+    map <string,vector<SymbolTableEntry*> > SymbolTable;
+    map <int,vector<SymbolTableEntry*> > ScopeTable;
     
 
     /*Symbol table Functions*/
     
-    void addToSymbolTable(std::string _name, int _scope, int _line, SymbolType _type) {
+    void addToSymbolTable(string _name, int _scope, int _line, SymbolType _type) {
         SymbolTableEntry *newEntry = new SymbolTableEntry(_name,_scope,_line,_type);
         SymbolTable[_name].push_back(newEntry);
         ScopeTable[_scope].push_back(newEntry);
     }
 
     void InitilizeLibraryFunctions(){
-        SymbolType t = LIBFUNC;
-        addToSymbolTable("print",0,0,t);
-        addToSymbolTable("input",0,0,t);
-        addToSymbolTable("objectmemberkeys",0,0,t);
-        addToSymbolTable("objecttotalmembers",0,0,t);
-        addToSymbolTable("objectcopy",0,0,t);
-        addToSymbolTable("totalarguments",0,0,t);
-        addToSymbolTable("argument",0,0,t);
-        addToSymbolTable("typeof",0,0,t);
-        addToSymbolTable("strtonum",0,0,t);
-        addToSymbolTable("sqrt",0,0,t);
-        addToSymbolTable("cos",0,0,t);
-        addToSymbolTable("sin ",0,0,t);
+        addToSymbolTable("print",0,0,LIBFUNC);
+        addToSymbolTable("input",0,0,LIBFUNC);
+        addToSymbolTable("objectmemberkeys",0,0,LIBFUNC);
+        addToSymbolTable("objecttotalmembers",0,0,LIBFUNC);
+        addToSymbolTable("objectcopy",0,0,LIBFUNC);
+        addToSymbolTable("totalarguments",0,0,LIBFUNC);
+        addToSymbolTable("argument",0,0,LIBFUNC);
+        addToSymbolTable("typeof",0,0,LIBFUNC);
+        addToSymbolTable("strtonum",0,0,LIBFUNC);
+        addToSymbolTable("sqrt",0,0,LIBFUNC);
+        addToSymbolTable("cos",0,0,LIBFUNC);
+        addToSymbolTable("sin ",0,0,LIBFUNC);
     }
 
+    bool SymbolLookup(string name){
 
-    
+        for(int i=0; i<ScopeTable[0].size(); i++){
+            if(ScopeTable[0][i]->getName()==name && ScopeTable[0][i]->getType()==4){
+                cout<<"ERROR: Symbol: "<<name<<" at line: "<<yylineno<<" is a library function."<<endl;
+                return false;
+            }
+        }
+        for(int i=0; i<SymbolTable[name].size(); i++){
+            if(SymbolTable[name][i]->isActive() && SymbolTable[name][i]->getType()==3){
+                cout<<"ERROR: Symbol: "<<name<<" at line "<<yylineno<<" has same name with an active function at line "<<SymbolTable[name][i]->getLine()<<"."<<endl;
+                return false;
+            }
+        }
+        return true;
+    }
 %}
 
 
@@ -171,17 +219,17 @@ expr:             assignexpr {}
                 | term {}
                 ;
 /*
-op:               MULTIPLY {std::cout<<"op>>>MULTIPLY\n";}
-                | DIVIDE {std::cout<<"op>>>DIVIDE\n";}
-                | MOD {std::cout<<"op>>>MOD\n";}
-                | GREATER {std::cout<<"op>>>GREATER\n";}
-                | GREATER_EQUAL {std::cout<<"op>>>GREATER_EQUAL\n";}
-                | LESS {std::cout<<"op>>>LESS\n";}
-                | LESS_EQUAL {std::cout<<"op>>>LESS_EQUAL\n";}
-                | EQUAL {std::cout<<"op>>>EQUAL\n";}
-                | NOT_EQUAL {std::cout<<"op>>>NOT_EQUAL\n";}
-                | AND {std::cout<<"op>>>AND\n";}
-                | OR {std::cout<<"op>>>or\n";}
+op:               MULTIPLY {cout<<"op>>>MULTIPLY\n";}
+                | DIVIDE {cout<<"op>>>DIVIDE\n";}
+                | MOD {cout<<"op>>>MOD\n";}
+                | GREATER {cout<<"op>>>GREATER\n";}
+                | GREATER_EQUAL {cout<<"op>>>GREATER_EQUAL\n";}
+                | LESS {cout<<"op>>>LESS\n";}
+                | LESS_EQUAL {cout<<"op>>>LESS_EQUAL\n";}
+                | EQUAL {cout<<"op>>>EQUAL\n";}
+                | NOT_EQUAL {cout<<"op>>>NOT_EQUAL\n";}
+                | AND {cout<<"op>>>AND\n";}
+                | OR {cout<<"op>>>or\n";}
                 ;
 */
 
@@ -287,9 +335,9 @@ returnstmt:       RETURN SEMICOLON {}
 %%
 
 int
-yyerror(std::string yaccProvideMessage){
+yyerror(string yaccProvideMessage){
 
-    std::cout<<yaccProvideMessage<<": at line "<< yylineno<<", before token: "<<yytext<<std::endl;
+    cout<<yaccProvideMessage<<": at line "<< yylineno<<", before token: "<<yytext<<endl;
     fprintf(stderr, "INPUT NOT VALID\n");
 }
 
@@ -305,13 +353,12 @@ main(int argc, char** argv){
     else
         yyin = stdin;
     initEnumMap();
+    InitilizeLibraryFunctions();
     yyparse();
-    std::cout<<"redre"<<std::endl;
-    addToSymbolTable("eltion", 0, 0, LOCL);
-    std::cout<<SymbolTable["eltion"][0]->getType()<<std::endl;
-    std::cout<<ScopeTable[0][0]->getType()<<std::endl;
-    /*addToSymbolTable("sdsa", 0, 0, GLOB);
-    std::cout<<SymbolTable.size()<<std::endl;
-    std::cout<<SymbolTable["eltion"][1].type<<std::endl;*/
+    addToSymbolTable("eltion", 0, 46, USERFUNC);
+    cout<<SymbolLookup("eltion")<<endl;
+    //cout<<SymbolLookup("printt")<<endl;
+    //currentScope++;
+    //cout<<SymbolLookup("eltion")<<endl;
     return 0;
 }
