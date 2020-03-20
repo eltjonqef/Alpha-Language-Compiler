@@ -10,7 +10,7 @@
     using namespace std;
 
     int yyerror(string yaccProvideMessage);
-    int yylex(void* yylval);
+    int yylex();
     extern void initEnumMap();
     extern int yylineno;
     extern char* yytext;
@@ -19,7 +19,7 @@
     unsigned int currentScope = 0;
 
     enum SymbolType {
-      GLOB, LOCL, FORMAL, USERFUNC, LIBFUNC  
+        GLOB, LOCL, FORMAL, USERFUNC, LIBFUNC  
     };
 
     class Variable {
@@ -123,11 +123,37 @@
     
 
     /*Symbol table Functions*/
-    
+    bool SymbolLookup(string name){
+
+        for(int i=0; i<ScopeTable[0].size(); i++){
+            if(ScopeTable[0][i]->getName()==name && ScopeTable[0][i]->getType()==4){
+                cout<<"ERROR: Symbol: "<<name<<" at line: "<<yylineno<<" is a library function."<<endl;
+                return false;
+            }
+        }
+        for(int i=0; i<SymbolTable[name].size(); i++){
+            if(SymbolTable[name][i]->isActive() && SymbolTable[name][i]->getType()==3){
+                cout<<"ERROR: Symbol: "<<name<<" at line "<<yylineno<<" has same name with an active function at line "<<SymbolTable[name][i]->getLine()<<"."<<endl;
+                return false;
+            }
+        }
+        return true;
+    }
+    bool checkLibFunctions(string name){
+        for(int i=0; i<ScopeTable[0].size(); i++){
+            if(ScopeTable[0][i]->getName()==name && ScopeTable[0][i]->getType()==4){
+                cout<<"ERROR: Symbol: "<<name<<" at line: "<<yylineno<<" is a library function."<<endl;
+                return false;
+            }
+        }
+        return true;
+    }
+
     void addToSymbolTable(string _name, int _scope, int _line, SymbolType _type) {
-        SymbolTableEntry *newEntry = new SymbolTableEntry(_name,_scope,_line,_type);
-        SymbolTable[_name].push_back(newEntry);
-        ScopeTable[_scope].push_back(newEntry);
+
+            SymbolTableEntry *newEntry = new SymbolTableEntry(_name,_scope,_line,_type);
+            SymbolTable[_name].push_back(newEntry);
+            ScopeTable[_scope].push_back(newEntry);
     }
 
     void InitilizeLibraryFunctions(){
@@ -145,32 +171,34 @@
         addToSymbolTable("sin ",0,0,LIBFUNC);
     }
 
-    bool SymbolLookup(string name){
-
-        for(int i=0; i<ScopeTable[0].size(); i++){
-            if(ScopeTable[0][i]->getName()==name && ScopeTable[0][i]->getType()==4){
-                cout<<"ERROR: Symbol: "<<name<<" at line: "<<yylineno<<" is a library function."<<endl;
-                return false;
-            }
+    void decreaseScope() {
+        for(int i = 0; i < ScopeTable[currentScope].size(); i++) {
+            ScopeTable[currentScope][i]->deactivate();
         }
-        for(int i=0; i<SymbolTable[name].size(); i++){
-            if(SymbolTable[name][i]->isActive() && SymbolTable[name][i]->getType()==3){
-                cout<<"ERROR: Symbol: "<<name<<" at line "<<yylineno<<" has same name with an active function at line "<<SymbolTable[name][i]->getLine()<<"."<<endl;
-                return false;
-            }
-        }
-        return true;
+        currentScope--;
+        return;
     }
+
 %}
 
+//%lex-param {NULL}
 
-%lex-param {NULL}
+%union {
+    int intValue;
+    char* stringValue;
+    double doubleValue;
+}
+
 %start program
 
 %token IF ELSE WHILE FOR FUNCTION RETURN BREAK CONTINUE AND NOT OR LOCAL TRUE FALSE NIL
 %token ASSIGN PLUS MINUS MULTIPLY DIVIDE MOD EQUAL NOT_EQUAL PLUS_PLUS MINUS_MINUS GREATER LESS GREATER_EQUAL LESS_EQUAL
 %token SEMICOLON COMMA COLON COLON_COLON DOT DOT_DOT LEFT_BRACE RIGHT_BRACE LEFT_BRACKET RIGHT_BRACKET LEFT_PARENTHESIS RIGHT_PARENTHESIS 
-%token IDENT DOUBLECONST INTCONST STRING
+%token <stringValue> IDENT
+%token <intValue> INTCONST
+%token <stringValue> STRING
+%token <doubleValue> DOUBLECONST
+
 %token UMINUS
 
 %left LEFT_PARENTHESIS RIGHT_PARENTHESIS
@@ -187,9 +215,12 @@
 
 
 %%
-program:          stmt {}
+program:          loopstmt {}
                 ;
 
+loopstmt:         loopstmt stmt
+                |
+                ;
 stmt:             expr SEMICOLON {}
                 | ifstmt {}
                 | whilestmt {}
@@ -253,8 +284,8 @@ primary:          lvalue {}
                 | const {}
                 ;
 
-lvalue:           IDENT {}
-                | LOCAL IDENT {}
+lvalue:           IDENT {} //auto einai otan dhlwnoune/xrhsimopoioume kapoia metavliti
+                | LOCAL IDENT {} 
                 | COLON_COLON IDENT {}
                 | member {}
                 ;
@@ -281,27 +312,27 @@ methodcall:       DOT_DOT IDENT LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {}
                 ;
 
 elist:            expr {}
-                | expr COMMA elist {}
+                | expr COMMA expr {}
                 |
                 ;
 
+//MPOROUME NA VGALOUME ENTELWS TO OBJECT DEF KAI NA STAMATHSEI H ANAGWGI STA PROIGOUMENA
 objectdef:        LEFT_BRACKET elist RIGHT_BRACKET {}
                 | LEFT_BRACKET indexed RIGHT_BRACKET {}
                 ;
 
 indexed:          indexedelem {}
-                | indexedelem COMMA indexed {}
+                | indexedelem COMMA indexedelem {}
                 ;
 
 indexedelem:      LEFT_BRACE expr COLON expr RIGHT_BRACE {}
                 ;
 
-block:            LEFT_BRACE RIGHT_BRACE {}
-                | LEFT_BRACE stmt RIGHT_BRACE {}
+block:            LEFT_BRACE {currentScope++;} loopstmt {decreaseScope();} RIGHT_BRACE
                 ;
 
-funcdef:          FUNCTION LEFT_PARENTHESIS idlist RIGHT_PARENTHESIS block {}
-                | FUNCTION IDENT LEFT_PARENTHESIS idlist RIGHT_PARENTHESIS block {}
+funcdef:          FUNCTION LEFT_PARENTHESIS {currentScope++;} idlist {decreaseScope();}RIGHT_PARENTHESIS block {}
+                | FUNCTION IDENT LEFT_PARENTHESIS {currentScope++;} idlist {decreaseScope();}RIGHT_PARENTHESIS block {}
                 ;
 
 const:            INTCONST {}
@@ -335,7 +366,7 @@ returnstmt:       RETURN SEMICOLON {}
 %%
 
 int
-yyerror(string yaccProvideMessage){
+yyerror(string yaccProvideMessage) {
 
     cout<<yaccProvideMessage<<": at line "<< yylineno<<", before token: "<<yytext<<endl;
     fprintf(stderr, "INPUT NOT VALID\n");
@@ -355,8 +386,8 @@ main(int argc, char** argv){
     initEnumMap();
     InitilizeLibraryFunctions();
     yyparse();
-    addToSymbolTable("eltion", 0, 46, USERFUNC);
-    cout<<SymbolLookup("eltion")<<endl;
+    //addToSymbolTable("eltion", 0, 46, USERFUNC);
+    //cout<<SymbolLookup("eltion")<<endl;
     //cout<<SymbolLookup("printt")<<endl;
     //currentScope++;
     //cout<<SymbolLookup("eltion")<<endl;

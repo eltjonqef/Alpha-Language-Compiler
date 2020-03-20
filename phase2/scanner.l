@@ -2,7 +2,7 @@
     #include "parser.hpp"
     #include <string>
     #include <stdlib.h>
-    #include <string.h>
+    #include <string>
     #include <iostream>
     #include <vector>
     #include <map>
@@ -22,7 +22,7 @@
         std::string      tokenType;
     } alpha_tok;
     
-    #define YY_DECL int yylex(void* yylval)
+    #define YY_DECL int yylex()
 
     int tokenCounter = 0;
 
@@ -107,13 +107,22 @@ UNDEFINEDCHAR ("$")|("_d")|("~")|("?")|("#")|("&&")|("||")|("!")
 
 {OPERATOR} { return enumMap[yytext]; }
 
-{INTCONST} { return INTCONST; }
+{INTCONST} {
+    yylval.intValue=atoi(yytext);
+    return INTCONST; 
+}
 
-{DOUBLECONST} { return DOUBLECONST; }
+{DOUBLECONST} { 
+    yylval.doubleValue=atof(yytext);
+    return DOUBLECONST; 
+}
 
 {PUNMARKS} { return enumMap[yytext]; }
 
-{IDENT} { return IDENT;}
+{IDENT} { 
+    yylval.stringValue=yytext;
+    return IDENT;
+}
 
 {SCOMMENT} { int rewrwer =2;}
 
