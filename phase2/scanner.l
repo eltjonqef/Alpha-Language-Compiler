@@ -120,11 +120,11 @@ UNDEFINEDCHAR ("$")|("_d")|("~")|("?")|("#")|("&&")|("||")|("!")
 {PUNMARKS} { return enumMap[yytext]; }
 
 {IDENT} { 
-    yylval.stringValue=yytext;
+    yylval.stringValue=strdup(yytext);
     return IDENT;
 }
 
-{SCOMMENT} { int rewrwer =2;}
+{SCOMMENT} {}
 
 \" {
     std::string tmp = "";

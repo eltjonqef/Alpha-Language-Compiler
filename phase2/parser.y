@@ -1,8 +1,10 @@
 %{
     #include <stdio.h>
     #include <stdlib.h>
+    #include "SymbolTable.hpp"
     #include <iostream>
     #include <string>
+    #include <string.h>
     #include <map>
     #include <vector>
     #include <assert.h>
@@ -11,6 +13,11 @@
 
     int yyerror(string yaccProvideMessage);
     int yylex();
+    void InitilizeLibraryFunctions();
+    void addToSymbolTable(string _name, int _scope, int _line, SymbolType _type);
+    void decreaseScope();
+    bool checkLibFunctions(string name);
+    bool checkFunctionIsActive(string name);
     extern void initEnumMap();
     extern int yylineno;
     extern char* yytext;
@@ -18,170 +25,42 @@
 
     unsigned int currentScope = 0;
 
-    enum SymbolType {
-        GLOB, LOCL, FORMAL, USERFUNC, LIBFUNC  
-    };
-
-    class Variable {
-        private:
-            string name;
-            unsigned int scope;
-            unsigned int line;
-        public:
-            Variable(string _name, unsigned int _scope, unsigned int _line) {
-                name = _name;
-                scope = _scope;
-                line = _line;
-            }
-
-            string getName() { return name; }
-            unsigned int getScope() { return scope; }
-            unsigned int getLine() { return line; }
-    };
-
-    class Function {
-        private:
-            string name;
-            unsigned int scope;
-            unsigned int line;
-        public:
-            Function(string _name, unsigned int _scope, unsigned int _line) {
-                name = _name;
-                scope = _scope;
-                line = _line;
-            }
-            
-            string getName() { return name; }
-            unsigned int getScope() { return scope; }
-            unsigned int getLine() { return line; }
-    };
-
-    //meant to be called from addToSymbolTableOnly
-    class SymbolTableEntry {
-        private:
-            bool enabled;
-            union {
-                Variable *varValue;
-                Function *funcValue;
-            } value;
-            SymbolType type;
-        public:
-            SymbolTableEntry(string _name, int _scope, int _line, SymbolType _type) {
-                if(_type == 3 || _type == 4) {
-                    Function *temp = new Function(_name, _scope, _line);
-                    value.funcValue=temp;
-                } 
-                else {
-                    Variable *temp = new Variable(_name, _scope, _line);
-                    value.varValue=temp;
-                }
-                enabled=true;
-                type = _type;
-            }
-
-            string getName(){ 
-                if(type == 3 || type ==4){
-                    return value.funcValue->getName();
-                }
-                else{
-                    return value.varValue->getName();
-                }
-            }
-
-            unsigned int getScope(){
-                if(type == 3 || type ==4){
-                    return value.funcValue->getScope();
-                }
-                else{
-                    return value.varValue->getScope();
-                }
-            }
-
-            unsigned int getLine(){
-                if(type == 3 || type ==4){
-                    return value.funcValue->getLine();
-                }
-                else{
-                    return value.varValue->getLine();
-                }
-            }
-
-            int getType(){
-                return type;
-            }
-
-            bool isActive() { return enabled; }
-
-            void activate() { enabled = true; }
-            void deactivate() { enabled = false; }
-            
-            
-    };
-
+    
     map <string,vector<SymbolTableEntry*> > SymbolTable;
     map <int,vector<SymbolTableEntry*> > ScopeTable;
     
-
-    /*Symbol table Functions*/
-    bool SymbolLookup(string name){
-
-        for(int i=0; i<ScopeTable[0].size(); i++){
-            if(ScopeTable[0][i]->getName()==name && ScopeTable[0][i]->getType()==4){
-                cout<<"ERROR: Symbol: "<<name<<" at line: "<<yylineno<<" is a library function."<<endl;
-                return false;
+    /*
+        Looks all active scopes (based on currentScope)
+        returns true if a variable with that name exists
+    */
+    //todo
+    bool checkVariableExists(string name) {
+        for(int i=0;i<=currentScope;i++) {
+            for (int j = 0; j < ScopeTable[i].size(); j++) {
+                if (ScopeTable[i][j]->getType() <= 2 && ScopeTable[i][j]->getName() == name)
+                    return true;
             }
         }
-        for(int i=0; i<SymbolTable[name].size(); i++){
-            if(SymbolTable[name][i]->isActive() && SymbolTable[name][i]->getType()==3){
-                cout<<"ERROR: Symbol: "<<name<<" at line "<<yylineno<<" has same name with an active function at line "<<SymbolTable[name][i]->getLine()<<"."<<endl;
-                return false;
+        return false;
+    }
+
+    /*
+        Searches all active scopes(based on currentSocpe)
+        returns true if a function with that name exists
+    */
+    //todo
+    bool checkFunctionExists(string name){
+        for(int i=0;i<=currentScope;i++) {
+            for (int j = 0; j < ScopeTable[i].size(); j++) {
+                if (ScopeTable[i][j]->getType() >= 3 && ScopeTable[i][j]->getName() == name)
+                    return true;
             }
         }
-        return true;
+        return false;
     }
-    bool checkLibFunctions(string name){
-        for(int i=0; i<ScopeTable[0].size(); i++){
-            if(ScopeTable[0][i]->getName()==name && ScopeTable[0][i]->getType()==4){
-                cout<<"ERROR: Symbol: "<<name<<" at line: "<<yylineno<<" is a library function."<<endl;
-                return false;
-            }
-        }
-        return true;
-    }
-
-    void addToSymbolTable(string _name, int _scope, int _line, SymbolType _type) {
-
-            SymbolTableEntry *newEntry = new SymbolTableEntry(_name,_scope,_line,_type);
-            SymbolTable[_name].push_back(newEntry);
-            ScopeTable[_scope].push_back(newEntry);
-    }
-
-    void InitilizeLibraryFunctions(){
-        addToSymbolTable("print",0,0,LIBFUNC);
-        addToSymbolTable("input",0,0,LIBFUNC);
-        addToSymbolTable("objectmemberkeys",0,0,LIBFUNC);
-        addToSymbolTable("objecttotalmembers",0,0,LIBFUNC);
-        addToSymbolTable("objectcopy",0,0,LIBFUNC);
-        addToSymbolTable("totalarguments",0,0,LIBFUNC);
-        addToSymbolTable("argument",0,0,LIBFUNC);
-        addToSymbolTable("typeof",0,0,LIBFUNC);
-        addToSymbolTable("strtonum",0,0,LIBFUNC);
-        addToSymbolTable("sqrt",0,0,LIBFUNC);
-        addToSymbolTable("cos",0,0,LIBFUNC);
-        addToSymbolTable("sin ",0,0,LIBFUNC);
-    }
-
-    void decreaseScope() {
-        for(int i = 0; i < ScopeTable[currentScope].size(); i++) {
-            ScopeTable[currentScope][i]->deactivate();
-        }
-        currentScope--;
-        return;
-    }
-
 %}
 
-//%lex-param {NULL}
+
 
 %union {
     int intValue;
@@ -198,7 +77,7 @@
 %token <intValue> INTCONST
 %token <stringValue> STRING
 %token <doubleValue> DOUBLECONST
-
+%type <stringValue> lvalue
 %token UMINUS
 
 %left LEFT_PARENTHESIS RIGHT_PARENTHESIS
@@ -274,7 +153,7 @@ term:             LEFT_PARENTHESIS expr RIGHT_PARENTHESIS {}
                 | primary {}
                 ;
 
-assignexpr:       lvalue ASSIGN expr {}
+assignexpr:       lvalue ASSIGN expr {if(checkLibFunctions($1) && !checkFunctionIsActive($1)) addToSymbolTable($1, currentScope, yylineno, GLOB);}
                 ;
 
 primary:          lvalue {}
@@ -284,7 +163,7 @@ primary:          lvalue {}
                 | const {}
                 ;
 
-lvalue:           IDENT {} //auto einai otan dhlwnoune/xrhsimopoioume kapoia metavliti
+lvalue:           IDENT {$$=$1;}
                 | LOCAL IDENT {} 
                 | COLON_COLON IDENT {}
                 | member {}
@@ -332,7 +211,7 @@ block:            LEFT_BRACE {currentScope++;} loopstmt {decreaseScope();} RIGHT
                 ;
 
 funcdef:          FUNCTION LEFT_PARENTHESIS {currentScope++;} idlist {decreaseScope();}RIGHT_PARENTHESIS block {}
-                | FUNCTION IDENT LEFT_PARENTHESIS {currentScope++;} idlist {decreaseScope();}RIGHT_PARENTHESIS block {}
+                | FUNCTION IDENT {if(checkLibFunctions($2)) addToSymbolTable($2, currentScope, yylineno, USERFUNC);}  LEFT_PARENTHESIS {currentScope++;} idlist {decreaseScope();} RIGHT_PARENTHESIS block 
                 ;
 
 const:            INTCONST {}
@@ -343,7 +222,7 @@ const:            INTCONST {}
                 | FALSE {}
                 ;
 
-idlist:           IDENT {}
+idlist:           IDENT {cout<<"ident1 "<<$1<<endl;}
                 | IDENT COMMA idlist {}
                 | {}
                 ;
@@ -386,10 +265,68 @@ main(int argc, char** argv){
     initEnumMap();
     InitilizeLibraryFunctions();
     yyparse();
-    //addToSymbolTable("eltion", 0, 46, USERFUNC);
-    //cout<<SymbolLookup("eltion")<<endl;
-    //cout<<SymbolLookup("printt")<<endl;
-    //currentScope++;
-    //cout<<SymbolLookup("eltion")<<endl;
+    for(int i=0; i<ScopeTable.size(); i++){
+        cout<<"-------------------     Scope #"<<i<<"     -------------------"<<endl;
+        for(int j=0; j<ScopeTable[i].size(); j++){
+            cout<<ScopeTable[i][j]->getName()<<" "<<ScopeTable[i][j]->getType()<<endl;
+        }
+    }
     return 0;
+}
+
+void
+addToSymbolTable(string _name, int _scope, int _line, SymbolType _type) {
+    SymbolTableEntry *newEntry = new SymbolTableEntry(_name,_scope,_line,_type);
+    SymbolTable[_name].push_back(newEntry);
+    ScopeTable[_scope].push_back(newEntry);
+}
+
+bool
+checkLibFunctions(string name) {
+
+    for(int i=0; i<ScopeTable[0].size(); i++) {
+        if (ScopeTable[0][i]->getName()==name && ScopeTable[0][i]->getType()==4) {
+            cout<<"ERROR: Symbol: "<<name<<" at line: "<<yylineno<<" is a library function."<<endl;
+            return false;
+        }
+    }
+    return true;
+}
+
+bool
+checkFunctionIsActive(string name){
+    
+    for(int i=0; i<SymbolTable[name].size(); i++){
+        if(SymbolTable[name][i]->isActive()){
+            cout<<"ERROR: Symbol: "<<name<<" at line: "<<yylineno<<" has same name as active function."<<endl;
+            return true;
+        }
+    }
+    return false;
+}
+
+void
+InitilizeLibraryFunctions(){
+
+    addToSymbolTable("print",0,0,LIBFUNC);
+    addToSymbolTable("input",0,0,LIBFUNC);
+    addToSymbolTable("objectmemberkeys",0,0,LIBFUNC);
+    addToSymbolTable("objecttotalmembers",0,0,LIBFUNC);
+    addToSymbolTable("objectcopy",0,0,LIBFUNC);
+    addToSymbolTable("totalarguments",0,0,LIBFUNC);
+    addToSymbolTable("argument",0,0,LIBFUNC);
+    addToSymbolTable("typeof",0,0,LIBFUNC);
+    addToSymbolTable("strtonum",0,0,LIBFUNC);
+    addToSymbolTable("sqrt",0,0,LIBFUNC);
+    addToSymbolTable("cos",0,0,LIBFUNC);
+    addToSymbolTable("sin ",0,0,LIBFUNC);
+}
+
+void
+decreaseScope() {
+
+    for(int i = 0; i < ScopeTable[currentScope].size(); i++) {
+        ScopeTable[currentScope][i]->deactivate();
+    }
+    currentScope--;
 }
