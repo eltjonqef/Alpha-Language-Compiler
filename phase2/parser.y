@@ -16,8 +16,13 @@
     void InitilizeLibraryFunctions();
     void addToSymbolTable(string _name, int _scope, int _line, SymbolType _type);
     void decreaseScope();
+    void printSymbolTable();
+    bool checkExistanceInScope(string name);
+    bool checkIfExistingVariable(string name);
+    bool checkVariableIsActive(string name);
     bool checkLibFunctions(string name);
     bool checkFunctionIsActive(string name);
+    bool SearchInScope(int _scop,string _name);
     extern void initEnumMap();
     extern int yylineno;
     extern char* yytext;
@@ -48,6 +53,7 @@
 %token <stringValue> STRING
 %token <doubleValue> DOUBLECONST
 %type <stringValue> lvalue
+%type <stringValue> primary
 %token UMINUS
 
 %left LEFT_PARENTHESIS RIGHT_PARENTHESIS
@@ -123,19 +129,47 @@ term:             LEFT_PARENTHESIS expr RIGHT_PARENTHESIS {}
                 | primary {}
                 ;
 
-assignexpr:       lvalue ASSIGN expr {if(checkLibFunctions($1) && !checkFunctionIsActive($1)) addToSymbolTable($1, currentScope, yylineno, GLOB);}
+assignexpr:       lvalue ASSIGN expr {if(checkFunctionIsActive($1)){
+                                            cout<<"ERROR (assignexpr rule): Active function cant be assigned expr.\n";
+                                        }
+                                    }
                 ;
 
-primary:          lvalue {}
+primary:          lvalue {$$ =$1;}
                 | call {}
                 | objectdef {}
                 | LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS {}
                 | const {}
                 ;
 
-lvalue:           IDENT {$$=$1;}
-                | LOCAL IDENT {} 
-                | COLON_COLON IDENT {}
+
+lvalue:           IDENT {
+                       if(checkFunctionIsActive($1)){
+                           cout<<"error: variable "<<$1<<" is already a function\n";
+                        }else if(!checkVariableIsActive($1)){
+                            if(currentScope == 0){
+                                addToSymbolTable($1, currentScope, yylineno,GLOB);
+                            }else{
+                                addToSymbolTable($1, currentScope, yylineno,LOCL);
+                            }
+                        }
+                        $$ = $1;
+                    }
+                | LOCAL IDENT {if(!SearchInScope(currentScope,$2)){
+                                    if(!checkFunctionIsActive($2)){
+                                        addToSymbolTable($2, currentScope, yylineno, LOCL);
+                                    }else{
+                                        cout<<"ERROR( local ident rule) : a function with that name already exists\n"; 
+                                    }
+                                }
+                                $$ = $2;
+                            } 
+                | COLON_COLON IDENT {
+                    if(!SearchInScope(0,$2)){
+                        cout<<"ERROR (colon_colon rule): cant find global id\n";
+                    }
+                    $$ = $2;
+                }
                 | member {}
                 ;
 
@@ -181,7 +215,7 @@ block:            LEFT_BRACE {currentScope++;} loopstmt {decreaseScope();} RIGHT
                 ;
 
 funcdef:          FUNCTION LEFT_PARENTHESIS {currentScope++;} idlist {decreaseScope();}RIGHT_PARENTHESIS block {}
-                | FUNCTION IDENT {if(checkLibFunctions($2)) addToSymbolTable($2, currentScope, yylineno, USERFUNC);}  LEFT_PARENTHESIS {currentScope++;} idlist {decreaseScope();} RIGHT_PARENTHESIS block 
+                | FUNCTION IDENT {if(checkLibFunctions($2) && checkVariableIsActive($2)) addToSymbolTable($2, currentScope, yylineno, USERFUNC);}  LEFT_PARENTHESIS {currentScope++;} idlist {decreaseScope();} RIGHT_PARENTHESIS block 
                 ;
 
 const:            INTCONST {}
@@ -192,8 +226,8 @@ const:            INTCONST {}
                 | FALSE {}
                 ;
 
-idlist:           IDENT {cout<<"ident1 "<<$1<<endl;}
-                | IDENT COMMA idlist {}
+idlist:           IDENT {addToSymbolTable($1, currentScope, yylineno, FORMAL);}
+                | IDENT COMMA idlist {addToSymbolTable($1, currentScope, yylineno, FORMAL);}
                 | {}
                 ;
 
@@ -209,7 +243,7 @@ forstmt:          FOR LEFT_PARENTHESIS elist SEMICOLON expr SEMICOLON elist RIGH
                 ;
 
 returnstmt:       RETURN SEMICOLON {}
-                | RETURN expr SEMICOLON {}
+                | RETURN expr SEMICOLON {if(!SearchInScope(currentScope, $2)) cout << "Undecleared variable"<<endl;}
                 ;
             
 %%
@@ -235,12 +269,9 @@ main(int argc, char** argv){
     initEnumMap();
     InitilizeLibraryFunctions();
     yyparse();
-    for(int i=0; i<ScopeTable.size(); i++){
-        cout<<"-------------------     Scope #"<<i<<"     -------------------"<<endl;
-        for(int j=0; j<ScopeTable[i].size(); j++){
-            cout<<ScopeTable[i][j]->getName()<<" "<<ScopeTable[i][j]->getType()<<endl;
-        }
-    }
+    
+    printSymbolTable();
+
     return 0;
 }
 
@@ -256,7 +287,7 @@ checkLibFunctions(string name) {
 
     for(int i=0; i<ScopeTable[0].size(); i++) {
         if (ScopeTable[0][i]->getName()==name && ScopeTable[0][i]->getType()==4) {
-            cout<<"ERROR: Symbol: "<<name<<" at line: "<<yylineno<<" is a library function."<<endl;
+            cout<<"ERROR(checkLibFunction): Symbol: "<<name<<" at line: "<<yylineno<<" is a library function."<<endl;
             return false;
         }
     }
@@ -265,19 +296,34 @@ checkLibFunctions(string name) {
 
 bool
 checkFunctionIsActive(string name){
-    
-    for(int i=0; i<SymbolTable[name].size(); i++){
-        if(SymbolTable[name][i]->isActive()){
+/*    
+    for (int sc = 1; sc == currentScope+1; sc += currentScope) {
+        for (int i = 0; i < ScopeTable[sc-1].size(); i++) {
+            if (ScopeTable[sc-1][i]->getType() >= 3 && ScopeTable[sc-1][i]->getName() == name) {
+                cout<<"ERROR: Symbol: "<<name<<" at line: "<<yylineno<<" has same name as active function."<<endl;
+                return true;
+            }
+        }
+    }
+*/
+    for (int i = 0; i < ScopeTable[0].size(); i++) {
+        if (ScopeTable[0][i]->getType() >= 3 && ScopeTable[0][i]->getName() == name) {
             cout<<"ERROR: Symbol: "<<name<<" at line: "<<yylineno<<" has same name as active function."<<endl;
             return true;
         }
     }
+    for(int i = 0; i < ScopeTable[currentScope].size(); i++) {
+        if (ScopeTable[currentScope][i]->getType() >= 3 && ScopeTable[currentScope][i]->getName() == name) {
+            cout<<"ERROR: Symbol: "<<name<<" at line: "<<yylineno<<" has same name as active function."<<endl;
+            return true;
+        }
+    }
+
     return false;
 }
 
 void
 InitilizeLibraryFunctions(){
-
     addToSymbolTable("print",0,0,LIBFUNC);
     addToSymbolTable("input",0,0,LIBFUNC);
     addToSymbolTable("objectmemberkeys",0,0,LIBFUNC);
@@ -299,4 +345,60 @@ decreaseScope() {
         ScopeTable[currentScope][i]->deactivate();
     }
     currentScope--;
+}
+
+bool
+checkVariableIsActive(string name) {
+/*  
+    for (int sc = 1; sc == currentScope; sc += currentScope) {
+        for (int i = 0; i < ScopeTable[sc-1].size(); i++) {
+            if (ScopeTable[sc-1][i]->getType() <= 2 && ScopeTable[sc-1][i]->getName() == name) {
+                cout << "Pre-existing variable: " << name << ", with type: " << SymbolTable[name][i]->getType() << ", at line: " << SymbolTable[name][i]->getLine() << endl;
+                return true;
+            }
+        }
+    }
+*/
+    for(int i=0;i<ScopeTable[0].size();i++){
+        if (ScopeTable[0][i]->getType() <= 2 && ScopeTable[0][i]->getName() == name) {
+            cout << "Pre-existing variable: " << name << ", with type: " << SymbolTable[name][i]->getType() << ", at line: " << SymbolTable[name][i]->getLine() << endl;
+            return true;
+        }
+    }   
+    for(int i=0;i<ScopeTable[currentScope].size();i++){     
+        if (ScopeTable[currentScope][i]->getType() <= 2 && ScopeTable[currentScope][i]->getName() == name) {
+            cout << "Pre-existing variable: " << name << ", with type: " << SymbolTable[name][i]->getType() << ", at line: " << SymbolTable[name][i]->getLine() << endl;
+            return true;
+        }
+    }
+    return false;
+}
+
+/*
+    Searches in given scope for a variable or function with given name
+*/
+bool SearchInScope(int _scop,string _name) {
+    for(int i=0;i<ScopeTable[_scop].size();i++) {
+        if(ScopeTable[_scop][i]->getName() == _name) return true;
+    }
+    return false;
+}
+
+void printSymbolTable() {
+    map<int,vector<SymbolTableEntry*> >::iterator it = ScopeTable.begin();
+    map<int,string> enumtype;
+    enumtype[0]="GLOBAl";
+    enumtype[1]="LOCAL";
+    enumtype[2]="FORMAL";
+    enumtype[3]="USERFUNC";
+    enumtype[4]="LIBFUNC";
+
+    while(it != ScopeTable.end()) {
+        for(int i=0;i<ScopeTable[it->first].size();i++) {
+            cout<<"\" "<<ScopeTable[it->first][i]->getName()<<"\" ["<<enumtype[ScopeTable[it->first][i]->getType()]<<"] ( line "<<
+                ScopeTable[it->first][i]->getLine()<<" ) ( scope "<<ScopeTable[it->first][i]->getScope()<<")\n";
+        }
+        it++;
+    }
+
 }
