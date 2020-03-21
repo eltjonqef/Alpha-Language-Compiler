@@ -28,36 +28,6 @@
     
     map <string,vector<SymbolTableEntry*> > SymbolTable;
     map <int,vector<SymbolTableEntry*> > ScopeTable;
-    
-    /*
-        Looks all active scopes (based on currentScope)
-        returns true if a variable with that name exists
-    */
-    //todo
-    bool checkVariableExists(string name) {
-        for(int i=0;i<=currentScope;i++) {
-            for (int j = 0; j < ScopeTable[i].size(); j++) {
-                if (ScopeTable[i][j]->getType() <= 2 && ScopeTable[i][j]->getName() == name)
-                    return true;
-            }
-        }
-        return false;
-    }
-
-    /*
-        Searches all active scopes(based on currentSocpe)
-        returns true if a function with that name exists
-    */
-    //todo
-    bool checkFunctionExists(string name){
-        for(int i=0;i<=currentScope;i++) {
-            for (int j = 0; j < ScopeTable[i].size(); j++) {
-                if (ScopeTable[i][j]->getType() >= 3 && ScopeTable[i][j]->getName() == name)
-                    return true;
-            }
-        }
-        return false;
-    }
 %}
 
 
