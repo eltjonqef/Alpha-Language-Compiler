@@ -361,6 +361,11 @@ bool LookUpScope(string name,int scope) {
             return false;
         }
     }
+    for(int i=SymbolTable[name].size()-1; i>=0; i--){
+        if(SymbolTable[name][i]->getType()==2 && SymbolTable[name][i]->getScope()<scope){
+            cout<<"ERROR:"<<name<<" is formal variable of aprevious scope function."<<endl;
+        }
+    }
     return true;
 }
 
