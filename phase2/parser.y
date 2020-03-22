@@ -20,6 +20,7 @@
     bool LookUpScope(string name, int scope);
     bool LookUpFunction(string name);
     bool LookUpVariable(string variable);
+    void isFormalFromAncestorFunction(string name);
     extern void initEnumMap();
     extern int yylineno;
     extern char* yytext;
@@ -140,19 +141,21 @@ primary:          lvalue {}
 
 
 lvalue:           IDENT {
-                            if(LookUpVariable($1)){
-                                if(currentScope == 0){
-                                    addToSymbolTable($1, currentScope, yylineno,GLOB);
-                                }else{
-                                    addToSymbolTable($1, currentScope, yylineno,LOCL);
+                            if(!LookUpScope($1, currentScope)){
+                                if(LookUpVariable($1)){
+                                    if(currentScope == 0){
+                                        addToSymbolTable($1, currentScope, yylineno,GLOB);
+                                    }else{
+                                        addToSymbolTable($1, currentScope, yylineno,LOCL);
+                                    }
                                 }
                             }
-                        }
+                        }   
                 | LOCAL IDENT {$$=$2; if(LookUpScope($2, currentScope) && !libFunctions[$2])
                                     addToSymbolTable($2, currentScope, yylineno, LOCL);
                               } 
                 | COLON_COLON IDENT {
-                    if(LookUpScope($2, 0)){
+                    if(!LookUpScope($2, 0) && !libFunctions[$2]){
                         cout<<"ERROR:"<<$2<<" at line:"<<yylineno<<" Couldn't find global variable with same name."<<endl;
                     }
                 }
@@ -341,7 +344,7 @@ LookUpVariable(string name){
         if(SymbolTable[name][i]->getType()<=2 && SymbolTable[name][i]->isActive()){
             return false;
         }
-        if(SymbolTable[name][i]->getType()>2){
+        if(SymbolTable[name][i]->getType()>2 && SymbolTable[name][i]->isActive()){
             return false;
         }
     }
@@ -355,13 +358,20 @@ bool LookUpScope(string name,int scope) {
 
     for(int i=0;i<ScopeTable[scope].size();i++) {
         if(ScopeTable[scope][i]->getName() == name && ScopeTable[scope][i]->isActive()){
-            if(ScopeTable[scope][i]->getType()==3)
-                cout<<"ERROR: Variable: "<<name<<" at line: "<<yylineno<<" is already active in this scope: "<<scope<<endl;
             return false;
         }
     }
     return true;
 }
+
+void
+isFormalFromAncestorFunction(string name){
+
+        if(SymbolTable[name][SymbolTable[name].size()-1]->isActive() && SymbolTable[name][SymbolTable[name].size()-1]->getType()==2 && currentScope>SymbolTable[name][SymbolTable[name].size()-1]->getScope()){
+            cout<<"ERROR:"<<name<<" is formal variable of ancestor function.\n";
+        }
+}
+
 
 void printSymbolTable() {
     map<int,vector<SymbolTableEntry*> >::iterator it = ScopeTable.begin();
