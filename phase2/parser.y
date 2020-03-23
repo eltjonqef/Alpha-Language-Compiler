@@ -20,6 +20,8 @@
     bool LookUpScope(string name, int scope);
     bool LookUpFunction(string name);
     bool LookUpVariable(string variable);
+    void LookUpRvalue(string name);
+    int localFlag=0;
     void isFormalFromAncestorFunction(string name);
     extern void initEnumMap();
     extern int yylineno;
@@ -126,9 +128,7 @@ term:             LEFT_PARENTHESIS expr RIGHT_PARENTHESIS {}
                 | primary {}
                 ;
 
-assignexpr:       lvalue ASSIGN expr {
-                                        if(libFunctions[$1])
-                                            cout<<"ERROR:"<<$1<<" at line "<< yylineno<<" has same name with library function."<<endl;
+assignexpr:       lvalue ASSIGN expr {if(localFlag==0) {LookUpRvalue($1);localFlag=0;}
                                     }
                 ;
 
@@ -140,8 +140,8 @@ primary:          lvalue {}
                 ;
 
 
-lvalue:           IDENT {
-                            if(!LookUpScope($1, currentScope)){
+lvalue:           IDENT {   
+                            if(LookUpScope($1, currentScope)){
                                 if(LookUpVariable($1)){
                                     if(currentScope == 0){
                                         addToSymbolTable($1, currentScope, yylineno,GLOB);
@@ -151,11 +151,11 @@ lvalue:           IDENT {
                                 }
                             }
                         }   
-                | LOCAL IDENT {$$=$2; if(LookUpScope($2, currentScope) && !libFunctions[$2])
-                                    addToSymbolTable($2, currentScope, yylineno, LOCL);
+                | LOCAL IDENT {$$=$2;if(LookUpScope($2, currentScope) && !libFunctions[$2]){
+                                    addToSymbolTable($2, currentScope, yylineno, LOCL);localFlag=1; }
                               } 
                 | COLON_COLON IDENT {
-                    if(!LookUpScope($2, 0) && !libFunctions[$2]){
+                    if(LookUpScope($2, 0) && !libFunctions[$2]){
                         cout<<"ERROR:"<<$2<<" at line:"<<yylineno<<" Couldn't find global variable with same name."<<endl;
                     }
                 }
@@ -203,7 +203,7 @@ indexedelem:      LEFT_BRACE expr COLON expr RIGHT_BRACE {}
 block:            LEFT_BRACE {currentScope++;} loopstmt {decreaseScope();} RIGHT_BRACE
                 ;
 
-funcdef:          FUNCTION LEFT_PARENTHESIS {currentScope++;} idlist {decreaseScope();}RIGHT_PARENTHESIS block {}
+funcdef:          FUNCTION LEFT_PARENTHESIS {currentScope++;} idlist {currentScope--;}RIGHT_PARENTHESIS block {}
                 | FUNCTION IDENT {if(LookUpFunction($2)) addToSymbolTable($2, currentScope, yylineno, USERFUNC);}  LEFT_PARENTHESIS {currentScope++;} idlist {currentScope--;} RIGHT_PARENTHESIS block 
                 ;
 
@@ -317,12 +317,12 @@ bool
 LookUpFunction(string name){
 
     if(libFunctions[name]){
-        cout<<"ERROR:"<<yytext<<" at line "<< yylineno<<" has same name with library function"<<endl;
+        cout<<"ERROR:"<<name<<" at line "<< yylineno<<" has same name with library function"<<endl;
         return false;
     }
     for(int i=0; i<SymbolTable[name].size(); i++){
         if(SymbolTable[name][i]->getType()<=2 && SymbolTable[name][i]->isActive()){
-            cout<<"ERROR:"<<yytext<<" at line "<< yylineno<<" has same name with active variable at line:"<<SymbolTable[name][i]->getLine()<<endl;
+            cout<<"ERROR:"<<name<<" at line "<< yylineno<<" has same name with active variable at line:"<<SymbolTable[name][i]->getLine()<<endl;
             return false;
         }
     }
@@ -340,7 +340,6 @@ LookUpVariable(string name){
         return false;
     }
     for(int i=0; i<SymbolTable[name].size(); i++){
-
         if(SymbolTable[name][i]->getType()<=2 && SymbolTable[name][i]->isActive()){
             return false;
         }
@@ -350,7 +349,16 @@ LookUpVariable(string name){
     }
     return true;
 }
-
+void LookUpRvalue(string name){
+    for(int i=0;i<SymbolTable[name].size();i++) {
+        if(SymbolTable[name][i]->isActive()){
+            if(SymbolTable[name][i]->getType()==3)
+                cout<<"ERROR:"<<name<<" at line:"<<yylineno<<" is an active user function and it cannot be r-value."<<endl;
+            else if(SymbolTable[name][i]->getType()==4)
+                cout<<"ERROR:"<<name<<" at line:"<<yylineno<<" is a library function and it cannot be shadowed."<<endl;
+        }
+    }
+}
 /*
     Searches in given scope for a variable or function with given name
 */
@@ -362,8 +370,12 @@ bool LookUpScope(string name,int scope) {
         }
     }
     for(int i=SymbolTable[name].size()-1; i>=0; i--){
-        if(SymbolTable[name][i]->getType()==2 && SymbolTable[name][i]->getScope()<scope){
-            cout<<"ERROR:"<<name<<" is formal variable of aprevious scope function."<<endl;
+        if(SymbolTable[name][i]->getScope()<scope){
+            if(SymbolTable[name][i]->getType()==2)
+                cout<<"ERROR:"<<name<<" at line:"<<yylineno<<" is formal variable of a previous scope function."<<endl;
+            else if(SymbolTable[name][i]->getType()==1)
+                cout<<"ERROR:"<<name<<" at line:"<<yylineno<<" is local variable of a previous scope function."<<endl;
+            break;
         }
     }
     return true;
@@ -372,8 +384,11 @@ bool LookUpScope(string name,int scope) {
 void
 isFormalFromAncestorFunction(string name){
 
-        if(SymbolTable[name][SymbolTable[name].size()-1]->isActive() && SymbolTable[name][SymbolTable[name].size()-1]->getType()==2 && currentScope>SymbolTable[name][SymbolTable[name].size()-1]->getScope()){
-            cout<<"ERROR:"<<name<<" is formal variable of ancestor function.\n";
+        if(SymbolTable[name][SymbolTable[name].size()-1]->isActive() && currentScope>SymbolTable[name][SymbolTable[name].size()-1]->getScope()){
+            if(SymbolTable[name][SymbolTable[name].size()-1]->getType()==2)
+                cout<<"ERROR:"<<name<<" is formal variable of ancestor function.\n";
+            else if(SymbolTable[name][SymbolTable[name].size()-1]->getType()==1)
+                cout<<"ERROR:"<<name<<" is local variable of ancestor function.\n";
         }
 }
 
