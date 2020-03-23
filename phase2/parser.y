@@ -21,7 +21,11 @@
     bool LookUpFunction(string name);
     bool LookUpVariable(string variable);
     void LookUpRvalue(string name);
-    int localFlag=0;
+    void callFunction(string name);
+    int Flag=0;
+    int nestedFunctionCounter=0;
+    int nestedLoopCounter=0;
+    int returnState=0;
     void isFormalFromAncestorFunction(string name);
     extern void initEnumMap();
     extern int yylineno;
@@ -79,9 +83,9 @@ stmt:             expr SEMICOLON {}
                 | ifstmt {}
                 | whilestmt {}
                 | forstmt {}
-                | returnstmt {}
-                | BREAK SEMICOLON {}
-                | CONTINUE SEMICOLON {}
+                | {returnState=1;}returnstmt {returnState=0; if(!nestedFunctionCounter) cout<<"ERROR at line "<<yylineno<<": return while not inside a function."<<endl;}
+                | BREAK SEMICOLON {if(!nestedFunctionCounter) cout<<"ERROR at line "<<yylineno<<": break while not inside a loop."<<endl;}
+                | CONTINUE SEMICOLON {if(!nestedFunctionCounter) cout<<"ERROR at line "<<yylineno<<": continue while not inside a loop."<<endl;}
                 | block {}
                 | funcdef {}
                 | SEMICOLON {}
@@ -128,7 +132,7 @@ term:             LEFT_PARENTHESIS expr RIGHT_PARENTHESIS {}
                 | primary {}
                 ;
 
-assignexpr:       lvalue ASSIGN expr {if(localFlag==0) {LookUpRvalue($1);localFlag=0;}
+assignexpr:       lvalue ASSIGN expr {if(Flag==1) {LookUpRvalue($1);Flag=0;}
                                     }
                 ;
 
@@ -152,10 +156,10 @@ lvalue:           IDENT {
                             }
                         }   
                 | LOCAL IDENT {$$=$2;if(LookUpScope($2, currentScope) && !libFunctions[$2]){
-                                    addToSymbolTable($2, currentScope, yylineno, LOCL);localFlag=1; }
+                                    addToSymbolTable($2, currentScope, yylineno, LOCL);Flag=1; }
                               } 
                 | COLON_COLON IDENT {
-                    if(LookUpScope($2, 0) && !libFunctions[$2]){
+                    if(LookUpScope($2, 0) && !libFunctions[$2]){Flag=1;
                         cout<<"ERROR:"<<$2<<" at line:"<<yylineno<<" Couldn't find global variable with same name."<<endl;
                     }
                 }
@@ -169,7 +173,7 @@ member:           lvalue DOT IDENT {}
                 ;
 
 call:             call LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {}
-                | lvalue callsuffix {}
+                | lvalue {if(!returnState) callFunction($1);} callsuffix 
                 | LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {}
                 ;
 
@@ -184,7 +188,7 @@ methodcall:       DOT_DOT IDENT LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {}
                 ;
 
 elist:            expr {}
-                | expr COMMA expr {}
+                | expr COMMA elist {}
                 |
                 ;
 
@@ -194,7 +198,7 @@ objectdef:        LEFT_BRACKET elist RIGHT_BRACKET {}
                 ;
 
 indexed:          indexedelem {}
-                | indexedelem COMMA indexedelem {}
+                | indexedelem COMMA indexed {}
                 ;
 
 indexedelem:      LEFT_BRACE expr COLON expr RIGHT_BRACE {}
@@ -203,8 +207,8 @@ indexedelem:      LEFT_BRACE expr COLON expr RIGHT_BRACE {}
 block:            LEFT_BRACE {currentScope++;} loopstmt {decreaseScope();} RIGHT_BRACE
                 ;
 
-funcdef:          FUNCTION LEFT_PARENTHESIS {currentScope++;} idlist {currentScope--;}RIGHT_PARENTHESIS block {}
-                | FUNCTION IDENT {if(LookUpFunction($2)) addToSymbolTable($2, currentScope, yylineno, USERFUNC);}  LEFT_PARENTHESIS {currentScope++;} idlist {currentScope--;} RIGHT_PARENTHESIS block 
+funcdef:          FUNCTION {nestedFunctionCounter--;} LEFT_PARENTHESIS {currentScope++;} idlist {currentScope--;}RIGHT_PARENTHESIS block {nestedFunctionCounter--;}
+                | FUNCTION IDENT {if(LookUpFunction($2)) addToSymbolTable($2, currentScope, yylineno, USERFUNC); nestedFunctionCounter++;}  LEFT_PARENTHESIS {currentScope++;} idlist {currentScope--;} RIGHT_PARENTHESIS block {nestedFunctionCounter--;}
                 ;
 
 const:            INTCONST {}
@@ -225,10 +229,10 @@ ifstmt:           IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt {}
                 | IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt ELSE stmt {}
                 ;
 
-whilestmt:        WHILE LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt {}
+whilestmt:        WHILE {nestedLoopCounter++;} LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt {nestedLoopCounter--;}
                 ;
 
-forstmt:          FOR LEFT_PARENTHESIS elist SEMICOLON expr SEMICOLON elist RIGHT_PARENTHESIS stmt {}
+forstmt:          FOR {nestedLoopCounter++;} LEFT_PARENTHESIS elist SEMICOLON expr SEMICOLON elist RIGHT_PARENTHESIS stmt {nestedLoopCounter--;}
                 ;
 
 returnstmt:       RETURN SEMICOLON {}
@@ -325,6 +329,10 @@ LookUpFunction(string name){
             cout<<"ERROR:"<<name<<" at line "<< yylineno<<" has same name with active variable at line:"<<SymbolTable[name][i]->getLine()<<endl;
             return false;
         }
+        if(SymbolTable[name][i]->getType()==3 && SymbolTable[name][i]->isActive() && SymbolTable[name][i]->getScope()==currentScope){
+            cout<<"ERROR at line "<<yylineno<<": Collision with function from line "<<SymbolTable[name][i]->getLine()<<endl;
+            return false;
+        }
     }
     return true;
 }
@@ -350,9 +358,11 @@ LookUpVariable(string name){
     return true;
 }
 void LookUpRvalue(string name){
-    for(int i=0;i<SymbolTable[name].size();i++) {
+    for(int i=SymbolTable[name].size()-1; i>=0 ;i--) {
         if(SymbolTable[name][i]->isActive()){
-            if(SymbolTable[name][i]->getType()==3)
+            if(SymbolTable[name][i]->getType()==1)
+                break;
+            else if(SymbolTable[name][i]->getType()==3)
                 cout<<"ERROR:"<<name<<" at line:"<<yylineno<<" is an active user function and it cannot be r-value."<<endl;
             else if(SymbolTable[name][i]->getType()==4)
                 cout<<"ERROR:"<<name<<" at line:"<<yylineno<<" is a library function and it cannot be shadowed."<<endl;
@@ -392,6 +402,15 @@ isFormalFromAncestorFunction(string name){
         }
 }
 
+void
+callFunction(string name){
+    
+    for(int i=0; i<SymbolTable[name].size(); i++){
+        if(SymbolTable[name][i]->isActive() && SymbolTable[name][i]->getType()<=2){
+            cout<<"ERROR at line "<<yylineno<<": can't call a variable."<<endl;
+        }
+    }
+}
 
 void printSymbolTable() {
     map<int,vector<SymbolTableEntry*> >::iterator it = ScopeTable.begin();
