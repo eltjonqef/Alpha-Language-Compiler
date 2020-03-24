@@ -223,12 +223,12 @@ idlist:           IDENT {
                                 if(existsInScope($1, currentScope))
                                     addToSymbolTable($1, currentScope, yylineno, FORMAL);
                         }
-                | IDENT COMMA idlist {
-                            if(libFunctions[$1])
+                | idlist COMMA IDENT {
+                            if(libFunctions[$3])
                                 cout<<"ERROR at line "<<yylineno<<": Collision with library function"<<endl;
                             else 
-                                if(existsInScope($1, currentScope))
-                                    addToSymbolTable($1, currentScope, yylineno, FORMAL);
+                                if(existsInScope($3, currentScope))
+                                    addToSymbolTable($3, currentScope, yylineno, FORMAL);
                                     }
                 | {}
                 ;
