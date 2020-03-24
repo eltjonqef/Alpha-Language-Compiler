@@ -210,9 +210,9 @@ UNDEFINEDCHAR ("$")|("_d")|("~")|("?")|("#")|("&&")|("||")|("!")
         printf("Comment starting in line %d is not closed properly.\n", startingLine);
         
     }else if(commentCounter == 0){
-        printf("Simple multiline comment at line %d\n", startingLine);
+        //printf("Simple multiline comment at line %d\n", startingLine);
     }else{
-        printf("Nested multiline comment %d (in total,not depth) at line %d\n",commentCounter, startingLine);
+        //printf("Nested multiline comment %d (in total,not depth) at line %d\n",commentCounter, startingLine);
     }
     
 }

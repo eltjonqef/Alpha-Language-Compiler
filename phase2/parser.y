@@ -20,7 +20,7 @@
     bool LookUpScope(string name, int scope);
     bool LookUpFunction(string name);
     bool LookUpVariable(string variable, int flag);
-    void LookUpRvalue(string name, int Flag);
+    void LookUpRvalue(string name);
     void callFunction(string name);
     bool existsInScope(string name, int scope);
     int Flag=0;
@@ -61,6 +61,7 @@
 %token <doubleValue> DOUBLECONST
 %token UMINUS
 %type <stringValue> lvalue
+%type <stringValue> member
 %left LEFT_PARENTHESIS RIGHT_PARENTHESIS
 %left LEFT_BRACKET RIGHT_BRACKET
 %left DOT DOT_DOT
@@ -127,14 +128,14 @@ op:               MULTIPLY {cout<<"op>>>MULTIPLY\n";}
 term:             LEFT_PARENTHESIS expr RIGHT_PARENTHESIS {}
                 | UMINUS expr {}
                 | NOT expr {}
-                | PLUS_PLUS lvalue {LookUpRvalue($2, Flag);}
-                | lvalue PLUS_PLUS {LookUpRvalue($1, Flag);}
-                | MINUS_MINUS lvalue {LookUpRvalue($2, Flag);}
-                | lvalue MINUS_MINUS {LookUpRvalue($1, Flag);}
+                | PLUS_PLUS lvalue {LookUpRvalue($2);}
+                | lvalue PLUS_PLUS {LookUpRvalue($1);}
+                | MINUS_MINUS lvalue {LookUpRvalue($2);}
+                | lvalue MINUS_MINUS {LookUpRvalue($1);}
                 | primary {}
                 ;
 
-assignexpr:       lvalue {LookUpRvalue($1, Flag);} ASSIGN expr 
+assignexpr:       lvalue {if(Flag==1) Flag=0; else LookUpRvalue($1);} ASSIGN expr 
                 ;
 
 primary:          lvalue {}
@@ -156,14 +157,15 @@ lvalue:           IDENT {
                         }   
                 | LOCAL IDENT {$$=$2;if(LookUpVariable($2, 1)){
                                     addToSymbolTable($2, currentScope, yylineno, LOCL);Flag=1; }
+                                    else if(libFunctions[$2])cout<<"ERROR at line "<<yylineno<<": Collision with library function"<<endl;
                               } 
-                | COLON_COLON IDENT {LookUpScope($2, 0);}
+                | COLON_COLON IDENT {LookUpScope($2, 0); Flag=1;}
                 | member {}
                 ;
 
-member:           lvalue DOT IDENT {}
+member:           lvalue DOT IDENT {$$=$3;}
                 | lvalue LEFT_BRACKET expr RIGHT_BRACKET{}
-                | call DOT IDENT {}
+                | call DOT IDENT {$$=$3;}
                 | call LEFT_BRACKET expr RIGHT_BRACKET{}
                 ;
 
@@ -336,7 +338,7 @@ LookUpFunction(string name){
             cout<<"ERROR:"<<name<<" at line "<< yylineno<<" has same name with active variable at line:"<<SymbolTable[name][i]->getLine()<<endl;
             return false;
         }
-        if(SymbolTable[name][i]->getType()>3 && SymbolTable[name][i]->isActive() && SymbolTable[name][i]->getScope()==currentScope){
+        if(SymbolTable[name][i]->getType()>=3 && SymbolTable[name][i]->isActive() && SymbolTable[name][i]->getScope()==currentScope){
             cout<<"ERROR at line "<<yylineno<<": Collision with function from line "<<SymbolTable[name][i]->getLine()<<endl;
             return false;
         }
@@ -370,7 +372,7 @@ LookUpVariable(string name, int flag){
     return true;
 }
 
-void LookUpRvalue(string name, int Flag){
+void LookUpRvalue(string name){
     for(int i=SymbolTable[name].size()-1; i>=0 ;i--) {
         if(SymbolTable[name][i]->isActive()){
             if(SymbolTable[name][i]->getType()==1)
@@ -410,7 +412,7 @@ bool
 existsInScope(string name, int scope){
 
     for(int i=0; i<ScopeTable[scope].size(); i++){
-        if(ScopeTable[scope][i]->getName()==name){
+        if(ScopeTable[scope][i]->getName()==name && ScopeTable[scope][i]->isActive()){
             cout<<"ERROR:"<<name<<" at line:"<<yylineno<<" . Variable already defined."<<endl;
             return false;
         }
@@ -432,7 +434,7 @@ void
 callFunction(string name){
     
     for(int i=0; i<SymbolTable[name].size(); i++){
-        if(SymbolTable[name][i]->isActive() && SymbolTable[name][i]->getType()<=2 and !libFunctions[name]){
+        if(SymbolTable[name][i]->isActive() && SymbolTable[name][i]->getType()==1 and !libFunctions[name]){
             cout<<"ERROR at line "<<yylineno<<": can't call a variable."<<name<<endl;
         }
     }
