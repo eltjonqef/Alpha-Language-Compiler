@@ -76,39 +76,40 @@
 
 
 %%
-program:          loopstmt {}
+program:          loopstmt {cout<<"program -> loopstmt\n";}
                 ;
 
-loopstmt:         loopstmt stmt
+loopstmt:         loopstmt stmt {cout<<"loopstmt -> loopstmt stmt\n"};
                 |
                 ;
-stmt:             expr SEMICOLON {}
-                | ifstmt {}
-                | whilestmt {}
-                | forstmt {}
-                | {returnState=1;}returnstmt {returnState=0; if(!nestedFunctionCounter) cout<<"ERROR at line "<<yylineno<<": return while not inside a function."<<endl;}
-                | BREAK SEMICOLON {if(!nestedLoopCounter) cout<<"ERROR at line "<<yylineno<<": break while not inside a loop."<<endl;}
-                | CONTINUE SEMICOLON {if(!nestedLoopCounter) cout<<"ERROR at line "<<yylineno<<": continue while not inside a loop."<<endl;}
-                | block {}
-                | funcdef {}
-                | SEMICOLON {}
+stmt:             expr SEMICOLON {cout<<"stmt -> expr SEMICOLON\n";}
+                | ifstmt {cout<<"stmt -> ifstmt\n";}
+                | whilestmt {cout<<"stmt -> whilestmt\n";}
+                | forstmt {cout<<"stmt -> forstmt\n";}
+                | {returnState=1;}returnstmt {returnState=0; if(!nestedFunctionCounter) {cout<<"ERROR at line "<<yylineno<<": return while not inside a function."<<endl;}
+                    cout<<"stmt -> returnstmt\n";}
+                | BREAK SEMICOLON {if(!nestedLoopCounter) {cout<<"ERROR at line "<<yylineno<<": break while not inside a loop."<<endl;} cout<<"stmt -> BREAK SEMICOLON\n"}
+                | CONTINUE SEMICOLON {if(!nestedLoopCounter) {cout<<"ERROR at line "<<yylineno<<": continue while not inside a loop."<<endl;} cout<<"stmt -> CONTINUE SEMICOLON\n"}
+                | block {cout<<"stmt -> block\n";}
+                | funcdef {cout<<"stmt -> funcdef\n";}
+                | SEMICOLON {cout<<"stmt -> SEMICOLON\n";}
                 ;
 
-expr:             assignexpr {}
-                | expr PLUS expr {}
-                | expr MINUS expr {}
-                | expr MULTIPLY expr {}
-                | expr DIVIDE expr {}
-                | expr MOD expr {}
-                | expr GREATER expr {}
-                | expr GREATER_EQUAL expr {}
-                | expr LESS expr {}
-                | expr LESS_EQUAL expr {}
-                | expr EQUAL expr {}
-                | expr NOT_EQUAL expr {}
-                | expr AND expr {}
-                | expr OR expr {}
-                | term {}
+expr:             assignexpr { cout<<"expr -> assignexpr\n";}
+                | expr PLUS expr {cout<<"expr -> expr PLUS expr\n";}
+                | expr MINUS expr {cout<<"expr -> expr MINUS expr\n";}
+                | expr MULTIPLY expr {cout<<"expr -> expr MULTIPLY expr\n";}
+                | expr DIVIDE expr {cout<<"expr -> expr DIVIDE expr\n";}
+                | expr MOD expr {cout<<"expr -> expr MOD expr\n";}
+                | expr GREATER expr {cout<<"expr -> expr GREATER expr\n";}
+                | expr GREATER_EQUAL expr {cout<<"expr -> expr GREATER_EQUAL expr\n";}
+                | expr LESS expr {cout<<"expr -> expr LESS expr\n";}
+                | expr LESS_EQUAL expr {cout<<"expr -> expr LESS_EQUAL expr\n";}
+                | expr EQUAL expr {cout<<"expr ->  expr EQUAL expr\n";}
+                | expr NOT_EQUAL expr {cout<<"expr -> expr NOT_EQUAL expr\n";}
+                | expr AND expr {cout<<"expr -> expr AND expr\n";}
+                | expr OR expr {cout<<"expr -> expr OR expr\n";}
+                | term {cout<<"expr -> term\n";}
                 ;
 /*
 op:               MULTIPLY {cout<<"op>>>MULTIPLY\n";}
@@ -125,24 +126,24 @@ op:               MULTIPLY {cout<<"op>>>MULTIPLY\n";}
                 ;
 */
 
-term:             LEFT_PARENTHESIS expr RIGHT_PARENTHESIS {}
-                | UMINUS expr {}
-                | NOT expr {}
-                | PLUS_PLUS lvalue {LookUpRvalue($2);}
-                | lvalue PLUS_PLUS {LookUpRvalue($1);}
-                | MINUS_MINUS lvalue {LookUpRvalue($2);}
-                | lvalue MINUS_MINUS {LookUpRvalue($1);}
-                | primary {}
+term:             LEFT_PARENTHESIS expr RIGHT_PARENTHESIS {cout<<"term -> LEFT_PARENTHESIS expr RIGHT_PARENTHESIS \n";}
+                | UMINUS expr {cout<<"term -> UMINUS expr \n";}
+                | NOT expr {cout<<"term -> NOT expr \n";}
+                | PLUS_PLUS lvalue {LookUpRvalue($2);cout<<"term -> PLUS_PLUS lvalue \n";}
+                | lvalue PLUS_PLUS {LookUpRvalue($1);cout<<"term -> lvalue PLUS_PLUS \n";}
+                | MINUS_MINUS lvalue {LookUpRvalue($2);cout<<"term -> MINUS_MINUS lvalue \n";}
+                | lvalue MINUS_MINUS {LookUpRvalue($1);cout<<"term -> lvalue MINUS_MINUS \n";}
+                | primary {cout<<"term -> primary \n";}
                 ;
 
-assignexpr:       lvalue {if(Flag==1) Flag=0; else LookUpRvalue($1);} ASSIGN expr 
+assignexpr:       lvalue {if(Flag==1) Flag=0; else LookUpRvalue($1);} ASSIGN expr {cout<<"assignexpr -> lvalue ASSIGN expr \n";}
                 ;
 
-primary:          lvalue {}
-                | call {}
-                | objectdef {}
-                | LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS {}
-                | const {}
+primary:          lvalue {cout<<"primary -> lvalue \n";}
+                | call {cout<<"primary -> call \n";}
+                | objectdef {cout<<"primary -> objectdef \n";}
+                | LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS {cout<<"primary -> LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS \n";}
+                | const {cout<<"primary -> const \n";}
                 ;
 
 
@@ -154,98 +155,105 @@ lvalue:           IDENT {
                                     addToSymbolTable($1, currentScope, yylineno,LOCL);
                                 }
                             }
+                            cout<<"lvalue -> IDENT \n";
                         }   
                 | LOCAL IDENT {$$=$2;if(LookUpVariable($2, 1)){
                                     addToSymbolTable($2, currentScope, yylineno, LOCL);Flag=1; }
                                     else if(libFunctions[$2])cout<<"ERROR at line "<<yylineno<<": Collision with library function"<<endl;
+                                cout<<"lvalue -> LOCAL IDENT\n"
                               } 
-                | COLON_COLON IDENT {LookUpScope($2, 0); Flag=1;}
+                | COLON_COLON IDENT {LookUpScope($2, 0); Flag=1;cout<<"lvalue -> COLON_COLON IDENT\n";}
                 | member {}
                 ;
 
-member:           lvalue DOT IDENT {$$=$3;}
-                | lvalue LEFT_BRACKET expr RIGHT_BRACKET{}
-                | call DOT IDENT {$$=$3;}
-                | call LEFT_BRACKET expr RIGHT_BRACKET{}
+member:           lvalue DOT IDENT {$$=$3;cout<<"member -> lvalue DOT IDENT\n";}
+                | lvalue LEFT_BRACKET expr RIGHT_BRACKET{cout<<"member -> lvalue LEFT_BRACKET expr RIGHT_BRACKET \n";}
+                | call DOT IDENT {$$=$3;cout<<"member -> call DOT IDENT\n";}
+                | call LEFT_BRACKET expr RIGHT_BRACKET{cout<<"call LEFT_BRACKET expr RIGHT_BRACKET \n";}
                 ;
 
-call:             call LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {}
-                | lvalue callsuffix {if(callFlag==1){callFlag=0;}else {if(!returnState) callFunction($1);}}
-                | LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {}
+call:             call LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {cout<<"call -> call LEFT_PARENTHESIS elist RIGHT_PARENTHESIS\n";}
+                | lvalue callsuffix {if(callFlag==1){callFlag=0;}else {if(!returnState) callFunction($1);} cout<<"call -> lvalue callsuffix\n";}
+                | LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {cout<<"call -> LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS LEFT_PARENTHESIS elist RIGHT_PARENTHESIS\n";}
                 ;
 
-callsuffix:       normcall {}
-                | methodcall {}
+callsuffix:       normcall {cout<<"callsuffix -> normcall\n";}
+                | methodcall {cout<<"callsuffix -> methodcall \n";}
                 ;
 
-normcall:         LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {}
+normcall:         LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {cout<<"normcall -> LEFT_PARENTHESIS elist RIGHT_PARENTHESIS\n";}
                 ;
 
-methodcall:       DOT_DOT IDENT {if(!returnState) callFlag=1; callFunction($2);} LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {}
+methodcall:       DOT_DOT IDENT {if(!returnState) callFlag=1; callFunction($2);} LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {cout<<"methodcall -> DOT_DOT IDENT LEFT_PARENTHESIS elist RIGHT_PARENTHESIS \n";}
                 ;
 
-elist:            expr {}
-                | expr COMMA elist {}
-                |
+elist:            expr {cout<<"elist -> expr \n";}
+                | expr COMMA elist {cout<<"elist -> expr COMMA elist\n";}
+                |{cout<<"elist ->  \n";}
                 ;
 
-//MPOROUME NA VGALOUME ENTELWS TO OBJECT DEF KAI NA STAMATHSEI H ANAGWGI STA PROIGOUMENA
-objectdef:        LEFT_BRACKET elist RIGHT_BRACKET {}
-                | LEFT_BRACKET indexed RIGHT_BRACKET {}
+objectdef:        LEFT_BRACKET elist RIGHT_BRACKET {cout<<"objectdef -> LEFT_BRACKET elist RIGHT_BRACKET\n";}
+                | LEFT_BRACKET indexed RIGHT_BRACKET {cout<<"objectdef -> LEFT_BRACKET indexed RIGHT_BRACKET\n";}
                 ;
 
-indexed:          indexedelem {}
-                | indexedelem COMMA indexed {}
+indexed:          indexedelem {cout<<"indexed -> indexedelem\n";}
+                | indexedelem COMMA indexed {cout<<"indexed -> indexedelem COMMA indexed\n";}
                 ;
 
-indexedelem:      LEFT_BRACE expr COLON expr RIGHT_BRACE {}
+indexedelem:      LEFT_BRACE expr COLON expr RIGHT_BRACE {cout<<"indexedelem -> LEFT_BRACE expr COLON expr RIGHT_BRACE \n";}
                 ;
 
-block:            LEFT_BRACE {currentScope++;} loopstmt {decreaseScope();} RIGHT_BRACE
+block:            LEFT_BRACE {currentScope++;} loopstmt {decreaseScope();} RIGHT_BRACE {cout<<"block -> LEFT_BRACE loopstmt RIGHT_BRACE \n";}
                 ;
 
-funcdef:          FUNCTION {nestedFunctionCounter++;} LEFT_PARENTHESIS {currentScope++;} idlist {currentScope--;}RIGHT_PARENTHESIS block {nestedFunctionCounter--;}
-                | FUNCTION IDENT {if(LookUpFunction($2)) addToSymbolTable($2, currentScope, yylineno, USERFUNC); nestedFunctionCounter++;}  LEFT_PARENTHESIS {currentScope++;} idlist {currentScope--;} RIGHT_PARENTHESIS block {nestedFunctionCounter--;}
+funcdef:          FUNCTION {nestedFunctionCounter++;} LEFT_PARENTHESIS {currentScope++;} idlist {currentScope--;}RIGHT_PARENTHESIS block {nestedFunctionCounter--;cout<<"funcdef -> FUNCTION LEFT_PARENTHESIS idlist RIGHT_PARENTHESIS block \n";}
+                | FUNCTION IDENT {if(LookUpFunction($2)) addToSymbolTable($2, currentScope, yylineno, USERFUNC); nestedFunctionCounter++;}  LEFT_PARENTHESIS {currentScope++;} idlist {currentScope--;} RIGHT_PARENTHESIS block {nestedFunctionCounter--;cout<<"funcdef -> FUNCTION IDENT LEFT_PARENTHESIS idlist RIGHT_PARENTHESIS block\n";}
                 ;
 
-const:            INTCONST {}
-                | DOUBLECONST {}
-                | STRING {}
-                | NIL {}
-                | TRUE {}
-                | FALSE {}
+const:            INTCONST {cout<<"const -> INTCONST\n";}
+                | DOUBLECONST {cout<<"const -> DOUBLECONST\n";}
+                | STRING {cout<<"const -> String\n";}
+                | NIL {cout<<"const -> NIL\n";}
+                | TRUE {cout<<"const -> TRUE\n";}
+                | FALSE {cout<<"const -> FALSE\n";}
                 ;
 
 idlist:           IDENT {
-                            if(libFunctions[$1])
+                            if(libFunctions[$1]) {
                                 cout<<"ERROR at line "<<yylineno<<": Collision with library function"<<endl;
-                            else 
-                                if(existsInScope($1, currentScope))
+                            }else{
+                                if(existsInScope($1, currentScope)){
                                     addToSymbolTable($1, currentScope, yylineno, FORMAL);
+                                }
+                            }
+                            cout<<"idlist -> IDENT\n";    
                         }
                 | idlist COMMA IDENT {
-                            if(libFunctions[$3])
+                            if(libFunctions[$3]){
                                 cout<<"ERROR at line "<<yylineno<<": Collision with library function"<<endl;
-                            else 
-                                if(existsInScope($3, currentScope))
+                            }else{ 
+                                if(existsInScope($3, currentScope)){
                                     addToSymbolTable($3, currentScope, yylineno, FORMAL);
-                                    }
-                | {}
+                                }
+                            }
+                            cout<<"idlist -> idlist COMMA IDENT\n";   
+                        }
+                | {cout<<"idlist -> \n";}
                 ;
 
 
-ifstmt:           IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt {}
-                | IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt ELSE stmt {}
+ifstmt:           IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt {cout<<"ifstmt -> IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt\n";}
+                | IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt ELSE stmt {cout<<" ifstmt -> IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt\n";}
                 ;
 
-whilestmt:        WHILE {nestedLoopCounter++;} LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt {nestedLoopCounter--;}
+whilestmt:        WHILE {nestedLoopCounter++;} LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt {nestedLoopCounter--;cout<<"whilestmt -> WHILE LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt\n";}
                 ;
 
-forstmt:          FOR {nestedLoopCounter++;} LEFT_PARENTHESIS elist SEMICOLON expr SEMICOLON elist RIGHT_PARENTHESIS stmt {nestedLoopCounter--;}
+forstmt:          FOR {nestedLoopCounter++;} LEFT_PARENTHESIS elist SEMICOLON expr SEMICOLON elist RIGHT_PARENTHESIS stmt {nestedLoopCounter--;cout<<"forstmt -> FOR LEFT_PARENTHESIS elist SEMICOLON expr SEMICOLON elist RIGHT_PARENTHESIS stmt\n";}
                 ;
 
-returnstmt:       RETURN SEMICOLON {}
-                | RETURN expr SEMICOLON {}
+returnstmt:       RETURN SEMICOLON {cout<<"returnstmt -> RETURN SEMICOLON\n";}
+                | RETURN expr SEMICOLON {cout<<"RETURN expr SEMICOLON\n";}
                 ;
             
 %%
