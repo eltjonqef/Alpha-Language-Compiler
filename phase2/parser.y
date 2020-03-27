@@ -28,7 +28,6 @@
     int nestedFunctionCounter=0;
     int nestedLoopCounter=0;
     int returnState=0;
-    void isFormalFromAncestorFunction(string name);
     extern void initEnumMap();
     extern int yylineno;
     extern char* yytext;
@@ -79,8 +78,8 @@
 program:          loopstmt {cout<<"program -> loopstmt\n";}
                 ;
 
-loopstmt:         loopstmt stmt {cout<<"loopstmt -> loopstmt stmt\n"};
-                |
+loopstmt:         loopstmt stmt {cout<<"loopstmt -> loopstmt stmt\n";}
+                | {cout<<"loopstmt -> EMPTY\n";}
                 ;
 stmt:             expr SEMICOLON {cout<<"stmt -> expr SEMICOLON\n";}
                 | ifstmt {cout<<"stmt -> ifstmt\n";}
@@ -88,8 +87,8 @@ stmt:             expr SEMICOLON {cout<<"stmt -> expr SEMICOLON\n";}
                 | forstmt {cout<<"stmt -> forstmt\n";}
                 | {returnState=1;}returnstmt {returnState=0; if(!nestedFunctionCounter) {cout<<"ERROR at line "<<yylineno<<": return while not inside a function."<<endl;}
                     cout<<"stmt -> returnstmt\n";}
-                | BREAK SEMICOLON {if(!nestedLoopCounter) {cout<<"ERROR at line "<<yylineno<<": break while not inside a loop."<<endl;} cout<<"stmt -> BREAK SEMICOLON\n"}
-                | CONTINUE SEMICOLON {if(!nestedLoopCounter) {cout<<"ERROR at line "<<yylineno<<": continue while not inside a loop."<<endl;} cout<<"stmt -> CONTINUE SEMICOLON\n"}
+                | BREAK SEMICOLON {if(!nestedLoopCounter) {cout<<"ERROR at line "<<yylineno<<": break while not inside a loop."<<endl;} cout<<"stmt -> BREAK SEMICOLON\n";}
+                | CONTINUE SEMICOLON {if(!nestedLoopCounter) {cout<<"ERROR at line "<<yylineno<<": continue while not inside a loop."<<endl;} cout<<"stmt -> CONTINUE SEMICOLON\n";}
                 | block {cout<<"stmt -> block\n";}
                 | funcdef {cout<<"stmt -> funcdef\n";}
                 | SEMICOLON {cout<<"stmt -> SEMICOLON\n";}
@@ -111,20 +110,6 @@ expr:             assignexpr { cout<<"expr -> assignexpr\n";}
                 | expr OR expr {cout<<"expr -> expr OR expr\n";}
                 | term {cout<<"expr -> term\n";}
                 ;
-/*
-op:               MULTIPLY {cout<<"op>>>MULTIPLY\n";}
-                | DIVIDE {cout<<"op>>>DIVIDE\n";}
-                | MOD {cout<<"op>>>MOD\n";}
-                | GREATER {cout<<"op>>>GREATER\n";}
-                | GREATER_EQUAL {cout<<"op>>>GREATER_EQUAL\n";}
-                | LESS {cout<<"op>>>LESS\n";}
-                | LESS_EQUAL {cout<<"op>>>LESS_EQUAL\n";}
-                | EQUAL {cout<<"op>>>EQUAL\n";}
-                | NOT_EQUAL {cout<<"op>>>NOT_EQUAL\n";}
-                | AND {cout<<"op>>>AND\n";}
-                | OR {cout<<"op>>>or\n";}
-                ;
-*/
 
 term:             LEFT_PARENTHESIS expr RIGHT_PARENTHESIS {cout<<"term -> LEFT_PARENTHESIS expr RIGHT_PARENTHESIS \n";}
                 | UMINUS expr {cout<<"term -> UMINUS expr \n";}
@@ -160,16 +145,16 @@ lvalue:           IDENT {
                 | LOCAL IDENT {$$=$2;if(LookUpVariable($2, 1)){
                                     addToSymbolTable($2, currentScope, yylineno, LOCL);Flag=1; }
                                     else if(libFunctions[$2])cout<<"ERROR at line "<<yylineno<<": Collision with library function"<<endl;
-                                cout<<"lvalue -> LOCAL IDENT\n"
+                                cout<<"lvalue -> LOCAL IDENT\n";
                               } 
                 | COLON_COLON IDENT {LookUpScope($2, 0); Flag=1;cout<<"lvalue -> COLON_COLON IDENT\n";}
-                | member {}
+                | member {cout<<"lvalue -> member\n";}
                 ;
 
 member:           lvalue DOT IDENT {$$=$3;cout<<"member -> lvalue DOT IDENT\n";}
                 | lvalue LEFT_BRACKET expr RIGHT_BRACKET{cout<<"member -> lvalue LEFT_BRACKET expr RIGHT_BRACKET \n";}
                 | call DOT IDENT {$$=$3;cout<<"member -> call DOT IDENT\n";}
-                | call LEFT_BRACKET expr RIGHT_BRACKET{cout<<"call LEFT_BRACKET expr RIGHT_BRACKET \n";}
+                | call LEFT_BRACKET expr RIGHT_BRACKET{cout<<"member -> call LEFT_BRACKET expr RIGHT_BRACKET \n";}
                 ;
 
 call:             call LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {cout<<"call -> call LEFT_PARENTHESIS elist RIGHT_PARENTHESIS\n";}
@@ -178,18 +163,18 @@ call:             call LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {cout<<"call -> 
                 ;
 
 callsuffix:       normcall {cout<<"callsuffix -> normcall\n";}
-                | methodcall {cout<<"callsuffix -> methodcall \n";}
+                | methodcall {cout<<"callsuffix -> methodcall\n";}
                 ;
 
 normcall:         LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {cout<<"normcall -> LEFT_PARENTHESIS elist RIGHT_PARENTHESIS\n";}
                 ;
 
-methodcall:       DOT_DOT IDENT {if(!returnState) callFlag=1; callFunction($2);} LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {cout<<"methodcall -> DOT_DOT IDENT LEFT_PARENTHESIS elist RIGHT_PARENTHESIS \n";}
+methodcall:       DOT_DOT IDENT {if(!returnState) callFlag=1; callFunction($2);} LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {cout<<"methodcall -> DOT_DOT IDENT LEFT_PARENTHESIS elist RIGHT_PARENTHESIS\n";}
                 ;
 
 elist:            expr {cout<<"elist -> expr \n";}
                 | expr COMMA elist {cout<<"elist -> expr COMMA elist\n";}
-                |{cout<<"elist ->  \n";}
+                |{cout<<"elist -> EMPTY\n";}
                 ;
 
 objectdef:        LEFT_BRACKET elist RIGHT_BRACKET {cout<<"objectdef -> LEFT_BRACKET elist RIGHT_BRACKET\n";}
@@ -238,12 +223,12 @@ idlist:           IDENT {
                             }
                             cout<<"idlist -> idlist COMMA IDENT\n";   
                         }
-                | {cout<<"idlist -> \n";}
+                | {cout<<"idlist -> EMPTY\n";}
                 ;
 
 
 ifstmt:           IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt {cout<<"ifstmt -> IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt\n";}
-                | IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt ELSE stmt {cout<<" ifstmt -> IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt\n";}
+                | IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt ELSE stmt {cout<<" ifstmt -> IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt ELSE stmt\n";}
                 ;
 
 whilestmt:        WHILE {nestedLoopCounter++;} LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt {nestedLoopCounter--;cout<<"whilestmt -> WHILE LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt\n";}
@@ -253,7 +238,7 @@ forstmt:          FOR {nestedLoopCounter++;} LEFT_PARENTHESIS elist SEMICOLON ex
                 ;
 
 returnstmt:       RETURN SEMICOLON {cout<<"returnstmt -> RETURN SEMICOLON\n";}
-                | RETURN expr SEMICOLON {cout<<"RETURN expr SEMICOLON\n";}
+                | RETURN expr SEMICOLON {cout<<"returnstmt -> RETURN expr SEMICOLON\n";}
                 ;
             
 %%
@@ -380,7 +365,8 @@ LookUpVariable(string name, int flag){
     return true;
 }
 
-void LookUpRvalue(string name){
+void
+LookUpRvalue(string name){
     for(int i=SymbolTable[name].size()-1; i>=0 ;i--) {
         if(SymbolTable[name][i]->isActive()){
             if(SymbolTable[name][i]->getType()==1)
@@ -395,7 +381,8 @@ void LookUpRvalue(string name){
 /*
     Searches in given scope for a variable or function with given name
 */
-bool LookUpScope(string name, int scope) {
+bool
+LookUpScope(string name, int scope) {
     if(name==""){
         for(int it=currentScope-1; it>=scope; it--){
             for(int i=0; i<ScopeTable[it].size(); i++){
@@ -426,16 +413,6 @@ existsInScope(string name, int scope){
         }
     }
     return true;
-}
-void
-isFormalFromAncestorFunction(string name){
-
-        if(SymbolTable[name][SymbolTable[name].size()-1]->isActive() && currentScope>SymbolTable[name][SymbolTable[name].size()-1]->getScope()){
-            if(SymbolTable[name][SymbolTable[name].size()-1]->getType()==2)
-                cout<<"ERROR:"<<name<<" is formal variable of ancestor function.\n";
-            else if(SymbolTable[name][SymbolTable[name].size()-1]->getType()==1)
-                cout<<"ERROR:"<<name<<" is local variable of ancestor function.\n";
-        }
 }
 
 void
