@@ -7,7 +7,6 @@
     #include <string.h>
     #include <map>
     #include <vector>
-    #include <assert.h>
     #include "Quads.hpp"
 
     using namespace std;
