@@ -304,7 +304,7 @@ string opcodeToString(iopcode _opcode){
         case tablecreate_op:return "tablecreate";
         case tablegetelem_op:return "tablegetelem";
         case tablesetelem_op:return "tablesetelem";
-        /*maybe throw error here*/
+        /*maybe throw error here uwu*/
     }
 }
 
