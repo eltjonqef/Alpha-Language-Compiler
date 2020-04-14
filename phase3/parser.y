@@ -1,6 +1,6 @@
 %{
     #include <stdio.h>
-    /#include <stdlib.h>
+    //#include <stdlib.h>
     //#include "SymbolTable.hpp"
     #include <iostream>
     #include <string>
@@ -309,6 +309,13 @@ string opcodeToString(iopcode _opcode){
 }
 
 
+void
+addToSymbolTable(string _name, int _scope, int _line, SymbolType _type) {
+    SymbolTableEntry *newEntry = new SymbolTableEntry(_name,_scope,_line,_type);
+    SymbolTable[_name].push_back(newEntry);
+    ScopeTable[_scope].push_back(newEntry);
+}
+
 
 
 void
@@ -337,12 +344,6 @@ InitilizeLibraryFunctions(){
     libFunctions["sqrt"]=1;
     libFunctions["cos"]=1;
     libFunctions["sin"]=1;
-}
-
-string nextTempVariable(){
-    string tmp = "t" + std::to_string(tempVariableCount);
-    tempVariableCount++;
-    return tmp;
 }
 
 
