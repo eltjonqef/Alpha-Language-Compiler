@@ -1,6 +1,6 @@
 %{
     #include <stdio.h>
-    //#include <stdlib.h>
+    /#include <stdlib.h>
     //#include "SymbolTable.hpp"
     #include <iostream>
     #include <string>
@@ -39,6 +39,11 @@
     map <string,vector<SymbolTableEntry*> > SymbolTable;
     map <int,vector<SymbolTableEntry*> > ScopeTable;
     map <string, int> libFunctions;
+
+    //phase3
+    string iopcodeToString(iopcode _opcode);
+    void printQuads();
+    unsigned int tempVariableCount = 0;
 %}
 
 
@@ -133,6 +138,7 @@ primary:          lvalue {}
 
 
 lvalue:           IDENT {   
+                            $$ = $1;
                             if(LookUpVariable($1, 0)){
                                 if(currentScope == 0){
                                     addToSymbolTable($1, currentScope, yylineno,GLOB);
@@ -147,7 +153,7 @@ lvalue:           IDENT {
                                     else if(libFunctions[$2])cout<<"ERROR at line "<<yylineno<<": Collision with library function"<<endl;
                                 
                               } 
-                | COLON_COLON IDENT {LookUpScope($2, 0); Flag=1;}
+                | COLON_COLON IDENT {LookUpScope($2, 0); Flag=1;$$=$2;}
                 | member {}
                 ;
 
@@ -270,12 +276,39 @@ main(int argc, char** argv){
     return 0;
 }
 
-void
-addToSymbolTable(string _name, int _scope, int _line, SymbolType _type) {
-    SymbolTableEntry *newEntry = new SymbolTableEntry(_name,_scope,_line,_type);
-    SymbolTable[_name].push_back(newEntry);
-    ScopeTable[_scope].push_back(newEntry);
+string opcodeToString(iopcode _opcode){
+    iopcode temp = _opcode;
+    switch(temp){
+        case assign_op:return "assign";
+        case add_op:return "add";
+        case sub_op:return "sub";
+        case mul_op:return "mul";
+        case div_op:return "div";
+        case mod_op:return "mod";
+        case uminus_op:return "uminus";
+        case and_op:return "and";
+        case or_op:return "or";
+        case not_op:return "not";
+        case if_eq_op: return "if_eq";
+        case if_noteq_op:return "if_noteq";
+        case if_lesseq_op:return "if_lesseq";
+        case if_greatereq_op:return "if_greatereq_op";
+        case if_less_op:return "if_less";
+        case if_greater_op:return "if_greater";
+        case call_op:return "call";
+        case param_op:return "param";
+        case ret_op:return "return";
+        case getretval_op: return "getretval";
+        case funcstart_op:return "funcstart";
+        case funcend_op:return "funcend";
+        case tablecreate_op:return "tablecreate";
+        case tablegetelem_op:return "tablegetelem";
+        case tablesetelem_op:return "tablesetelem";
+        /*maybe throw error here*/
+    }
 }
+
+
 
 
 void
@@ -305,6 +338,13 @@ InitilizeLibraryFunctions(){
     libFunctions["cos"]=1;
     libFunctions["sin"]=1;
 }
+
+string nextTempVariable(){
+    string tmp = "t" + std::to_string(tempVariableCount);
+    tempVariableCount++;
+    return tmp;
+}
+
 
 void
 decreaseScope() {
