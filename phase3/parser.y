@@ -309,6 +309,14 @@ string opcodeToString(iopcode _opcode){
 }
 
 
+string nextVariableName(){
+    string numberInString = to_string(tempVariableCount);
+    string RetVal = "t"+numberInString;
+    tempVariableCount++;
+    return RetVal;
+}
+
+
 void
 addToSymbolTable(string _name, int _scope, int _line, SymbolType _type) {
     SymbolTableEntry *newEntry = new SymbolTableEntry(_name,_scope,_line,_type);
