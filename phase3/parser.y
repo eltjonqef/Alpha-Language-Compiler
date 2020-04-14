@@ -99,10 +99,10 @@ stmt:             expr SEMICOLON {}
                 | SEMICOLON {}
                 ;
 
-expr:             assignexpr { }
-                | expr PLUS expr {}
+expr:             assignexpr { $$=$1;}
+                | expr PLUS expr {emit(add_op,nextVariableName(),$1,$3,null,null)} // emit (+,t0,exp1,exp2->,null,null) x = y = 5 +2;
                 | expr MINUS expr {}
-                | expr MULTIPLY expr {}
+                | expr MULTIPLY expr {}x+y+e+s;
                 | expr DIVIDE expr {}
                 | expr MOD expr {}
                 | expr GREATER expr {}
@@ -126,7 +126,7 @@ term:             LEFT_PARENTHESIS expr RIGHT_PARENTHESIS {}
                 | primary {}
                 ;
 
-assignexpr:       lvalue {if(Flag==1) Flag=0; else LookUpRvalue($1);} ASSIGN expr {}
+assignexpr:       lvalue {if(Flag==1) Flag=0; else LookUpRvalue($1);} ASSIGN expr {emit(assign_op,null,$1,$3`1);} //quad {assign x1 x2}
                 ;
 
 primary:          lvalue {}
