@@ -102,7 +102,7 @@ stmt:             expr SEMICOLON {}
 expr:             assignexpr { $$=$1;}
                 | expr PLUS expr {emit(add_op,"_t0",$1,$3,null,null);}
                 | expr MINUS expr {}
-                | expr MULTIPLY expr {}x+y+e+s;
+                | expr MULTIPLY expr {}
                 | expr DIVIDE expr {}
                 | expr MOD expr {}
                 | expr GREATER expr {}
