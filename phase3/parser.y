@@ -100,7 +100,7 @@ stmt:             expr SEMICOLON {}
                 ;
 
 expr:             assignexpr { $$=$1;}
-                | expr PLUS expr {emit(add_op,nextVariableName(),$1,$3,null,null)} // emit (+,t0,exp1,exp2->,null,null) x = y = 5 +2;
+                | expr PLUS expr {emit(add_op,"_t0",$1,$3,null,null);}
                 | expr MINUS expr {}
                 | expr MULTIPLY expr {}x+y+e+s;
                 | expr DIVIDE expr {}
@@ -271,8 +271,8 @@ main(int argc, char** argv){
     InitilizeLibraryFunctions();
     yyparse();
     
-    printSymbolTable();
-
+    //printSymbolTable();
+    printQuads();
     return 0;
 }
 
@@ -311,7 +311,7 @@ string opcodeToString(iopcode _opcode){
 
 string nextVariableName(){
     string numberInString = to_string(tempVariableCount);
-    string RetVal = "t"+numberInString;
+    string RetVal = "_t"+numberInString;
     tempVariableCount++;
     return RetVal;
 }
@@ -492,4 +492,11 @@ void printSymbolTable() {
         it++;
     }
 
+}
+
+void printQuads(){
+
+    for(int i=0; i<quads.size(); i++){
+        cout<<quads[i].op<<" "<<quads[i].result<<" "<<quads[i].arg1<<" "<<quads[i].arg2<<endl;
+    }
 }

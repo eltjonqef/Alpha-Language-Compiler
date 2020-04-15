@@ -72,8 +72,8 @@ class quad{
         unsigned label;
         unsigned line;
     
-    quad(expr* _result, expr* _arg1, expr* _arg2, unsigned _label, unsigned _line){
-
+    quad(iopcode _op,expr* _result, expr* _arg1, expr* _arg2, unsigned _label, unsigned _line){
+        op = _op;
         result=_result;
         arg1=_arg1;
         arg2=_arg2;
@@ -104,12 +104,8 @@ expand(){
 }*/
 
 void
-emit(iopcode op, expr* arg1, expr* arg2, expr* result, unsigned label, unsigned line){   
-    /*
-    if(currQuad==total)
-        expand();
-    */
-    quad newQuad(arg1, arg2, result, label, line);
+emit(iopcode op, expr* result, expr* arg1, expr* arg2, unsigned label, unsigned line){   
+    
+    quad newQuad(op,result, arg1, arg2, label, line);
     quads.push_back(newQuad);
-    cout<<newQuad.label<<" ee"<<endl;
 }
