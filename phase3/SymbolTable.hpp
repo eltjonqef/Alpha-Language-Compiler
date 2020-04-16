@@ -1,6 +1,7 @@
 #include <string>
 #include <stack>
 #include <assert.h>
+using namespace std;
 enum SymbolType {
     GLOB,
     LOCL,
@@ -11,7 +12,7 @@ enum SymbolType {
 
 enum scopespace_t{
     programvar,functionlocal,formalarg
-}
+};
 enum symbol_t {var_s,programfunc_s,libraryfunc_s};
 
 
@@ -19,7 +20,7 @@ unsigned programVarOffsetCounter = 0;
 unsigned functionLocalOffsetCounter = 0;
 unsigned formalArgOffsetCounter = 0;
 int scopeSpaceCounter = 1;
-stack<unsigned> functionOffsets;
+std::stack<unsigned> functionOffsets;
 
 
 void saveAndResetFunctionOffset(){
@@ -35,7 +36,9 @@ unsigned getPrevFunctionOffset(){
     if(functionOffsets.empty()){
         assert(0);
     }else{
-        return functionOffsets.pop();
+        unsigned retval = functionOffsets.top();
+        functionOffsets.pop();
+        return retval;
     }
 }
 
@@ -54,14 +57,14 @@ scopespace_t getCurrentScopespace(void) {
 
 
 
-unsinged currentOffset({
+unsigned currentOffset(){
     switch(getCurrentScopespace()) {
         case programvar : return programVarOffsetCounter;
         case formalarg : return formalArgOffsetCounter;
         case functionlocal : return functionLocalOffsetCounter;
         default: assert(0);
     }
-})
+}
 
 void incCurScopeOffset(){
     switch(getCurrentScopespace()){
@@ -87,49 +90,35 @@ class Variable {
         std::string name;
         unsigned int scope;
         unsigned int line;
-        symbol_t type;
-        scopespace_t space;
-        unsigned offset;
     public:
-        Variable(std::string _name, unsigned int _scope, unsigned int _line,symbol_t _type,scopespace_t _space,unsigned _offset) {
+        Variable(std::string _name, unsigned int _scope, unsigned int _line) {
             name = _name;
             scope = _scope;
             line = _line;
-            type = _type;
-            space = _space;
-            offset = _offset;
         }
 
         std::string getName() { return name; }
         unsigned int getScope() { return scope; }
         unsigned int getLine() { return line; }
-        symbol_t getType() {return type;}
-        scopespace_t getScopespace {return space;}
-        unsigned getOffset() {return offset;}
-};
 
+
+};
 class Function {
     private:
         std::string name;
         unsigned int scope;
         unsigned int line;
-        symbol_t type;
 
     public:
-        Function(std::string _name, unsigned int _scope, unsigned int _line,symbol_t _type) {
+        Function(std::string _name, unsigned int _scope, unsigned int _line) {
             name = _name;
             scope = _scope;
             line = _line;
-            type = _type;
-
         }
         
         std::string getName() { return name; }
         unsigned int getScope() { return scope; }
         unsigned int getLine() { return line; }
-        symbol_t getType() {return type;}
-        scopespace_t getScopespace {return space;}
-        unsigned getOffset() {return offset;}
 };
 
 //meant to be called from addToSymbolTableOnly
@@ -142,19 +131,57 @@ class SymbolTableEntry {
             Function *funcValue;
         } value;
         SymbolType type;
+        symbol_t type_t;
+        scopespace_t space;
+        unsigned offset;
+        int UnionFlag; //0 for variable , 1 for function
 
     public:
-        SymbolTableEntry(std::string _name, int _scope, int _line, SymbolType _type) {
+        SymbolTableEntry(std::string _name, int _scope, int _line, SymbolType _type,symbol_t _symtype) {
             if(_type == 3 || _type == 4) {
                 Function *temp = new Function(_name, _scope, _line);
                 value.funcValue=temp;
+                UnionFlag = 1;
             } 
             else {
                 Variable *temp = new Variable(_name, _scope, _line);
                 value.varValue=temp;
+                UnionFlag = 0;
             }
             enabled=true;
             type = _type;
+            type_t = _symtype;
+        }
+
+        symbol_t getType_t(){return type_t;}
+        scopespace_t getScopespace(){return space;}
+        unsigned getOffset(){
+            if(UnionFlag == 1){
+                return 0;
+            }
+            return offset;
+        }
+
+        std::string Type_t_toString(){//var_s,programfunc_s,libraryfunc_s
+            if(type_t == var_s){return "var_s";}
+            if(type_t == programfunc_s){return "programfunc_s";}
+            if(type_t == libraryfunc_s){return "libraryfunc_s";}
+            else{
+                assert(0);
+            }
+            return "";
+        }
+        std::string Scopespace_toString(){ //programvar,functionlocal,formalarg
+            if(UnionFlag == 1){
+                return "N>A";
+            }
+            switch (getCurrentScopespace())
+            {
+                case programvar:return"programvar";
+                case functionlocal:return"functionlocal";
+                case formalarg:return"formalarg";
+                default:return"N/A";
+            }
         }
 
         std::string getName(){ 
@@ -193,5 +220,11 @@ class SymbolTableEntry {
         void activate() { enabled = true; }
         void deactivate() { enabled = false; }
         
-        
+        void setOffset(unsigned _offset){
+
+            offset = _offset;
+        }
+        void setScopespace(scopespace_t _space){
+            space = _space;
+        }
 };

@@ -1,7 +1,5 @@
 %{
     #include <stdio.h>
-    //#include <stdlib.h>
-    //#include "SymbolTable.hpp"
     #include <iostream>
     #include <string>
     #include <string.h>
@@ -9,12 +7,12 @@
     #include <vector>
     #include "Quads.hpp"
 
-    using namespace std;
+    
 
     int yyerror(string yaccProvideMessage);
     int yylex();
     void InitilizeLibraryFunctions();
-    SymbolTableEntry *addToSymbolTable(string _name, int _scope, int _line, SymbolType _type);
+    SymbolTableEntry *addToSymbolTable(string _name, int _scope, int _line, SymbolType _type,symbol_t _symtype);
     void decreaseScope();
     void printSymbolTable();
     bool LookUpScope(string name, int scope);
@@ -139,24 +137,29 @@ primary:          lvalue {}
 
    
 lvalue:           IDENT {   
-                            expr *sym=LookUpVariable($1,0);
-                            if(sym==NULL){
+                            expr *expression=new expr(var_e);
+                            expression->sym=LookUpVariable($1,0);
+                            if(expression->sym==NULL){
                                 if(currentScope == 0){
-                                    sym=addToSymbolTable($1, currentScope, yylineno,GLOB,var_s,getCurrentScopespace(),currentOffset());
+                                    expression->sym=addToSymbolTable($1, currentScope, yylineno,GLOB,var_s);
+                                    expression->sym->setOffset(currentOffset());
+                                    expression->sym->setScopespace(getCurrentScopespace());
                                     incCurScopeOffset();
                                 }else{
-                                    sym=addToSymbolTable($1, currentScope, yylineno,LOCL,var_s,getCurrentScopespace(),currentOffset());
+                                    expression->sym=addToSymbolTable($1, currentScope, yylineno,LOCL,var_s);
+                                    expression->sym->setOffset(currentOffset());
+                                    expression->sym->setScopespace(getCurrentScopespace());
                                     incCurScopeOffset();
                                 }
                             }
                             
                         }   
-                | LOCAL IDENT {expr *sym=LookUpVariable($2, 1); if(sym==NULL){
-                                    sym=addToSymbolTable($2, currentScope, yylineno, LOCL,var_s,getCurrentScopespace(),currentOffset());Flag=1;incCurScopeOffset(); }
+                | LOCAL IDENT {expr *expression=new expr(var_e);expression->sym=LookUpVariable($2, 1); if(expression->sym==NULL){
+                                    expression->sym=addToSymbolTable($2, currentScope, yylineno, LOCL,var_s);Flag=1;expression->sym->setOffset(currentOffset());expression->sym->setScopespace(getCurrentScopespace());incCurScopeOffset(); }
                                     else if(libFunctions[$2])cout<<"ERROR at line "<<yylineno<<": Collision with library function"<<endl;
 
                               } 
-                | COLON_COLON IDENT { expr *sym=LookUpScope($2, 0); Flag=1;}
+                | COLON_COLON IDENT { /*expr *expression=new expr(var_e); expression->sym=LookUpScope($2, 0); Flag=1;*/}
                 | member {}
                 ;
 
@@ -200,8 +203,8 @@ indexedelem:      LEFT_BRACE expr COLON expr RIGHT_BRACE {}
 block:            LEFT_BRACE {enterScopespace();} loopstmt {decreaseScope();} RIGHT_BRACE {}
                 ;
 
-funcdef:          FUNCTION {nestedFunctionCounter++; expr *sym=addToSymbolTable("$"+to_string(anonymousFuntionCounter++), currentScope, yylineno, USERFUNC,programfunc_s); }  LEFT_PARENTHESIS {currentScope++;} idlist {currentScope--;}RIGHT_PARENTHESIS block {nestedFunctionCounter--;}
-                | FUNCTION IDENT {if(LookUpFunction($2)) expr *sym=addToSymbolTable($2, currentScope, yylineno, USERFUNC,programfunc_s); nestedFunctionCounter++;}  LEFT_PARENTHESIS {currentScope++;enterScopespace();resetFormalArgOffsetCounter();} idlist {currentScope--;} RIGHT_PARENTHESIS {enterScopespace();saveAndResetFunctionOffset();}block {nestedFunctionCounter--;exitScopespace();exitScopespace();getPrevFunctionOffset();}
+funcdef:          FUNCTION {nestedFunctionCounter++; expr *expression=new expr(programfunc_e); expression->sym=addToSymbolTable("$"+to_string(anonymousFuntionCounter++), currentScope, yylineno, USERFUNC,programfunc_s); }  LEFT_PARENTHESIS {currentScope++;} idlist {currentScope--;}RIGHT_PARENTHESIS block {nestedFunctionCounter--;}
+                | FUNCTION IDENT {if(LookUpFunction($2)) {expr *expression=new expr(programfunc_e);expression->sym= addToSymbolTable($2, currentScope, yylineno, USERFUNC,programfunc_s); nestedFunctionCounter++;} } LEFT_PARENTHESIS {currentScope++;enterScopespace();resetFormalArgOffsetCounter();} idlist {currentScope--;} RIGHT_PARENTHESIS {enterScopespace();saveAndResetFunctionOffset();}block {nestedFunctionCounter--;exitScopespace();exitScopespace();getPrevFunctionOffset();}
                 ;
 
 const:            INTCONST {}
@@ -217,7 +220,9 @@ idlist:           IDENT {
                                 cout<<"ERROR at line "<<yylineno<<": Collision with library function"<<endl;
                             }else{
                                 if(existsInScope($1, currentScope)){
-                                    expr *sym=addToSymbolTable($1, currentScope, yylineno, FORMAL,var_s,getCurrentScopespace(),currentOffset());
+                                    expr *expression=new expr(var_e);expression->sym=addToSymbolTable($1, currentScope, yylineno, FORMAL,var_s);
+                                    expression->sym->setOffset(currentOffset());
+                                    expression->sym->setScopespace(getCurrentScopespace());
                                     incCurScopeOffset();
                                 }
                             }
@@ -228,7 +233,9 @@ idlist:           IDENT {
                                 cout<<"ERROR at line "<<yylineno<<": Collision with library function"<<endl;
                             }else{ 
                                 if(existsInScope($3, currentScope)){
-                                    expr *sym=addToSymbolTable($3, currentScope, yylineno, FORMAL,var_s,getCurrentScopespace(),currentOffset());
+                                    expr *expression=new expr(var_e); expression->sym=addToSymbolTable($3, currentScope, yylineno, FORMAL,var_s);
+                                    expression->sym->setOffset(currentOffset());
+                                    expression->sym->setScopespace(getCurrentScopespace());
                                     incCurScopeOffset();
                                 }
                             }
@@ -276,8 +283,8 @@ main(int argc, char** argv){
     InitilizeLibraryFunctions();
     yyparse();
     
-    //printSymbolTable();
-    printQuads();
+    printSymbolTable();
+    //printQuads();
     return 0;
 }
 
@@ -323,12 +330,20 @@ string nextVariableName(){
 
 
 SymbolTableEntry*
-addToSymbolTable(string _name, int _scope, int _line, SymbolType _type) {
-    SymbolTableEntry *newEntry = new SymbolTableEntry(_name,_scope,_line,_type);
+addToSymbolTable(string _name, int _scope, int _line, SymbolType _type,symbol_t _symtype) {
+    SymbolTableEntry *newEntry = new SymbolTableEntry(_name,_scope,_line,_type,_symtype);
     SymbolTable[_name].push_back(newEntry);
     ScopeTable[_scope].push_back(newEntry);
     return newEntry;
 }
+
+
+/*
+enum scopespace_t{
+    programvar,functionlocal,formalarg
+};
+enum symbol_t {var_s,programfunc_s,libraryfunc_s};
+*/
 
 
 
@@ -478,7 +493,7 @@ callFunction(string name){
         }
     }
 }
-/
+
 void printSymbolTable() {
     map<int,vector<SymbolTableEntry*> >::iterator it = ScopeTable.begin();
     map<int,string> enumtype;
@@ -493,17 +508,10 @@ void printSymbolTable() {
         for(int i=0;i<ScopeTable[it->first].size();i++) {
             cout<<"\""<<ScopeTable[it->first][i]->getName()<<"\" ["<<enumtype[ScopeTable[it->first][i]->getType()]<<"] (line "<<
                 ScopeTable[it->first][i]->getLine()<<") (scope "<<ScopeTable[it->first][i]->getScope()<<" symtype:"<<
-                ScopeTable[it->first][i]->type_toString()<<" space:"<<ScopeTable[it->first][i]->scopespace_toString()
+                ScopeTable[it->first][i]->Type_t_toString()<<" space:"<<ScopeTable[it->first][i]->Scopespace_toString()
                 <<" offset:"<<ScopeTable[it->first][i]->getOffset()<<")\n";
         }
         it++;
     }
 
 }
-/*
-void printQuads(){
-
-    for(int i=0; i<quads.size(); i++){
-        cout<<quads[i].op<<" "<<quads[i].result<<" "<<quads[i].arg1<<" "<<quads[i].arg2<<endl;
-    }
-*/

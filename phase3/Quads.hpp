@@ -3,9 +3,8 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <vector>
-using namespace std;
 
-enum iopcode{
+enum iopcode{ 
     assign_op,
     add_op,
     sub_op,
@@ -55,34 +54,66 @@ enum expr_t{
 class expr{
     private:
         expr_t type;
-        SymbolTableEntry* sym;
         expr* index;
         double numConst;
-        string strConst;
+        std::string strConst;
         unsigned char boolConst;
         expr* next;
+    public:
+        SymbolTableEntry* sym;
+        expr(expr_t _type){
+            type=_type;
+        }
+        expr_t getType(){
+            return type;
+        }
+        double getNumConst(){
+            return numConst;
+        }
+        void setNumConst(double _numConst){
+            numConst=numConst;
+        }
 };
 
 class quad{
-    public:
+    private:
         iopcode op;
         expr* result;
         expr* arg1;
         expr* arg2;
         unsigned label;
         unsigned line;
-    
-    quad(iopcode _op,expr* _result, expr* _arg1, expr* _arg2, unsigned _label, unsigned _line){
-        op = _op;
-        result=_result;
-        arg1=_arg1;
-        arg2=_arg2;
-        label=_label;
-        line=_line;
-    }
+    public:
+        quad(iopcode _op,expr* _result, expr* _arg1, expr* _arg2, unsigned _label, unsigned _line){
+            op = _op;
+            result=_result;
+            arg1=_arg1;
+            arg2=_arg2;
+            label=_label;
+            line=_line;
+        }
+        iopcode getOP(){
+            return op;
+        }
+        expr_t getResult(){
+            return result->getType();
+        }
+        expr_t getArg1(){
+            return arg1->getType();
+        }
+        expr_t getArg2(){
+            return arg2->getType();
+        }
+        unsigned getLabel(){
+            return label;
+        }
+        unsigned getLine(){
+            return line;
+        }
+        
 };
 
-vector<quad> quads;
+std::vector<quad> quads;
 /*
 #define EXPAND_SIZE 1024
 #define CURR_SIZE   (total*sizeof(quad))
