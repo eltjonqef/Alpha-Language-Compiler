@@ -42,6 +42,8 @@
     string iopcodeToString(iopcode _opcode);
     void printQuads();
     unsigned int tempVariableCount = 0;
+    string nextVariableName();
+    SymbolType getGlobLocl();
 %}
 
 
@@ -215,7 +217,7 @@ block:            LEFT_BRACE {currentScope++;} loopstmt {decreaseScope();} RIGHT
                 ;
 
 funcdef:          FUNCTION {nestedFunctionCounter++; expr *expression=new expr(programfunc_e); expression->sym=addToSymbolTable("$"+to_string(anonymousFuntionCounter++), currentScope, yylineno, USERFUNC,programfunc_s); }  LEFT_PARENTHESIS {currentScope++;enterScopespace();} idlist {currentScope--;enterScopespace();saveAndResetFunctionOffset();}RIGHT_PARENTHESIS block {nestedFunctionCounter--;exitScopespace();exitScopespace();getPrevFunctionOffset();}
-                | FUNCTION IDENT {if(LookUpFunction($2)) {expr *expression=new expr(programfunc_e);expression->sym= addToSymbolTable($2, currentScope, yylineno, USERFUNC,programfunc_s); nestedFunctionCounter++;} } LEFT_PARENTHESIS {currentScope++cc;enterScopespace();resetFormalArgOffsetCounter();} idlist {currentScope--;} RIGHT_PARENTHESIS {eccace();saveAndResetFunctionOffset();}block {nestedFunctionCounter--;exitScopespace();exitScopespace();getPrevFunctionOffset();}
+                | FUNCTION IDENT {if(LookUpFunction($2)) {expr *expression=new expr(programfunc_e);expression->sym= addToSymbolTable($2, currentScope, yylineno, USERFUNC,programfunc_s); nestedFunctionCounter++;} } LEFT_PARENTHESIS {currentScope++;enterScopespace();resetFormalArgOffsetCounter();} idlist {currentScope--;} RIGHT_PARENTHESIS {enterScopespace();saveAndResetFunctionOffset();}block {nestedFunctionCounter--;exitScopespace();exitScopespace();getPrevFunctionOffset();}
                 ;
 
 const:            INTCONST {expr *expression=new expr(constnum_e); expression->setNumConst($1);$$=expression;}
