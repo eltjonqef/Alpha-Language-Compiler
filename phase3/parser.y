@@ -52,8 +52,8 @@
     int intValue;
     char* stringValue;
     double doubleValue;
-    expr *name;
-}
+    class expr *name;
+}   
 
 %start program
 
@@ -100,8 +100,8 @@ stmt:             expr SEMICOLON {}
                 | SEMICOLON {}
                 ;
 
-expr:             assignexpr { $$=$1;}
-                | expr PLUS expr {emit(add_op,"_t0",$1,$3,null,null);}
+expr:             assignexpr { }
+                | expr PLUS expr {}
                 | expr MINUS expr {}
                 | expr MULTIPLY expr {}
                 | expr DIVIDE expr {}
@@ -127,7 +127,7 @@ term:             LEFT_PARENTHESIS expr RIGHT_PARENTHESIS {}
                 | primary {}
                 ;
 
-assignexpr:       lvalue {if(Flag==1) Flag=0; else LookUpRvalue($1);} ASSIGN expr {} //quad {assign x1 x2}
+assignexpr:       lvalue {if(Flag==1) Flag=0; else LookUpRvalue($1);} ASSIGN expr {}
                 ;
 
 primary:          lvalue {}
@@ -139,30 +139,30 @@ primary:          lvalue {}
 
    
 lvalue:           IDENT {   
-                            $$ = $1;
-                            if(LookUpVariable($1, 0)){
+                            expr *sym=LookUpVariable($1,0);
+                            if(sym==NULL){
                                 if(currentScope == 0){
-                                    addToSymbolTable($1, currentScope, yylineno,GLOB,var_s,getCurrentScopespace(),currentOffset());
+                                    sym=addToSymbolTable($1, currentScope, yylineno,GLOB,var_s,getCurrentScopespace(),currentOffset());
                                     incCurScopeOffset();
                                 }else{
-                                    addToSymbolTable($1, currentScope, yylineno,LOCL,var_s,getCurrentScopespace(),currentOffset());
+                                    sym=addToSymbolTable($1, currentScope, yylineno,LOCL,var_s,getCurrentScopespace(),currentOffset());
                                     incCurScopeOffset();
                                 }
                             }
                             
                         }   
-                | LOCAL IDENT {$$=$2;if(LookUpVariable($2, 1)){
-                                    addToSymbolTable($2, currentScope, yylineno, LOCL,var_s,getCurrentScopespace(),currentOffset());Flag=1;incCurScopeOffset(); }
+                | LOCAL IDENT {expr *sym=LookUpVariable($2, 1); if(sym==NULL){
+                                    sym=addToSymbolTable($2, currentScope, yylineno, LOCL,var_s,getCurrentScopespace(),currentOffset());Flag=1;incCurScopeOffset(); }
                                     else if(libFunctions[$2])cout<<"ERROR at line "<<yylineno<<": Collision with library function"<<endl;
 
                               } 
-                | COLON_COLON IDENT {LookUpScope($2, 0); Flag=1;$$=$2;}
+                | COLON_COLON IDENT { expr *sym=LookUpScope($2, 0); Flag=1;}
                 | member {}
                 ;
 
-member:           lvalue DOT IDENT {$$=$3;}
+member:           lvalue DOT IDENT {}
                 | lvalue LEFT_BRACKET expr RIGHT_BRACKET{}
-                | call DOT IDENT {$$=$3;}
+                | call DOT IDENT {}
                 | call LEFT_BRACKET expr RIGHT_BRACKET{}
                 ;
 
@@ -200,8 +200,8 @@ indexedelem:      LEFT_BRACE expr COLON expr RIGHT_BRACE {}
 block:            LEFT_BRACE {enterScopespace();} loopstmt {decreaseScope();} RIGHT_BRACE {}
                 ;
 
-funcdef:          FUNCTION {nestedFunctionCounter++; addToSymbolTable("$"+to_string(anonymousFuntionCounter++), currentScope, yylineno, USERFUNC,programfunc_s); }  LEFT_PARENTHESIS {currentScope++;} idlist {currentScope--;}RIGHT_PARENTHESIS block {nestedFunctionCounter--;}
-                | FUNCTION IDENT {if(LookUpFunction($2)) addToSymbolTable($2, currentScope, yylineno, USERFUNC,programfunc_s); nestedFunctionCounter++;}  LEFT_PARENTHESIS {currentScope++;enterScopespace();resetFormalArgOffsetCounter();} idlist {currentScope--;} RIGHT_PARENTHESIS {enterScopespace();saveAndResetFunctionOffset();}block {nestedFunctionCounter--;exitScopespace();exitScopespace();getPrevFunctionOffset();}
+funcdef:          FUNCTION {nestedFunctionCounter++; expr *sym=addToSymbolTable("$"+to_string(anonymousFuntionCounter++), currentScope, yylineno, USERFUNC,programfunc_s); }  LEFT_PARENTHESIS {currentScope++;} idlist {currentScope--;}RIGHT_PARENTHESIS block {nestedFunctionCounter--;}
+                | FUNCTION IDENT {if(LookUpFunction($2)) expr *sym=addToSymbolTable($2, currentScope, yylineno, USERFUNC,programfunc_s); nestedFunctionCounter++;}  LEFT_PARENTHESIS {currentScope++;enterScopespace();resetFormalArgOffsetCounter();} idlist {currentScope--;} RIGHT_PARENTHESIS {enterScopespace();saveAndResetFunctionOffset();}block {nestedFunctionCounter--;exitScopespace();exitScopespace();getPrevFunctionOffset();}
                 ;
 
 const:            INTCONST {}
@@ -217,7 +217,7 @@ idlist:           IDENT {
                                 cout<<"ERROR at line "<<yylineno<<": Collision with library function"<<endl;
                             }else{
                                 if(existsInScope($1, currentScope)){
-                                    addToSymbolTable($1, currentScope, yylineno, FORMAL,var_s,getCurrentScopespace(),currentOffset());
+                                    expr *sym=addToSymbolTable($1, currentScope, yylineno, FORMAL,var_s,getCurrentScopespace(),currentOffset());
                                     incCurScopeOffset();
                                 }
                             }
@@ -228,7 +228,7 @@ idlist:           IDENT {
                                 cout<<"ERROR at line "<<yylineno<<": Collision with library function"<<endl;
                             }else{ 
                                 if(existsInScope($3, currentScope)){
-                                    addToSymbolTable($3, currentScope, yylineno, FORMAL,var_s,getCurrentScopespace(),currentOffset());
+                                    expr *sym=addToSymbolTable($3, currentScope, yylineno, FORMAL,var_s,getCurrentScopespace(),currentOffset());
                                     incCurScopeOffset();
                                 }
                             }
@@ -478,7 +478,7 @@ callFunction(string name){
         }
     }
 }
-
+/
 void printSymbolTable() {
     map<int,vector<SymbolTableEntry*> >::iterator it = ScopeTable.begin();
     map<int,string> enumtype;
@@ -492,16 +492,18 @@ void printSymbolTable() {
         cout<<"---------------     Scope #"<<it->first<<"     ---------------"<<endl;
         for(int i=0;i<ScopeTable[it->first].size();i++) {
             cout<<"\""<<ScopeTable[it->first][i]->getName()<<"\" ["<<enumtype[ScopeTable[it->first][i]->getType()]<<"] (line "<<
-                ScopeTable[it->first][i]->getLine()<<") (scope "<<ScopeTable[it->first][i]->getScope()<<")\n";
+                ScopeTable[it->first][i]->getLine()<<") (scope "<<ScopeTable[it->first][i]->getScope()<<" symtype:"<<
+                ScopeTable[it->first][i]->type_toString()<<" space:"<<ScopeTable[it->first][i]->scopespace_toString()
+                <<" offset:"<<ScopeTable[it->first][i]->getOffset()<<")\n";
         }
         it++;
     }
 
 }
-
+/*
 void printQuads(){
 
     for(int i=0; i<quads.size(); i++){
         cout<<quads[i].op<<" "<<quads[i].result<<" "<<quads[i].arg1<<" "<<quads[i].arg2<<endl;
     }
-}
+*/
