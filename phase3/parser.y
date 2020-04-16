@@ -538,6 +538,6 @@ void printSymbolTable() {
 
 void printQuads(){
     for(int i=0; i<quads.size(); i++){
-        cout<<opcodeToString(quads[i]->getOP())<<" "<<quads[i]->getResult()->to_string()<<" "<<quads[i]->getArg1()->to_string()<<" "<<quads[i]->getArg2()->to_string()<<" "<<endl;
+        cout<<opcodeToString(quads[i].getOP())<<" "<<quads[i].getResult()->to_string()<<" "<<quads[i].getArg1()->to_string()<<" "<<quads[i].getArg2()->to_string()<<" "<<endl;
     }
 }
