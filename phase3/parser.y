@@ -50,7 +50,7 @@
     int intValue;
     char* stringValue;
     double doubleValue;
-    class expr *name;
+    class expr *expressionUnion;
 }   
 
 %start program
@@ -65,6 +65,12 @@
 %token UMINUS
 %type <stringValue> lvalue
 %type <stringValue> member
+
+%type <expressionUnion> const
+%type <expressionUnion> primary
+%type <expressionUnion> term
+%type <expressionUnion> expression
+
 %left LEFT_PARENTHESIS RIGHT_PARENTHESIS
 %left LEFT_BRACKET RIGHT_BRACKET
 %left DOT DOT_DOT
@@ -99,7 +105,12 @@ stmt:             expr SEMICOLON {}
                 ;
 
 expr:             assignexpr { }
-                | expr PLUS expr {}
+                | expr PLUS expr {           
+                                expr *expression=new expr(arithexpr_e);
+                                expression->sym=addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
+                                expression->sym->setScopespace(getCurrentScopespace());
+                                emit(add_op, expression, $1, $3, yylineno, 0);
+                            }
                 | expr MINUS expr {}
                 | expr MULTIPLY expr {}
                 | expr DIVIDE expr {}
@@ -112,7 +123,7 @@ expr:             assignexpr { }
                 | expr NOT_EQUAL expr {}
                 | expr AND expr {}
                 | expr OR expr {}
-                | term {}
+                | term {$$=$1;}
                 ;
 
 term:             LEFT_PARENTHESIS expr RIGHT_PARENTHESIS {}
@@ -122,7 +133,7 @@ term:             LEFT_PARENTHESIS expr RIGHT_PARENTHESIS {}
                 | lvalue PLUS_PLUS {LookUpRvalue($1);}
                 | MINUS_MINUS lvalue {LookUpRvalue($2);}
                 | lvalue MINUS_MINUS {LookUpRvalue($1);}
-                | primary {}
+                | primary {$$=$1;}
                 ;
 
 assignexpr:       lvalue {if(Flag==1) Flag=0; else LookUpRvalue($1);} ASSIGN expr {}
@@ -132,7 +143,7 @@ primary:          lvalue {}
                 | call {}
                 | objectdef {}
                 | LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS {}
-                | const {}
+                | const {$$=$1;}
                 ;
 
    
@@ -200,19 +211,19 @@ indexed:          indexedelem {}
 indexedelem:      LEFT_BRACE expr COLON expr RIGHT_BRACE {}
                 ;
 
-block:            LEFT_BRACE {enterScopespace();} loopstmt {decreaseScope();} RIGHT_BRACE {}
+block:            LEFT_BRACE {currentScope++;} loopstmt {decreaseScope();} RIGHT_BRACE {}
                 ;
 
 funcdef:          FUNCTION {nestedFunctionCounter++; expr *expression=new expr(programfunc_e); expression->sym=addToSymbolTable("$"+to_string(anonymousFuntionCounter++), currentScope, yylineno, USERFUNC,programfunc_s); }  LEFT_PARENTHESIS {currentScope++;enterScopespace();} idlist {currentScope--;enterScopespace();saveAndResetFunctionOffset();}RIGHT_PARENTHESIS block {nestedFunctionCounter--;exitScopespace();exitScopespace();getPrevFunctionOffset();}
-                | FUNCTION IDENT {if(LookUpFunction($2)) {expr *expression=new expr(programfunc_e);expression->sym= addToSymbolTable($2, currentScope, yylineno, USERFUNC,programfunc_s); nestedFunctionCounter++;} } LEFT_PARENTHESIS {currentScope++;enterScopespace();resetFormalArgOffsetCounter();} idlist {currentScope--;} RIGHT_PARENTHESIS {enterScopespace();saveAndResetFunctionOffset();}block {nestedFunctionCounter--;exitScopespace();exitScopespace();getPrevFunctionOffset();}
+                | FUNCTION IDENT {if(LookUpFunction($2)) {expr *expression=new expr(programfunc_e);expression->sym= addToSymbolTable($2, currentScope, yylineno, USERFUNC,programfunc_s); nestedFunctionCounter++;} } LEFT_PARENTHESIS {currentScope++cc;enterScopespace();resetFormalArgOffsetCounter();} idlist {currentScope--;} RIGHT_PARENTHESIS {eccace();saveAndResetFunctionOffset();}block {nestedFunctionCounter--;exitScopespace();exitScopespace();getPrevFunctionOffset();}
                 ;
 
-const:            INTCONST {}
-                | DOUBLECONST {}
-                | STRING {}
-                | NIL {}
-                | TRUE {}
-                | FALSE {}
+const:            INTCONST {expr *expression=new expr(constnum_e); expression->setNumConst($1);$$=expression;}
+                | DOUBLECONST {expr *expression=new expr(constnum_e); expression->setNumConst($1);$$=expression;}
+                | STRING {expr *expression=new expr(conststring_e); expression->setStringConst($1);$$=expression;}
+                | NIL {expr *expression=new expr(nil_e); $$=expression;}
+                | TRUE {expr *expression=new expr(constbool_e); expression->setBoolConst(1);$$=expression;}
+                | FALSE {expr *expression=new expr(constbool_e); expression->setBoolConst(0);$$=expression;}
                 ;
  
 idlist:           IDENT {
@@ -320,6 +331,11 @@ string opcodeToString(iopcode _opcode){
     }
 }
 
+SymbolType getGlobLocl(){
+    if(currentScope ==0)return GLOB;
+    return LOCL;
+}
+
 
 string nextVariableName(){
     string numberInString = to_string(tempVariableCount);
@@ -327,6 +343,8 @@ string nextVariableName(){
     tempVariableCount++;
     return RetVal;
 }
+
+
 
 
 SymbolTableEntry*

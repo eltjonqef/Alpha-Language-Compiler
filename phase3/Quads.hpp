@@ -39,7 +39,7 @@ enum expr_t{
     programfunc_e,
     libraryfunc_e,
 
-    airthexpr_e,
+    arithexpr_e,
     boolexpr_e,
     assignexpr_e,
     newtable_e,
@@ -71,7 +71,19 @@ class expr{
             return numConst;
         }
         void setNumConst(double _numConst){
-            numConst=numConst;
+            numConst=_numConst;
+        }
+        void setStringConst(std::string _strConst){
+            strConst=_strConst;
+        }
+        std::string getStringConst(){
+            return strConst;
+        }
+        void setBoolConst(bool _boolConst){
+            boolConst=_boolConst;
+        }
+        bool getBoolConst(){
+            return boolConst;
         }
 };
 
