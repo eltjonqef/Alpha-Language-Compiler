@@ -119,10 +119,17 @@ class expr{
         }
         std::string to_String(){
             if(type == var_e)return sym->getName();
+            if(type == tableitem_e)return "tableitem not handles yet";
+            if(type == programfunc_e)return "programfunc not handled yet";
+            if(type == libraryfunc_e)"libraryfunc not handled yet";
             if(type == arithexpr_e)return sym->getName();
+            if(type == boolexpr_e)return "boolexp not handled yet";
+            if(type == assignexpr_e)return "assingexp not handled yet";
+            if(type == newtable_e)return"newtable not handled yet";
             if(type == constnum_e)return std::to_string(numConst);
+            if(type == constbool_e) return"constbool not handled yet";
+            if(type == conststring_e)return"constring not handled yet";
             if(type == nil_e)return "nil";
-            return "not handled yet";
         }
 };
 
