@@ -44,6 +44,7 @@
     unsigned int tempVariableCount = 0;
     string nextVariableName();
     SymbolType getGlobLocl();
+    expr* expressionHolder;
 %}
 
 
@@ -60,11 +61,13 @@
 %token IF ELSE WHILE FOR FUNCTION RETURN BREAK CONTINUE AND NOT OR LOCAL TRUE FALSE NIL
 %token ASSIGN PLUS MINUS MULTIPLY DIVIDE MOD EQUAL NOT_EQUAL PLUS_PLUS MINUS_MINUS GREATER LESS GREATER_EQUAL LESS_EQUAL
 %token SEMICOLON COMMA COLON COLON_COLON DOT DOT_DOT LEFT_BRACE RIGHT_BRACE LEFT_BRACKET RIGHT_BRACKET LEFT_PARENTHESIS RIGHT_PARENTHESIS 
-%token IDENT
-%token INTCONST
-%token STRING
-%token DOUBLECONST
+%token <stringValue> IDENT
+%token <intValue> INTCONST
+%token <stringValue> STRING
+%token <doubleValue> DOUBLECONST
 %token UMINUS
+%type <stringValue> lvalue
+%type <stringValue> member
 
 %type <expressionUnion> const
 %type <expressionUnion> primary
@@ -105,11 +108,11 @@ stmt:             expr SEMICOLON {}
                 ;
 
 expr:             assignexpr { }
-                | expr PLUS expr {           
+                | expr{expressionHolder = $1} PLUS expr {           
                                 expr *expression=new expr(arithexpr_e);
                                 expression->sym=addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
                                 expression->sym->setScopespace(getCurrentScopespace());
-                                emit(add_op, expression, $1, $3, yylineno, 0);
+                                emit(add_op, expression, expressionHolder, $3, yylineno, 0);
                             }
                 | expr MINUS expr {}
                 | expr MULTIPLY expr {}
