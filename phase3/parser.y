@@ -69,7 +69,7 @@
 %type <expressionUnion> const
 %type <expressionUnion> primary
 %type <expressionUnion> term
-%type <expressionUnion> expression
+%type <expressionUnion> expr
 
 %left LEFT_PARENTHESIS RIGHT_PARENTHESIS
 %left LEFT_BRACKET RIGHT_BRACKET
