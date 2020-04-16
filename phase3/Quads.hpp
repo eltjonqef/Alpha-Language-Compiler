@@ -85,6 +85,13 @@ class expr{
         bool getBoolConst(){
             return boolConst;
         }
+        std::string to_string(){
+            if(type == var_e)return sym->getName();
+            if(type == arithexpr_e)return sym->getName();
+            if(type == constnum_e)return std::to_string(numConst);
+            if(type == nil_e)return "nil";
+            return "not handled yet";
+        }
 };
 
 class quad{
@@ -107,14 +114,14 @@ class quad{
         iopcode getOP(){
             return op;
         }
-        expr_t getResult(){
-            return result->getType();
+        expr* getResult(){
+            return result;
         }
-        expr_t getArg1(){
-            return arg1->getType();
+        expr* getArg1(){
+            return arg1;
         }
-        expr_t getArg2(){
-            return arg2->getType();
+        expr* getArg2(){
+            return arg2;
         }
         unsigned getLabel(){
             return label;
