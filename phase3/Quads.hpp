@@ -51,6 +51,38 @@ enum expr_t{
     nil_e
 };
 
+string opcodeToString(iopcode _opcode){
+    iopcode temp = _opcode;
+    switch(temp){
+        case assign_op:return "assign";
+        case add_op:return "add";
+        case sub_op:return "sub";
+        case mul_op:return "mul";
+        case div_op:return "div";
+        case mod_op:return "mod";
+        case uminus_op:return "uminus";
+        case and_op:return "and";
+        case or_op:return "or";
+        case not_op:return "not";
+        case if_eq_op: return "if_eq";
+        case if_noteq_op:return "if_noteq";
+        case if_lesseq_op:return "if_lesseq";
+        case if_greatereq_op:return "if_greatereq_op";
+        case if_less_op:return "if_less";
+        case if_greater_op:return "if_greater";
+        case call_op:return "call";
+        case param_op:return "param";
+        case ret_op:return "return";
+        case getretval_op: return "getretval";
+        case funcstart_op:return "funcstart";
+        case funcend_op:return "funcend";
+        case tablecreate_op:return "tablecreate";
+        case tablegetelem_op:return "tablegetelem";
+        case tablesetelem_op:return "tablesetelem";
+        /*maybe throw error here uwu*/
+    }
+}
+
 class expr{
     private:
         expr_t type;
@@ -85,7 +117,7 @@ class expr{
         bool getBoolConst(){
             return boolConst;
         }
-        std::string to_string(){
+        std::string to_String(){
             if(type == var_e)return sym->getName();
             if(type == arithexpr_e)return sym->getName();
             if(type == constnum_e)return std::to_string(numConst);
@@ -97,15 +129,15 @@ class expr{
 class quad{
     private:
         iopcode op;
-        expr* result;
-        expr* arg1;
-        expr* arg2;
+        expr* result = NULL;
+        expr* arg1 = NULL;
+        expr* arg2 = NULL;
         unsigned label;
         unsigned line;
     public:
-        quad(iopcode _op,expr* _result, expr* _arg1, expr* _arg2, unsigned _label, unsigned _line){
+        quad(iopcode _op,expr* _result,expr* _arg1, expr* _arg2, unsigned _label, unsigned _line){
             op = _op;
-            result=_result;
+            result = _result;
             arg1=_arg1;
             arg2=_arg2;
             label=_label;
@@ -128,6 +160,13 @@ class quad{
         }
         unsigned getLine(){
             return line;
+        }
+        std::string toString(){
+            std::string retval = opcodeToString(op);
+            if(result != NULL){retval = retval +" "+ result->to_String();}
+            if(arg1 != NULL){retval = retval +" "+arg1->to_String();}
+            if(arg2 != NULL){retval = retval +" "+arg2->to_String();}
+            return retval;
         }
         
 };
@@ -159,3 +198,6 @@ emit(iopcode op, expr* result, expr* arg1, expr* arg2, unsigned label, unsigned 
     quad newQuad(op,result, arg1, arg2, label, line);
     quads.push_back(newQuad);
 }
+
+
+
