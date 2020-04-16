@@ -130,6 +130,7 @@ class expr{
             if(type == constbool_e) return"constbool not handled yet";
             if(type == conststring_e)return"constring not handled yet";
             if(type == nil_e)return "nil";
+            return "fuck";
         }
 };
 
