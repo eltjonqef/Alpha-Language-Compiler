@@ -61,7 +61,6 @@ class expr{
         string strConst;
         unsigned char boolConst;
         expr* next;
-    
 };
 
 class quad{
@@ -110,36 +109,3 @@ emit(iopcode op, expr* result, expr* arg1, expr* arg2, unsigned label, unsigned 
     quad newQuad(op,result, arg1, arg2, label, line);
     quads.push_back(newQuad);
 }
-
-
-unsigned programVarOffsetCounter = 0;
-unsigned functionLocalOffsetCounter = 0;
-unsigned formalArgOffsetCounter = 0;
-int scopeSpaceCounter = 0;
-
-enum scopespace_t{
-    programvar,functionlocal,formalarg
-}
-
-enum symbol_t {var_s,programfunc_s,libraryfunc_s};
-
-struct symbol {
-    symbol_t type;
-    string name;
-    scopespace_t space;
-    unsigned offset;
-    unsigned scope;
-    unsigned line;
-}
-
-scopespace_t getCurrentScopespace(void) {
-    if(scopeSpaceCounter == 1){
-        return programvar;
-    }else if(scopaSpaceCounter % 2 == 0){
-        return formalarg;
-    }else{
-        return functionlocal;
-    }
-}
-
-unsinged currentOf

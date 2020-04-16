@@ -14,12 +14,12 @@
     int yyerror(string yaccProvideMessage);
     int yylex();
     void InitilizeLibraryFunctions();
-    void addToSymbolTable(string _name, int _scope, int _line, SymbolType _type);
+    SymbolTableEntry *addToSymbolTable(string _name, int _scope, int _line, SymbolType _type);
     void decreaseScope();
     void printSymbolTable();
     bool LookUpScope(string name, int scope);
     bool LookUpFunction(string name);
-    bool LookUpVariable(string variable, int flag);
+    SymbolTableEntry *LookUpVariable(string variable, int flag);
     void LookUpRvalue(string name);
     void callFunction(string name);
     bool existsInScope(string name, int scope);
@@ -32,8 +32,8 @@
     extern int yylineno;
     extern char* yytext;
     extern FILE* yyin;
-
     unsigned int currentScope = 0;
+
 
     int anonymousFuntionCounter=0;
     map <string,vector<SymbolTableEntry*> > SymbolTable;
@@ -52,6 +52,7 @@
     int intValue;
     char* stringValue;
     double doubleValue;
+    expr *name;
 }
 
 %start program
@@ -126,7 +127,7 @@ term:             LEFT_PARENTHESIS expr RIGHT_PARENTHESIS {}
                 | primary {}
                 ;
 
-assignexpr:       lvalue {if(Flag==1) Flag=0; else LookUpRvalue($1);} ASSIGN expr {emit(assign_op,null,$1,$3`1);} //quad {assign x1 x2}
+assignexpr:       lvalue {if(Flag==1) Flag=0; else LookUpRvalue($1);} ASSIGN expr {} //quad {assign x1 x2}
                 ;
 
 primary:          lvalue {}
@@ -136,22 +137,24 @@ primary:          lvalue {}
                 | const {}
                 ;
 
-
+   
 lvalue:           IDENT {   
                             $$ = $1;
                             if(LookUpVariable($1, 0)){
                                 if(currentScope == 0){
-                                    addToSymbolTable($1, currentScope, yylineno,GLOB);
+                                    addToSymbolTable($1, currentScope, yylineno,GLOB,var_s,getCurrentScopespace(),currentOffset());
+                                    incCurScopeOffset();
                                 }else{
-                                    addToSymbolTable($1, currentScope, yylineno,LOCL);
+                                    addToSymbolTable($1, currentScope, yylineno,LOCL,var_s,getCurrentScopespace(),currentOffset());
+                                    incCurScopeOffset();
                                 }
                             }
                             
                         }   
                 | LOCAL IDENT {$$=$2;if(LookUpVariable($2, 1)){
-                                    addToSymbolTable($2, currentScope, yylineno, LOCL);Flag=1; }
+                                    addToSymbolTable($2, currentScope, yylineno, LOCL,var_s,getCurrentScopespace(),currentOffset());Flag=1;incCurScopeOffset(); }
                                     else if(libFunctions[$2])cout<<"ERROR at line "<<yylineno<<": Collision with library function"<<endl;
-                                
+
                               } 
                 | COLON_COLON IDENT {LookUpScope($2, 0); Flag=1;$$=$2;}
                 | member {}
@@ -194,11 +197,11 @@ indexed:          indexedelem {}
 indexedelem:      LEFT_BRACE expr COLON expr RIGHT_BRACE {}
                 ;
 
-block:            LEFT_BRACE {currentScope++;} loopstmt {decreaseScope();} RIGHT_BRACE {}
+block:            LEFT_BRACE {enterScopespace();} loopstmt {decreaseScope();} RIGHT_BRACE {}
                 ;
 
-funcdef:          FUNCTION {nestedFunctionCounter++; addToSymbolTable("$"+to_string(anonymousFuntionCounter++), currentScope, yylineno, USERFUNC); }  LEFT_PARENTHESIS {currentScope++;} idlist {currentScope--;}RIGHT_PARENTHESIS block {nestedFunctionCounter--;}
-                | FUNCTION IDENT {if(LookUpFunction($2)) addToSymbolTable($2, currentScope, yylineno, USERFUNC); nestedFunctionCounter++;}  LEFT_PARENTHESIS {currentScope++;} idlist {currentScope--;} RIGHT_PARENTHESIS block {nestedFunctionCounter--;}
+funcdef:          FUNCTION {nestedFunctionCounter++; addToSymbolTable("$"+to_string(anonymousFuntionCounter++), currentScope, yylineno, USERFUNC,programfunc_s); }  LEFT_PARENTHESIS {currentScope++;} idlist {currentScope--;}RIGHT_PARENTHESIS block {nestedFunctionCounter--;}
+                | FUNCTION IDENT {if(LookUpFunction($2)) addToSymbolTable($2, currentScope, yylineno, USERFUNC,programfunc_s); nestedFunctionCounter++;}  LEFT_PARENTHESIS {currentScope++;enterScopespace();resetFormalArgOffsetCounter();} idlist {currentScope--;} RIGHT_PARENTHESIS {enterScopespace();saveAndResetFunctionOffset();}block {nestedFunctionCounter--;exitScopespace();exitScopespace();getPrevFunctionOffset();}
                 ;
 
 const:            INTCONST {}
@@ -208,13 +211,14 @@ const:            INTCONST {}
                 | TRUE {}
                 | FALSE {}
                 ;
-
+ 
 idlist:           IDENT {
                             if(libFunctions[$1]) {
                                 cout<<"ERROR at line "<<yylineno<<": Collision with library function"<<endl;
                             }else{
                                 if(existsInScope($1, currentScope)){
-                                    addToSymbolTable($1, currentScope, yylineno, FORMAL);
+                                    addToSymbolTable($1, currentScope, yylineno, FORMAL,var_s,getCurrentScopespace(),currentOffset());
+                                    incCurScopeOffset();
                                 }
                             }
                                 
@@ -224,7 +228,8 @@ idlist:           IDENT {
                                 cout<<"ERROR at line "<<yylineno<<": Collision with library function"<<endl;
                             }else{ 
                                 if(existsInScope($3, currentScope)){
-                                    addToSymbolTable($3, currentScope, yylineno, FORMAL);
+                                    addToSymbolTable($3, currentScope, yylineno, FORMAL,var_s,getCurrentScopespace(),currentOffset());
+                                    incCurScopeOffset();
                                 }
                             }
                                
@@ -317,29 +322,30 @@ string nextVariableName(){
 }
 
 
-void
+SymbolTableEntry*
 addToSymbolTable(string _name, int _scope, int _line, SymbolType _type) {
     SymbolTableEntry *newEntry = new SymbolTableEntry(_name,_scope,_line,_type);
     SymbolTable[_name].push_back(newEntry);
     ScopeTable[_scope].push_back(newEntry);
+    return newEntry;
 }
 
 
 
 void
 InitilizeLibraryFunctions(){
-    addToSymbolTable("print",0,0,LIBFUNC);
-    addToSymbolTable("input",0,0,LIBFUNC);
-    addToSymbolTable("objectmemberkeys",0,0,LIBFUNC);
-    addToSymbolTable("objecttotalmembers",0,0,LIBFUNC);
-    addToSymbolTable("objectcopy",0,0,LIBFUNC);
-    addToSymbolTable("totalarguments",0,0,LIBFUNC);
-    addToSymbolTable("argument",0,0,LIBFUNC);
-    addToSymbolTable("typeof",0,0,LIBFUNC);
-    addToSymbolTable("strtonum",0,0,LIBFUNC);
-    addToSymbolTable("sqrt",0,0,LIBFUNC);
-    addToSymbolTable("cos",0,0,LIBFUNC);
-    addToSymbolTable("sin",0,0,LIBFUNC);
+    addToSymbolTable("print",0,0,LIBFUNC,libraryfunc_s);
+    addToSymbolTable("input",0,0,LIBFUNC,libraryfunc_s);
+    addToSymbolTable("objectmemberkeys",0,0,LIBFUNC,libraryfunc_s);
+    addToSymbolTable("objecttotalmembers",0,0,LIBFUNC,libraryfunc_s);
+    addToSymbolTable("objectcopy",0,0,LIBFUNC,libraryfunc_s);
+    addToSymbolTable("totalarguments",0,0,LIBFUNC,libraryfunc_s);
+    addToSymbolTable("argument",0,0,LIBFUNC,libraryfunc_s);
+    addToSymbolTable("typeof",0,0,LIBFUNC,libraryfunc_s);
+    addToSymbolTable("strtonum",0,0,LIBFUNC,libraryfunc_s);
+    addToSymbolTable("sqrt",0,0,LIBFUNC,libraryfunc_s);
+    addToSymbolTable("cos",0,0,LIBFUNC,libraryfunc_s);
+    addToSymbolTable("sin",0,0,LIBFUNC,libraryfunc_s);
     libFunctions["print"]=1;
     libFunctions["input"]=1;
     libFunctions["objectmemberkeys"]=1;
@@ -353,7 +359,6 @@ InitilizeLibraryFunctions(){
     libFunctions["cos"]=1;
     libFunctions["sin"]=1;
 }
-
 
 void
 decreaseScope() {
@@ -393,25 +398,25 @@ LookUpFunction(string name){
     LookUp when name is variable
     Will possibly put this and LookUpFunction as one
 */
-bool
+SymbolTableEntry*
 LookUpVariable(string name, int flag){
     if(libFunctions[name]){
-        return false;
+        return NULL;
     }
     for(int i=SymbolTable[name].size()-1; i>=0; i--){
         if(SymbolTable[name][i]->isActive()){
-            if(flag==0){
+            /*if(flag==0){
                 if(SymbolTable[name][i]->getType()==2 && currentScope>SymbolTable[name][i]->getScope())
                     cout<<"ERROR:"<<name<<" at line:"<<yylineno<<" is formal variable of a previous scope function."<<endl;
                 if(SymbolTable[name][i]->getType()==1 && !LookUpScope("", SymbolTable[name][i]->getScope()))
                     cout<<"ERROR:"<<name<<" at line:"<<yylineno<<" is local variable of a previous scope function."<<endl;
-                return false;
+                return SymbolTable[name][i];
             }
-            else
-                return true;
+            else*/
+                return SymbolTable[name][i];
         }
     }
-    return true;
+    return NULL;
 }
 
 void
