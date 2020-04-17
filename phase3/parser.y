@@ -158,8 +158,8 @@ expr:             assignexpr {$$=$1; }
                 | expr LESS_EQUAL expr {}
                 | expr EQUAL expr {}
                 | expr NOT_EQUAL expr {}
-                | expr AND expr {           
-                                    expr* expression=new expr(arithexpr_e);
+                | expr AND expr {          
+                                    expr* expression=new expr(boolexpr_e);
                                     expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
                                     expression->sym->setScopespace(getCurrentScopespace());
                                     expression->sym->setOffset(0);
@@ -167,7 +167,7 @@ expr:             assignexpr {$$=$1; }
                                     $$=expression;
                                 }
                 | expr OR expr {           
-                                    expr* expression=new expr(arithexpr_e);
+                                    expr* expression=new expr(boolexpr_e);
                                     expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
                                     expression->sym->setScopespace(getCurrentScopespace());
                                     expression->sym->setOffset(0);
@@ -178,9 +178,33 @@ expr:             assignexpr {$$=$1; }
                 ;
 
 term:             '(' expr ')' {}
-                | UMINUS expr {}
-                | NOT expr {}
-                | PLUS_PLUS lvalue {/*LookUpRvalue($2);*/int a=5;}
+                | UMINUS expr {
+                                expr* expression = new expr(arithexpr_e);
+                                expression->sym = addToSymbolTable(nextVariableName(),currentOffset,yylineno,getGlobLocl(),var_s);
+                                expression->sym->setScopespace(getCurrentScopespace());
+                                expression->setOffset(0);
+                                emit(uminus_op,expression,$2,NULL,yylino,0);
+                                $$=expression;
+                              }
+                | NOT expr  {
+                                expr* expression=new expr(boolexpr_e);
+                                expression->sym=addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
+                                expression->sym->setOffset(0);
+                                expression->sym->setScopespace(getCurrentScopespace());
+                                emit(not_op, expression, $2, NULL, yylineno, 0);
+                                $$=expression;
+                            }
+                | PLUS_PLUS lvalue  {/*LookUpRvalue($2);*/
+                                        expr *arrExpr=new expr(constnum_e);
+                                        arrExpr->setNumConst(1);
+                                        emit(add_op, $2, $2, arrExpr, yylineno, 0);
+                                        expr* expression= new expr(arithexpr_e);
+                                        expression->sym=addToSymbolTable(nextVariableName(),currentOffset,yylineno,getGlobLocl(),var_s);
+                                        expression->sym->setScopespace(getCurrentScopespace());
+                                        expression->setOffset(0);
+                                        emit(assign_op, expression, $2, NULL, yylineno, 0);
+                                        $$=expression;
+                                    }
                 | lvalue PLUS_PLUS {/*LookUpRvalue($1);*/int b=5;}
                 | MINUS_MINUS lvalue {/*LookUpRvalue($2);*/int a=6;}
                 | lvalue MINUS_MINUS {/*LookUpRvalue($1);*/int b=6;}
@@ -192,6 +216,7 @@ assignexpr:       lvalue '=' expr {
                                     expr* expression=new expr(assignexpr_e);
                                     expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
                                     emit(assign_op, expression,$1, NULL, yylineno, 0);
+                                    $$=expression;
                                   }
                 ;
 

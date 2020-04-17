@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <vector>
 
-enum iopcode{ 
+enum iopcode{
     assign_op,
     add_op,
     sub_op,
