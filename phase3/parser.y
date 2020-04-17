@@ -65,7 +65,6 @@
 %token <intValue> INTCONST
 %token <stringValue> STRING
 %token <doubleValue> DOUBLECONST
-%token UMINUS
 
 %type <expressionUnion> const
 %type <expressionUnion> primary
@@ -81,7 +80,7 @@
 %nonassoc '>' GREATER_EQUAL '<' LESS_EQUAL
 %left '+' '-' 
 %left '*' '/' '%'
-%right NOT PLUS_PLUS MINUS_MINUS UMINUS
+%right NOT PLUS_PLUS MINUS_MINUS '-'
 %left '.' DOT_DOT
 %left '[' ']'
 %left '(' ')'
@@ -178,7 +177,7 @@ expr:             assignexpr {$$=$1; }
                 ;
 
 term:             '(' expr ')' {}
-                | UMINUS expr {
+                | '-' expr {
                                 expr* expression = new expr(arithexpr_e);
                                 expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                                 expression->sym->setScopespace(getCurrentScopespace());
