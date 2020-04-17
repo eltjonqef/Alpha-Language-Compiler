@@ -59,32 +59,31 @@
 %start program
 
 %token IF ELSE WHILE FOR FUNCTION RETURN BREAK CONTINUE AND NOT OR LOCAL TRUE FALSE NIL
-%token ASSIGN PLUS MINUS MULTIPLY DIVIDE MOD EQUAL NOT_EQUAL PLUS_PLUS MINUS_MINUS GREATER LESS GREATER_EQUAL LESS_EQUAL
-%token SEMICOLON COMMA COLON COLON_COLON DOT DOT_DOT LEFT_BRACE RIGHT_BRACE LEFT_BRACKET RIGHT_BRACKET LEFT_PARENTHESIS RIGHT_PARENTHESIS 
+%token '=' '+' '-' '*' '/' '%' EQUAL NOT_EQUAL PLUS_PLUS MINUS_MINUS '>' '<' GREATER_EQUAL LESS_EQUAL
+%token ';' ',' ':' COLON_COLON '.' DOT_DOT '{' '}' '[' ']' '(' ')' 
 %token <stringValue> IDENT
 %token <intValue> INTCONST
 %token <stringValue> STRING
 %token <doubleValue> DOUBLECONST
 %token UMINUS
-%type <stringValue> lvalue
-%type <stringValue> member
 
 %type <expressionUnion> const
 %type <expressionUnion> primary
 %type <expressionUnion> term
 %type <expressionUnion> expr
-
-%left LEFT_PARENTHESIS RIGHT_PARENTHESIS
-%left LEFT_BRACKET RIGHT_BRACKET
-%left DOT DOT_DOT
+%type <expressionUnion> assignexpr
+%type <expressionUnion> lvalue
+%left '(' ')'
+%left '[' ']'
+%left '.' DOT_DOT
 %right NOT PLUS_PLUS MINUS_MINUS UMINUS
-%left MULTIPLY DIVIDE MOD
-%left PLUS MINUS 
-%nonassoc GREATER GREATER_EQUAL LESS LESS_EQUAL
+%left '*' '/' '%'
+%left '+' '-' 
+%nonassoc '>' GREATER_EQUAL '<' LESS_EQUAL
 %nonassoc EQUAL NOT_EQUAL
 %left AND
 %left OR
-%right ASSIGN
+%right '='
 
 
 %%
@@ -94,58 +93,94 @@ program:          loopstmt {}
 loopstmt:         loopstmt stmt {}
                 | {}
                 ;
-stmt:             expr SEMICOLON {}
+stmt:             expr ';' {}
                 | ifstmt {}
                 | whilestmt {}
                 | forstmt {}
                 | {returnState=1;}returnstmt {returnState=0; if(!nestedFunctionCounter) {cout<<"ERROR at line "<<yylineno<<": return while not inside a function."<<endl;}
                     }
-                | BREAK SEMICOLON {if(!nestedLoopCounter) {cout<<"ERROR at line "<<yylineno<<": break while not inside a loop."<<endl;}}
-                | CONTINUE SEMICOLON {if(!nestedLoopCounter) {cout<<"ERROR at line "<<yylineno<<": continue while not inside a loop."<<endl;}}
+                | BREAK ';' {if(!nestedLoopCounter) {cout<<"ERROR at line "<<yylineno<<": break while not inside a loop."<<endl;}}
+                | CONTINUE ';' {if(!nestedLoopCounter) {cout<<"ERROR at line "<<yylineno<<": continue while not inside a loop."<<endl;}}
                 | block {}
                 | funcdef {}
-                | SEMICOLON {}
+                | ';' {}
                 ;
 
-expr:             assignexpr { }
-                | expr{expressionHolder = $1;} PLUS expr {           
-                                expr* expression=new expr(arithexpr_e);
-                                expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
-                                expression->sym->setScopespace(getCurrentScopespace());
-                                emit(add_op, expression, expressionHolder, $4, yylineno, 0);
-                            }
-                | expr MINUS expr {}
-                | expr MULTIPLY expr {}
-                | expr DIVIDE expr {}
-                | expr MOD expr {}
-                | expr GREATER expr {}
+expr:             assignexpr {$$=$1; }
+                | expr '+' expr {           
+                                    expr* expression=new expr(arithexpr_e);
+                                    expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
+                                    expression->sym->setScopespace(getCurrentScopespace());
+                                    emit(add_op, expression, $1, $3, yylineno, 0);
+                                    $$=expression;
+                                }
+                | expr '-' expr {           
+                                    expr* expression=new expr(arithexpr_e);
+                                    expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
+                                    expression->sym->setScopespace(getCurrentScopespace());
+                                    emit(sub_op, expression, $1, $3, yylineno, 0);
+                                }
+                | expr '*' expr {           
+                                    expr* expression=new expr(arithexpr_e);
+                                    expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
+                                    expression->sym->setScopespace(getCurrentScopespace());
+                                    emit(mul_op, expression, $1, $3, yylineno, 0);
+                                }
+                | expr '/' expr {           
+                                    expr* expression=new expr(arithexpr_e);
+                                    expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
+                                    expression->sym->setScopespace(getCurrentScopespace());
+                                    emit(div_op, expression, $1, $3, yylineno, 0);
+                                }
+                | expr '%' expr {           
+                                    expr* expression=new expr(arithexpr_e);
+                                    expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
+                                    expression->sym->setScopespace(getCurrentScopespace());
+                                    emit(mod_op, expression, $1, $3, yylineno, 0);
+                                }
+                | expr '>' expr {}
                 | expr GREATER_EQUAL expr {}
-                | expr LESS expr {}
+                | expr '<' expr {}
                 | expr LESS_EQUAL expr {}
                 | expr EQUAL expr {}
                 | expr NOT_EQUAL expr {}
-                | expr AND expr {}
-                | expr OR expr {}
+                | expr AND expr {           
+                                    expr* expression=new expr(arithexpr_e);
+                                    expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
+                                    expression->sym->setScopespace(getCurrentScopespace());
+                                    emit(and_op, expression, $1, $3, yylineno, 0);
+                                }
+                | expr OR expr {           
+                                    expr* expression=new expr(arithexpr_e);
+                                    expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
+                                    expression->sym->setScopespace(getCurrentScopespace());
+                                    emit(or_op, expression, $1, $3, yylineno, 0);
+                                }
                 | term {$$=$1;}
                 ;
 
-term:             LEFT_PARENTHESIS expr RIGHT_PARENTHESIS {}
+term:             '(' expr ')' {}
                 | UMINUS expr {}
                 | NOT expr {}
-                | PLUS_PLUS lvalue {LookUpRvalue($2);}
-                | lvalue PLUS_PLUS {LookUpRvalue($1);}
-                | MINUS_MINUS lvalue {LookUpRvalue($2);}
-                | lvalue MINUS_MINUS {LookUpRvalue($1);}
+                | PLUS_PLUS lvalue /*{LookUpRvalue($2);}*/
+                | lvalue PLUS_PLUS /*{LookUpRvalue($1);}*/
+                | MINUS_MINUS lvalue /*{LookUpRvalue($2);}*/
+                | lvalue MINUS_MINUS /*{LookUpRvalue($1);}*/
                 | primary {$$=$1;}
                 ;
 
-assignexpr:       lvalue {if(Flag==1) Flag=0; else LookUpRvalue($1);} ASSIGN expr {}
+assignexpr:       lvalue '=' expr {           
+                                    emit(assign_op, $1, $3, NULL, yylineno, 0);
+                                    expr* expression=new expr(assignexpr_e);
+                                    expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
+                                    emit(assign_op, expression, $1, NULL, yylineno, 0);
+                                  }
                 ;
 
 primary:          lvalue {}
                 | call {}
                 | objectdef {}
-                | LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS {}
+                | '(' funcdef ')' {}
                 | const {$$=$1;}
                 ;
 
@@ -177,48 +212,48 @@ lvalue:           IDENT {
                 | member {}
                 ;
 
-member:           lvalue DOT IDENT {}
-                | lvalue LEFT_BRACKET expr RIGHT_BRACKET{}
-                | call DOT IDENT {}
-                | call LEFT_BRACKET expr RIGHT_BRACKET{}
+member:           lvalue '.' IDENT {}
+                | lvalue '[' expr ']'{}
+                | call '.' IDENT {}
+                | call '[' expr ']'{}
                 ;
 
-call:             call LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {}
-                | lvalue callsuffix {if(callFlag==1){callFlag=0;}else {if(!returnState) callFunction($1);} }
-                | LEFT_PARENTHESIS funcdef RIGHT_PARENTHESIS LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {}
+call:             call '(' elist ')' {}
+                | lvalue callsuffix {/*if(callFlag==1){callFlag=0;}else {if(!returnState) callFunction($1);} */}
+                | '(' funcdef ')' '(' elist ')' {}
                 ;
 
 callsuffix:       normcall {}
                 | methodcall {}
                 ;
 
-normcall:         LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {}
+normcall:         '(' elist ')' {}
                 ;
 
-methodcall:       DOT_DOT IDENT {if(!returnState) callFlag=1; callFunction($2);} LEFT_PARENTHESIS elist RIGHT_PARENTHESIS {}
+methodcall:       DOT_DOT IDENT {if(!returnState) callFlag=1; callFunction($2);} '(' elist ')' {}
                 ;
 
 elist:            expr {}
-                | expr COMMA elist {}
+                | expr ',' elist {}
                 |{}
                 ;
 
-objectdef:        LEFT_BRACKET elist RIGHT_BRACKET {}
-                | LEFT_BRACKET indexed RIGHT_BRACKET {}
+objectdef:        '[' elist ']' {}
+                | '[' indexed ']' {}
                 ;
 
 indexed:          indexedelem {}
-                | indexedelem COMMA indexed {}
+                | indexedelem ',' indexed {}
                 ;
 
-indexedelem:      LEFT_BRACE expr COLON expr RIGHT_BRACE {}
+indexedelem:      '{' expr ':' expr '}' {}
                 ;
 
-block:            LEFT_BRACE {currentScope++;} loopstmt {decreaseScope();} RIGHT_BRACE {}
+block:            '{' {currentScope++;} loopstmt {decreaseScope();} '}' {}
                 ;
 
-funcdef:          FUNCTION {nestedFunctionCounter++; expr *expression=new expr(programfunc_e); expression->sym=addToSymbolTable("$"+to_string(anonymousFuntionCounter++), currentScope, yylineno, USERFUNC,programfunc_s); }  LEFT_PARENTHESIS {currentScope++;enterScopespace();} idlist {currentScope--;enterScopespace();saveAndResetFunctionOffset();}RIGHT_PARENTHESIS block {nestedFunctionCounter--;exitScopespace();exitScopespace();getPrevFunctionOffset();}
-                | FUNCTION IDENT {if(LookUpFunction($2)) {expr *expression=new expr(programfunc_e);expression->sym= addToSymbolTable($2, currentScope, yylineno, USERFUNC,programfunc_s); nestedFunctionCounter++;} } LEFT_PARENTHESIS {currentScope++;enterScopespace();resetFormalArgOffsetCounter();} idlist {currentScope--;} RIGHT_PARENTHESIS {enterScopespace();saveAndResetFunctionOffset();}block {nestedFunctionCounter--;exitScopespace();exitScopespace();getPrevFunctionOffset();}
+funcdef:          FUNCTION {nestedFunctionCounter++; expr *expression=new expr(programfunc_e); expression->sym=addToSymbolTable("$"+to_string(anonymousFuntionCounter++), currentScope, yylineno, USERFUNC,programfunc_s); }  '(' {currentScope++;enterScopespace();} idlist {currentScope--;enterScopespace();saveAndResetFunctionOffset();}')' block {nestedFunctionCounter--;exitScopespace();exitScopespace();getPrevFunctionOffset();}
+                | FUNCTION IDENT {if(LookUpFunction($2)) {expr *expression=new expr(programfunc_e);expression->sym= addToSymbolTable($2, currentScope, yylineno, USERFUNC,programfunc_s); nestedFunctionCounter++;} } '(' {currentScope++;enterScopespace();resetFormalArgOffsetCounter();} idlist {currentScope--;} ')' {enterScopespace();saveAndResetFunctionOffset();}block {nestedFunctionCounter--;exitScopespace();exitScopespace();getPrevFunctionOffset();}
                 ;
 
 const:            INTCONST {expr *expression=new expr(constnum_e); expression->setNumConst($1);$$=expression;}
@@ -242,7 +277,7 @@ idlist:           IDENT {
                             }
                                 
                         }
-                | idlist COMMA IDENT {
+                | idlist ',' IDENT {
                             if(libFunctions[$3]){
                                 cout<<"ERROR at line "<<yylineno<<": Collision with library function"<<endl;
                             }else{ 
@@ -259,18 +294,18 @@ idlist:           IDENT {
                 ;
 
 
-ifstmt:           IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt {}
-                | IF LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt ELSE stmt {}
+ifstmt:           IF '(' expr ')' stmt {}
+                | IF '(' expr ')' stmt ELSE stmt {}
                 ;
 
-whilestmt:        WHILE {nestedLoopCounter++;} LEFT_PARENTHESIS expr RIGHT_PARENTHESIS stmt {nestedLoopCounter--;}
+whilestmt:        WHILE {nestedLoopCounter++;} '(' expr ')' stmt {nestedLoopCounter--;}
                 ;
 
-forstmt:          FOR {nestedLoopCounter++;} LEFT_PARENTHESIS elist SEMICOLON expr SEMICOLON elist RIGHT_PARENTHESIS stmt {nestedLoopCounter--;}
+forstmt:          FOR {nestedLoopCounter++;} '(' elist ';' expr ';' elist ')' stmt {nestedLoopCounter--;}
                 ;
 
-returnstmt:       RETURN SEMICOLON {}
-                | RETURN expr SEMICOLON {}
+returnstmt:       RETURN ';' {}
+                | RETURN expr ';' {}
                 ;
             
 %%

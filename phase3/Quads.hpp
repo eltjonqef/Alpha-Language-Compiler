@@ -124,7 +124,7 @@ class expr{
             if(type == libraryfunc_e)"libraryfunc not handled yet";
             if(type == arithexpr_e)return sym->getName();
             if(type == boolexpr_e)return "boolexp not handled yet";
-            if(type == assignexpr_e)return "assingexp not handled yet";
+            if(type == assignexpr_e)return sym->getName();
             if(type == newtable_e)return"newtable not handled yet";
             if(type == constnum_e)return std::to_string(numConst);
             if(type == constbool_e) return"constbool not handled yet";

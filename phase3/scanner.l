@@ -31,18 +31,18 @@
     std::map<std::string, int> enumMap;
 
     void initEnumMap(){
-        enumMap["="] = ASSIGN;
-        enumMap["+"] = PLUS;
-        enumMap["-"] = MINUS;
-        enumMap["*"] = MULTIPLY;
-        enumMap["/"] = DIVIDE;
-        enumMap["%"] = MOD;
+        enumMap["="] = '=';
+        enumMap["+"] = '+';
+        enumMap["-"] = '-';
+        enumMap["*"] = '*';
+        enumMap["/"] = '/';
+        enumMap["%"] = '%';
         enumMap["=="]= EQUAL;
         enumMap["!="]= NOT_EQUAL;
         enumMap["++"]= PLUS_PLUS;
         enumMap["--"]= MINUS_MINUS;
-        enumMap[">"] = GREATER;
-        enumMap["<"] = LESS;
+        enumMap[">"] = '>';
+        enumMap["<"] = '<';
         enumMap[">="]= GREATER_EQUAL;
         enumMap["<="]= LESS_EQUAL;
 
@@ -62,18 +62,18 @@
         enumMap["false"] = FALSE;
         enumMap["nil"] = NIL;
 
-        enumMap[";"] = SEMICOLON;
-        enumMap[","] = COMMA;
-        enumMap[":"] = COLON;
+        enumMap[";"] = ';';
+        enumMap[","] = ',';
+        enumMap[":"] = ':';
         enumMap["::"] = COLON_COLON;
-        enumMap["."] = DOT;
+        enumMap["."] = '.';
         enumMap[".."] = DOT_DOT;
-        enumMap["{"] = LEFT_BRACE;
-        enumMap["}"] = RIGHT_BRACE;
-        enumMap["["] = LEFT_BRACKET;
-        enumMap["]"] = RIGHT_BRACKET;
-        enumMap["("] = LEFT_PARENTHESIS;
-        enumMap[")"] = RIGHT_PARENTHESIS;
+        enumMap["{"] = '{';
+        enumMap["}"] = '}';
+        enumMap["["] = '[';
+        enumMap["]"] = ']';
+        enumMap["("] = '(';
+        enumMap[")"] = ')';
     }
 %}
 
