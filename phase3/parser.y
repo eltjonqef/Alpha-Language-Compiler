@@ -108,11 +108,11 @@ stmt:             expr SEMICOLON {}
                 ;
 
 expr:             assignexpr { }
-                | expr{expressionHolder = $1} PLUS expr {           
-                                expr *expression=new expr(arithexpr_e);
-                                expression->sym=addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
+                | expr{expressionHolder = $1;} PLUS expr {           
+                                expr* expression=new expr(arithexpr_e);
+                                expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
                                 expression->sym->setScopespace(getCurrentScopespace());
-                                emit(add_op, expression, expressionHolder, $3, yylineno, 0);
+                                emit(add_op, expression, expressionHolder, $4, yylineno, 0);
                             }
                 | expr MINUS expr {}
                 | expr MULTIPLY expr {}
