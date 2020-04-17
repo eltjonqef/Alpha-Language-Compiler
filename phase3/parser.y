@@ -61,6 +61,7 @@
 %token IF ELSE WHILE FOR FUNCTION RETURN BREAK CONTINUE AND NOT OR LOCAL TRUE FALSE NIL
 %token '=' '+' '-' '*' '/' '%' EQUAL NOT_EQUAL PLUS_PLUS MINUS_MINUS '>' '<' GREATER_EQUAL LESS_EQUAL
 %token ';' ',' ':' COLON_COLON '.' DOT_DOT '{' '}' '[' ']' '(' ')' 
+%token UMINUS
 %token <stringValue> IDENT
 %token <intValue> INTCONST
 %token <stringValue> STRING
@@ -80,7 +81,7 @@
 %nonassoc '>' GREATER_EQUAL '<' LESS_EQUAL
 %left '+' '-' 
 %left '*' '/' '%'
-%right NOT PLUS_PLUS MINUS_MINUS '-'
+%right NOT PLUS_PLUS MINUS_MINUS UMINUS
 %left '.' DOT_DOT
 %left '[' ']'
 %left '(' ')'
@@ -177,7 +178,7 @@ expr:             assignexpr {$$=$1; }
                 ;
 
 term:             '(' expr ')' {}
-                | '-' expr {
+                | '-' expr %prec UMINUS{
                                 expr* expression = new expr(arithexpr_e);
                                 expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                                 expression->sym->setScopespace(getCurrentScopespace());
