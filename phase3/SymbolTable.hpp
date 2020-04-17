@@ -26,6 +26,7 @@ std::stack<unsigned> functionOffsets;
 void saveAndResetFunctionOffset(){
     functionOffsets.push(functionLocalOffsetCounter);
     functionLocalOffsetCounter = 0;
+    cout<<"stack depth after s&r:"<<functionOffsets.size();
 }
 
 void resetFormalArgOffsetCounter(){

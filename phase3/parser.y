@@ -73,17 +73,22 @@
 %type <expressionUnion> expr
 %type <expressionUnion> assignexpr
 %type <expressionUnion> lvalue
-%left '(' ')'
-%left '[' ']'
-%left '.' DOT_DOT
-%right NOT PLUS_PLUS MINUS_MINUS UMINUS
-%left '*' '/' '%'
-%left '+' '-' 
-%nonassoc '>' GREATER_EQUAL '<' LESS_EQUAL
-%nonassoc EQUAL NOT_EQUAL
-%left AND
-%left OR
+%type <expressionUnion> stmt
 %right '='
+%left OR
+%left AND
+%nonassoc EQUAL NOT_EQUAL
+%nonassoc '>' GREATER_EQUAL '<' LESS_EQUAL
+%left '+' '-' 
+%left '*' '/' '%'
+%right NOT PLUS_PLUS MINUS_MINUS UMINUS
+%left '.' DOT_DOT
+%left '[' ']'
+%left '(' ')'
+
+
+
+
 
 
 %%
@@ -93,7 +98,7 @@ program:          loopstmt {}
 loopstmt:         loopstmt stmt {}
                 | {}
                 ;
-stmt:             expr ';' {}
+stmt:             expr ';' {$$=NULL;}
                 | ifstmt {}
                 | whilestmt {}
                 | forstmt {}
@@ -111,6 +116,7 @@ expr:             assignexpr {$$=$1; }
                                     expr* expression=new expr(arithexpr_e);
                                     expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
                                     expression->sym->setScopespace(getCurrentScopespace());
+                                    expression->sym->setOffset(0);
                                     emit(add_op, expression, $1, $3, yylineno, 0);
                                     $$=expression;
                                 }
@@ -118,25 +124,33 @@ expr:             assignexpr {$$=$1; }
                                     expr* expression=new expr(arithexpr_e);
                                     expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
                                     expression->sym->setScopespace(getCurrentScopespace());
+                                    expression->sym->setOffset(0);
                                     emit(sub_op, expression, $1, $3, yylineno, 0);
+                                    $$=expression;
                                 }
                 | expr '*' expr {           
                                     expr* expression=new expr(arithexpr_e);
                                     expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
                                     expression->sym->setScopespace(getCurrentScopespace());
+                                    expression->sym->setOffset(0);
                                     emit(mul_op, expression, $1, $3, yylineno, 0);
+                                    $$=expression;
                                 }
                 | expr '/' expr {           
                                     expr* expression=new expr(arithexpr_e);
                                     expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
                                     expression->sym->setScopespace(getCurrentScopespace());
                                     emit(div_op, expression, $1, $3, yylineno, 0);
+                                    expression->sym->setOffset(0);
+                                    $$=expression;
                                 }
                 | expr '%' expr {           
                                     expr* expression=new expr(arithexpr_e);
                                     expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
                                     expression->sym->setScopespace(getCurrentScopespace());
+                                    expression->sym->setOffset(0);
                                     emit(mod_op, expression, $1, $3, yylineno, 0);
+                                    $$=expression;
                                 }
                 | expr '>' expr {}
                 | expr GREATER_EQUAL expr {}
@@ -148,13 +162,17 @@ expr:             assignexpr {$$=$1; }
                                     expr* expression=new expr(arithexpr_e);
                                     expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
                                     expression->sym->setScopespace(getCurrentScopespace());
+                                    expression->sym->setOffset(0);
                                     emit(and_op, expression, $1, $3, yylineno, 0);
+                                    $$=expression;
                                 }
                 | expr OR expr {           
                                     expr* expression=new expr(arithexpr_e);
                                     expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
                                     expression->sym->setScopespace(getCurrentScopespace());
+                                    expression->sym->setOffset(0);
                                     emit(or_op, expression, $1, $3, yylineno, 0);
+                                    $$=expression;
                                 }
                 | term {$$=$1;}
                 ;
@@ -162,10 +180,10 @@ expr:             assignexpr {$$=$1; }
 term:             '(' expr ')' {}
                 | UMINUS expr {}
                 | NOT expr {}
-                | PLUS_PLUS lvalue /*{LookUpRvalue($2);}*/
-                | lvalue PLUS_PLUS /*{LookUpRvalue($1);}*/
-                | MINUS_MINUS lvalue /*{LookUpRvalue($2);}*/
-                | lvalue MINUS_MINUS /*{LookUpRvalue($1);}*/
+                | PLUS_PLUS lvalue {/*LookUpRvalue($2);*/int a=5;}
+                | lvalue PLUS_PLUS {/*LookUpRvalue($1);*/int b=5;}
+                | MINUS_MINUS lvalue {/*LookUpRvalue($2);*/int a=6;}
+                | lvalue MINUS_MINUS {/*LookUpRvalue($1);*/int b=6;}
                 | primary {$$=$1;}
                 ;
 
@@ -173,11 +191,11 @@ assignexpr:       lvalue '=' expr {
                                     emit(assign_op, $1, $3, NULL, yylineno, 0);
                                     expr* expression=new expr(assignexpr_e);
                                     expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
-                                    emit(assign_op, expression, $1, NULL, yylineno, 0);
+                                    emit(assign_op, expression,$1, NULL, yylineno, 0);
                                   }
                 ;
 
-primary:          lvalue {}
+primary:          lvalue {$$=$1;}
                 | call {}
                 | objectdef {}
                 | '(' funcdef ')' {}
@@ -201,7 +219,7 @@ lvalue:           IDENT {
                                     incCurScopeOffset();
                                 }
                             }
-                            
+                            $$=expression;
                         }   
                 | LOCAL IDENT {expr *expression=new expr(var_e);expression->sym=LookUpVariable($2, 1); if(expression->sym==NULL){
                                     expression->sym=addToSymbolTable($2, currentScope, yylineno, LOCL,var_s);Flag=1;expression->sym->setOffset(currentOffset());expression->sym->setScopespace(getCurrentScopespace());incCurScopeOffset(); }
