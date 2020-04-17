@@ -182,8 +182,8 @@ term:             '(' expr ')' {}
                                 expr* expression = new expr(arithexpr_e);
                                 expression->sym = addToSymbolTable(nextVariableName(),currentOffset,yylineno,getGlobLocl(),var_s);
                                 expression->sym->setScopespace(getCurrentScopespace());
-                                expression->setOffset(0);
-                                emit(uminus_op,expression,$2,NULL,yylino,0);
+                                expression->sym->setOffset(0);
+                                emit(uminus_op,expression,$2,NULL,yylineo,0);
                                 $$=expression;
                               }
                 | NOT expr  {
@@ -201,7 +201,7 @@ term:             '(' expr ')' {}
                                         expr* expression= new expr(arithexpr_e);
                                         expression->sym=addToSymbolTable(nextVariableName(),currentOffset,yylineno,getGlobLocl(),var_s);
                                         expression->sym->setScopespace(getCurrentScopespace());
-                                        expression->setOffset(0);
+                                        expression->sym->setOffset(0);
                                         emit(assign_op, expression, $2, NULL, yylineno, 0);
                                         $$=expression;
                                     }
@@ -215,6 +215,8 @@ assignexpr:       lvalue '=' expr {
                                     emit(assign_op, $1, $3, NULL, yylineno, 0);
                                     expr* expression=new expr(assignexpr_e);
                                     expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
+                                    expression->sym->setScopespace(getCurrentScopespace());
+                                    expression->sym->setOffset(0);
                                     emit(assign_op, expression,$1, NULL, yylineno, 0);
                                     $$=expression;
                                   }
