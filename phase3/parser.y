@@ -180,10 +180,10 @@ expr:             assignexpr {$$=$1; }
 term:             '(' expr ')' {}
                 | UMINUS expr {
                                 expr* expression = new expr(arithexpr_e);
-                                expression->sym = addToSymbolTable(nextVariableName(),currentOffset,yylineno,getGlobLocl(),var_s);
+                                expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                                 expression->sym->setScopespace(getCurrentScopespace());
                                 expression->sym->setOffset(0);
-                                emit(uminus_op,expression,$2,NULL,yylineo,0);
+                                emit(uminus_op,expression,$2,NULL,yylineno,0);
                                 $$=expression;
                               }
                 | NOT expr  {
@@ -199,7 +199,7 @@ term:             '(' expr ')' {}
                                         arrExpr->setNumConst(1);
                                         emit(add_op, $2, $2, arrExpr, yylineno, 0);
                                         expr* expression= new expr(arithexpr_e);
-                                        expression->sym=addToSymbolTable(nextVariableName(),currentOffset,yylineno,getGlobLocl(),var_s);
+                                        expression->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                                         expression->sym->setScopespace(getCurrentScopespace());
                                         expression->sym->setOffset(0);
                                         emit(assign_op, expression, $2, NULL, yylineno, 0);
