@@ -5,7 +5,7 @@
 #include <vector>
 #include <stack>
 
-enum iopcode{
+enum iopcode{ 
     assign_op,
     add_op,
     sub_op,

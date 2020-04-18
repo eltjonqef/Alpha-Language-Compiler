@@ -75,6 +75,7 @@
 %type <expressionUnion> lvalue
 %type <expressionUnion> stmt
 %type <expressionUnion> objectdef
+%type <expressionUnion> member
 %right '='
 %left OR
 %left AND
@@ -271,11 +272,11 @@ lvalue:           IDENT {
 
                               } 
                 | COLON_COLON IDENT { /*expr *expression=new expr(var_e); expression->sym=LookUpScope($2, 0); Flag=1;*/}
-                | member {}
+                | member {$$=$1;}
                 ;
 
 member:           lvalue '.' IDENT {}
-                | lvalue '[' expr ']'{}
+                | lvalue '[' expr ']'{$$=$3;}
                 | call '.' IDENT {}
                 | call '[' expr ']'{}
                 ;
@@ -308,6 +309,7 @@ objectdef:        '[' elist ']' {
                                     for(int i=0; i<tableEntries.size(); i++){
                                        emit(tablesetelem_op,expression,new expr(i++), tableEntries[i], getNextLabel(), yylineno); 
                                     }
+                                    tableEntries.clear();
                                     $$=expression;
 
                                 }

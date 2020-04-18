@@ -7,9 +7,9 @@ enum SymbolType {
     LOCL,
     FORMAL,
     USERFUNC, 
-    LIBFUNC  
+    LIBFUNC 
 };  
-
+   
 enum scopespace_t{
     programvar,functionlocal,formalarg
 };
