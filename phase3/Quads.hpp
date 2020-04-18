@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <vector>
+#include <stack>
 
 enum iopcode{
     assign_op,
@@ -96,6 +97,14 @@ class expr{
         expr(expr_t _type){
             type=_type;
         }
+        expr(char* s){
+            type=conststring_e;
+            strConst=strdup(s);
+        }
+        expr(double _numConst){
+            type=constnum_e;
+            numConst=_numConst;
+        }
         expr_t getType(){
             return type;
         }
@@ -117,10 +126,13 @@ class expr{
         bool getBoolConst(){
             return boolConst;
         }
+        expr* getIndex(){
+            return index;
+        }
         std::string to_String(){
             if(type == var_e)return sym->getName();
             if(type == tableitem_e)return "tableitem not handles yet";
-            if(type == programfunc_e)return "programfunc not handled yet";
+            if(type == programfunc_e)return sym->getName();
             if(type == libraryfunc_e)"libraryfunc not handled yet";
             if(type == arithexpr_e)return sym->getName();
             if(type == boolexpr_e)return "boolexp not handled yet";
@@ -170,7 +182,7 @@ class quad{
             return line;
         }
         std::string toString(){
-            std::string retval = opcodeToString(op);
+            std::string retval = "label: "+to_string(label)+opcodeToString(op);
             if(result != NULL){retval = retval +" "+ result->to_String();}
             if(arg1 != NULL){retval = retval +" "+arg1->to_String();}
             if(arg2 != NULL){retval = retval +" "+arg2->to_String();}
@@ -178,8 +190,11 @@ class quad{
         }
         
 };
-
+std::vector<expr*>tableEntries;
 std::vector<quad> quads;
+unsigned labelCounter = 1;
+std::stack<expr*> funcExprStack;
+
 /*
 #define EXPAND_SIZE 1024
 #define CURR_SIZE   (total*sizeof(quad))
@@ -199,6 +214,16 @@ expand(){
     quads = p;
     total += EXPAND_SIZE;
 }*/
+
+unsigned getNextLabel(){
+    unsigned retval = labelCounter;
+    labelCounter++;
+    return retval;
+}
+
+unsigned labelLookahead(){
+    return labelCounter;
+}
 
 void
 emit(iopcode op, expr* result, expr* arg1, expr* arg2, unsigned label, unsigned line){   
