@@ -74,6 +74,7 @@
 %type <expressionUnion> assignexpr
 %type <expressionUnion> lvalue
 %type <expressionUnion> stmt
+%type <expressionUnion> objectdef
 %right '='
 %left OR
 %left AND
@@ -117,7 +118,7 @@ expr:             assignexpr {$$=$1; }
                                     expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
                                     expression->sym->setScopespace(getCurrentScopespace());
                                     expression->sym->setOffset(0);
-                                    emit(add_op, expression, $1, $3, yylineno, 0);
+                                    emit(add_op, expression, $1, $3, getNextLabel(), yylineno);
                                     $$=expression;
                                 }
                 | expr '-' expr {           
@@ -125,7 +126,7 @@ expr:             assignexpr {$$=$1; }
                                     expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
                                     expression->sym->setScopespace(getCurrentScopespace());
                                     expression->sym->setOffset(0);
-                                    emit(sub_op, expression, $1, $3, yylineno, 0);
+                                    emit(sub_op, expression, $1, $3, getNextLabel(), yylineno);
                                     $$=expression;
                                 }
                 | expr '*' expr {           
@@ -133,14 +134,14 @@ expr:             assignexpr {$$=$1; }
                                     expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
                                     expression->sym->setScopespace(getCurrentScopespace());
                                     expression->sym->setOffset(0);
-                                    emit(mul_op, expression, $1, $3, yylineno, 0);
+                                    emit(mul_op, expression, $1, $3, getNextLabel(), yylineno);
                                     $$=expression;
                                 }
                 | expr '/' expr {           
                                     expr* expression=new expr(arithexpr_e);
                                     expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
                                     expression->sym->setScopespace(getCurrentScopespace());
-                                    emit(div_op, expression, $1, $3, yylineno, 0);
+                                    emit(div_op, expression, $1, $3, getNextLabel(),yylineno);
                                     expression->sym->setOffset(0);
                                     $$=expression;
                                 }
@@ -149,7 +150,7 @@ expr:             assignexpr {$$=$1; }
                                     expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
                                     expression->sym->setScopespace(getCurrentScopespace());
                                     expression->sym->setOffset(0);
-                                    emit(mod_op, expression, $1, $3, yylineno, 0);
+                                    emit(mod_op, expression, $1, $3, getNextLabel(), yylineno);
                                     $$=expression;
                                 }
                 | expr '>' expr {}
@@ -158,32 +159,18 @@ expr:             assignexpr {$$=$1; }
                 | expr LESS_EQUAL expr {}
                 | expr EQUAL expr {}
                 | expr NOT_EQUAL expr {}
-                | expr AND expr {          
-                                    expr* expression=new expr(boolexpr_e);
-                                    expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
-                                    expression->sym->setScopespace(getCurrentScopespace());
-                                    expression->sym->setOffset(0);
-                                    emit(and_op, expression, $1, $3, yylineno, 0);
-                                    $$=expression;
-                                }
-                | expr OR expr {           
-                                    expr* expression=new expr(boolexpr_e);
-                                    expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
-                                    expression->sym->setScopespace(getCurrentScopespace());
-                                    expression->sym->setOffset(0);
-                                    emit(or_op, expression, $1, $3, yylineno, 0);
-                                    $$=expression;
-                                }
+                | expr AND expr {}
+                | expr OR expr {}
                 | term {$$=$1;}
                 ;
 
-term:             '(' expr ')' {}
+term:             '(' expr ')' {$$=$2;}
                 | '-' expr %prec UMINUS{
                                 expr* expression = new expr(arithexpr_e);
                                 expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                                 expression->sym->setScopespace(getCurrentScopespace());
                                 expression->sym->setOffset(0);
-                                emit(uminus_op,expression,$2,NULL,yylineno,0);
+                                emit(uminus_op,expression,$2,NULL,getNextLabel(),yylineno);
                                 $$=expression;
                               }
                 | NOT expr  {
@@ -191,33 +178,63 @@ term:             '(' expr ')' {}
                                 expression->sym=addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
                                 expression->sym->setOffset(0);
                                 expression->sym->setScopespace(getCurrentScopespace());
-                                emit(not_op, expression, $2, NULL, yylineno, 0);
+                                emit(not_op, expression, $2, NULL, getNextLabel(), yylineno);
                                 $$=expression;
                             }
                 | PLUS_PLUS lvalue  {/*LookUpRvalue($2);*/
                                         expr *arrExpr=new expr(constnum_e);
                                         arrExpr->setNumConst(1);
-                                        emit(add_op, $2, $2, arrExpr, yylineno, 0);
+                                        emit(add_op, $2, $2, arrExpr, getNextLabel(), yylineno);
                                         expr* expression= new expr(arithexpr_e);
                                         expression->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                                         expression->sym->setScopespace(getCurrentScopespace());
                                         expression->sym->setOffset(0);
-                                        emit(assign_op, expression, $2, NULL, yylineno, 0);
+                                        emit(assign_op, expression, $2, NULL, getNextLabel(), yylineno);
                                         $$=expression;
                                     }
-                | lvalue PLUS_PLUS {/*LookUpRvalue($1);*/int b=5;}
-                | MINUS_MINUS lvalue {/*LookUpRvalue($2);*/int a=6;}
-                | lvalue MINUS_MINUS {/*LookUpRvalue($1);*/int b=6;}
+                | lvalue PLUS_PLUS {/*LookUpRvalue($1);*/
+                                        expr* expression= new expr(arithexpr_e);
+                                        expression->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
+                                        expression->sym->setScopespace(getCurrentScopespace());
+                                        expression->sym->setOffset(0);
+                                        emit(assign_op, expression, $1, NULL, getNextLabel(), yylineno);
+                                        expr *arrExpr=new expr(constnum_e);
+                                        arrExpr->setNumConst(1);
+                                        emit(add_op, $1, $1, arrExpr, getNextLabel(), yylineno);
+                                        $$=expression; 
+                                   }
+                | MINUS_MINUS lvalue {/*LookUpRvalue($2);*/
+                                        expr *arrExpr=new expr(constnum_e);
+                                        arrExpr->setNumConst(1);
+                                        emit(sub_op, $2, $2, arrExpr, yylineno, 0);
+                                        expr* expression= new expr(arithexpr_e);
+                                        expression->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
+                                        expression->sym->setScopespace(getCurrentScopespace());
+                                        expression->sym->setOffset(0);
+                                        emit(assign_op, expression, $2, NULL, getNextLabel(), yylineno);
+                                        $$=expression;
+                                     }
+                | lvalue MINUS_MINUS {/*LookUpRvalue($1);*/
+                                        expr* expression= new expr(arithexpr_e);
+                                        expression->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
+                                        expression->sym->setScopespace(getCurrentScopespace());
+                                        expression->sym->setOffset(0);
+                                        emit(assign_op, expression, $1, NULL, getNextLabel(), yylineno);
+                                        expr *arrExpr=new expr(constnum_e);
+                                        arrExpr->setNumConst(1);
+                                        emit(sub_op, $1, $1, arrExpr, getNextLabel(), yylineno);
+                                        $$=expression; 
+                                     }
                 | primary {$$=$1;}
                 ;
 
 assignexpr:       lvalue '=' expr {           
-                                    emit(assign_op, $1, $3, NULL, yylineno, 0);
+                                    emit(assign_op, $1, $3, NULL, getNextLabel(), yylineno);
                                     expr* expression=new expr(assignexpr_e);
                                     expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
                                     expression->sym->setScopespace(getCurrentScopespace());
                                     expression->sym->setOffset(0);
-                                    emit(assign_op, expression,$1, NULL, yylineno, 0);
+                                    emit(assign_op, expression,$1, NULL, getNextLabel(), yylineno);
                                     $$=expression;
                                   }
                 ;
@@ -278,12 +295,22 @@ normcall:         '(' elist ')' {}
 methodcall:       DOT_DOT IDENT {if(!returnState) callFlag=1; callFunction($2);} '(' elist ')' {}
                 ;
 
-elist:            expr {}
-                | expr ',' elist {}
+elist:            expr {tableEntries.push_back($1);}
+                | expr ',' elist {tableEntries.push_back($1);}
                 |{}
                 ;
 
-objectdef:        '[' elist ']' {}
+objectdef:        '[' elist ']' {
+                                    expr* expression=new expr(newtable_e);
+                                    expression->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
+                                    expression->sym->setScopespace(getCurrentScopespace());
+                                    expression->sym->setOffset(0);
+                                    for(int i=0; i<tableEntries.size(); i++){
+                                       emit(tablesetelem_op,expression,new expr(i++), tableEntries[i], getNextLabel(), yylineno); 
+                                    }
+                                    $$=expression;
+
+                                }
                 | '[' indexed ']' {}
                 ;
 
@@ -297,8 +324,57 @@ indexedelem:      '{' expr ':' expr '}' {}
 block:            '{' {currentScope++;} loopstmt {decreaseScope();} '}' {}
                 ;
 
-funcdef:          FUNCTION {nestedFunctionCounter++; expr *expression=new expr(programfunc_e); expression->sym=addToSymbolTable("$"+to_string(anonymousFuntionCounter++), currentScope, yylineno, USERFUNC,programfunc_s); }  '(' {currentScope++;enterScopespace();} idlist {currentScope--;enterScopespace();saveAndResetFunctionOffset();}')' block {nestedFunctionCounter--;exitScopespace();exitScopespace();getPrevFunctionOffset();}
-                | FUNCTION IDENT {if(LookUpFunction($2)) {expr *expression=new expr(programfunc_e);expression->sym= addToSymbolTable($2, currentScope, yylineno, USERFUNC,programfunc_s); nestedFunctionCounter++;} } '(' {currentScope++;enterScopespace();resetFormalArgOffsetCounter();} idlist {currentScope--;} ')' {enterScopespace();saveAndResetFunctionOffset();}block {nestedFunctionCounter--;exitScopespace();exitScopespace();getPrevFunctionOffset();}
+funcdef:          FUNCTION {
+                                nestedFunctionCounter++; expr *expression=new expr(programfunc_e); 
+                                expression->sym=addToSymbolTable("$"+to_string(anonymousFuntionCounter++), currentScope, yylineno, USERFUNC,programfunc_s);
+                                funcExprStack.push(expression);
+                                emit(funcstart_op,expression,NULL,NULL,getNextLabel(),yylineno);
+                            }  
+                        '(' {
+                                currentScope++;
+                                enterScopespace();
+                            } 
+                    idlist {
+                                currentScope--;enterScopespace();
+                                saveAndResetFunctionOffset();
+                            }
+                ')' block  {
+                                nestedFunctionCounter--;
+                                exitScopespace();exitScopespace();
+                                getPrevFunctionOffset();
+                                emit(funcend_op,funcExprStack.top(),NULL,NULL,getNextLabel(),yylineno);
+                                funcExprStack.pop();
+                            }
+                | FUNCTION IDENT {
+                                    if(LookUpFunction($2)) {
+                                        expr *expression=new expr(programfunc_e);
+                                        expression->sym= addToSymbolTable($2, currentScope, yylineno, USERFUNC,programfunc_s); 
+                                        nestedFunctionCounter++;
+                                        funcExprStack.push(expression);
+                                        emit(funcstart_op,expression,NULL,NULL,getNextLabel(),yylineno);
+                                    }else{
+                                        assert(0);
+                                    }
+                                } 
+                            '(' {
+                                    currentScope++;
+                                    enterScopespace();
+                                    resetFormalArgOffsetCounter();
+                                } 
+                        idlist {
+                                    currentScope--;
+                                } 
+                        ')'    {
+                                    enterScopespace();
+                                    saveAndResetFunctionOffset();
+                                }
+                        block   {
+                                    nestedFunctionCounter--;
+                                    exitScopespace();exitScopespace();
+                                    getPrevFunctionOffset();
+                                    emit(funcend_op,funcExprStack.top(),NULL,NULL,getNextLabel(),yylineno);
+                                    funcExprStack.pop();
+                                }
                 ;
 
 const:            INTCONST {expr *expression=new expr(constnum_e); expression->setNumConst($1);$$=expression;}
@@ -583,7 +659,6 @@ void printSymbolTable() {
                 <<" offset:"<<ScopeTable[it->first][i]->getOffset()<<")\n";
         }
         it++;
-        
     }
 
 }
@@ -591,5 +666,19 @@ void printSymbolTable() {
 void printQuads(){
     for(int i=0; i<quads.size(); i++){
         cout<<quads[i].toString()<<endl;
+    }
+}
+
+expr*
+emit_if_table(expr* e){
+
+    if(e->getType() != tableitem_e){
+        return e;
+    }
+    else{
+        expr *result= new expr(var_e);
+        result->sym=addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
+        emit(tablegetelem_op, result, e, e->getIndex(), getNextLabel(), yylineno);
+        return result;
     }
 }
