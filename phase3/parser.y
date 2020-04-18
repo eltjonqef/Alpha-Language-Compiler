@@ -583,6 +583,7 @@ void printSymbolTable() {
                 <<" offset:"<<ScopeTable[it->first][i]->getOffset()<<")\n";
         }
         it++;
+        
     }
 
 }
