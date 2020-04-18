@@ -32,7 +32,7 @@
     extern FILE* yyin;
     unsigned int currentScope = 0;
 
- 
+    
     int anonymousFuntionCounter=0;
     map <string,vector<SymbolTableEntry*> > SymbolTable;
     map <int,vector<SymbolTableEntry*> > ScopeTable;
@@ -158,12 +158,12 @@ expr:             assignexpr {$$=$1; }
                 | expr '>' expr {}
                 | expr GREATER_EQUAL expr {
                     expr* expression=new expr(boolexpr_e);
-                    expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl,var_s);
+                    expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                     expression->sym->setScopespace(getCurrentScopespace());
                     expression->sym->setOffset(0);
-                    expr* jumpExp = new expr(jump_e);
+                    expr* jumpExp = new expr(label_e);
 
-                    emit(if_greatereq_op,NULL,$1,$3,labelLookahead()+3);
+                    emit(if_greatereq_op,NULL,$1,$3,labelLookahead()+3,yylineno);
                     emit(assign_op,expression,newexpr_constbool(0),NULL,getNextLabel(),yylineno);
                     jumpExp->setJumpLab(labelLookahead()+2);
                     emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);
