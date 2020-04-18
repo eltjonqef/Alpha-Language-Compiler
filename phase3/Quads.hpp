@@ -71,7 +71,7 @@ string opcodeToString(iopcode _opcode){
         case if_eq_op: return "if_eq";
         case if_noteq_op:return "if_noteq";
         case if_lesseq_op:return "if_lesseq";
-        case if_greatereq_op:return "if_greatereq_op";
+        case if_greatereq_op:return "if_greatereq";
         case if_less_op:return "if_less";
         case if_greater_op:return "if_greater";
         case call_op:return "call";
@@ -134,7 +134,9 @@ class expr{
         expr* getIndex(){
             return index;
         }
-
+        void setIndex(expr* _index){
+            index=_index;
+        }
         void setJumpLab(unsigned _label){
             JumpLabel = _label;
         }
@@ -195,10 +197,11 @@ class quad{
             return line;
         }
         std::string toString(){
-            std::string retval = "label: "+to_string(label)+opcodeToString(op);
-            if(result != NULL){retval = retval +" "+ result->to_String();}
+            std::string retval = "label: "+to_string(label)+" "+opcodeToString(op);
+            if((result != NULL)&&(!reverseResultPrintOrder())){retval = retval +" "+ result->to_String();}
             if(arg1 != NULL){retval = retval +" "+arg1->to_String();}
             if(arg2 != NULL){retval = retval +" "+arg2->to_String();}
+            if((result != NULL)&&(reverseResultPrintOrder())){retval = retval +" "+ result->to_String();}
             return retval;
         }
         
@@ -246,4 +249,9 @@ emit(iopcode op, expr* result, expr* arg1, expr* arg2, unsigned label, unsigned 
 }
 
 
-
+bool reverseResultPrintOrder(iopcode opcd){
+    if((opcd == if_greatereq_op)||(opcd == if_greater_op)||(opcd == if_eq_op)||(opcd == if_less_op)||(opcd == if_lesseq_op)||(opcd == if_noteq_op)){
+        return true;
+    }
+    return false;
+}

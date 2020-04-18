@@ -21,6 +21,7 @@
     void LookUpRvalue(string name);
     void callFunction(string name);
     bool existsInScope(string name, int scope);
+    expr* emit_if_table(expr* e);
     int Flag=0;
     int callFlag=0;
     int nestedFunctionCounter=0;
@@ -162,8 +163,9 @@ expr:             assignexpr {$$=$1; }
                     expression->sym->setScopespace(getCurrentScopespace());
                     expression->sym->setOffset(0);
                     expr* jumpExp = new expr(label_e);
-
-                    emit(if_greatereq_op,NULL,$1,$3,labelLookahead()+3,yylineno);
+                    expr* ifJumpExp = new expr(label_e);
+                    ifJumpExp->setJumpLab(labelLookahead()+3);
+                    emit(if_greatereq_op,ifJumpExp,$1,$3,getNextLabel(),yylineno);
                     emit(assign_op,expression,newexpr_constbool(0),NULL,getNextLabel(),yylineno);
                     jumpExp->setJumpLab(labelLookahead()+2);
                     emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);
@@ -253,7 +255,10 @@ assignexpr:       lvalue '=' expr {
                                   }
                 ;
 
-primary:          lvalue {$$=$1;}
+primary:          lvalue {
+                            expr* expression=emit_if_table($1);
+                            $$=expression;
+                         }
                 | call {}
                 | objectdef {}
                 | '(' funcdef ')' {}
@@ -289,7 +294,13 @@ lvalue:           IDENT {
                 ;
 
 member:           lvalue '.' IDENT {}
-                | lvalue '[' expr ']'{$$=$3;}
+                | lvalue '[' expr ']'{
+                                        $1=emit_if_table($1);
+                                        expr* expression=new expr(tableitem_e);
+                                        expression->sym=$1->sym;
+                                        expression->setIndex($3);
+                                        $$=expression;
+                                     }
                 | call '.' IDENT {}
                 | call '[' expr ']'{}
                 ;
