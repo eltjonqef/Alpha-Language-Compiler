@@ -74,7 +74,7 @@ void incCurScopeOffset(){
         case functionlocal : ++functionLocalOffsetCounter;return;
         default : assert(0);
     }
-}
+} 
 
 void enterScopespace(){
     ++scopeSpaceCounter;

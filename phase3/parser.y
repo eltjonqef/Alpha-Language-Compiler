@@ -32,7 +32,7 @@
     extern FILE* yyin;
     unsigned int currentScope = 0;
 
-
+ 
     int anonymousFuntionCounter=0;
     map <string,vector<SymbolTableEntry*> > SymbolTable;
     map <int,vector<SymbolTableEntry*> > ScopeTable;
@@ -44,6 +44,7 @@
     unsigned int tempVariableCount = 0;
     string nextVariableName();
     SymbolType getGlobLocl();
+    expr* newexpr_constbool(bool a);
     expr* expressionHolder;
 %}
 
@@ -146,7 +147,7 @@ expr:             assignexpr {$$=$1; }
                                     expression->sym->setOffset(0);
                                     $$=expression;
                                 }
-                | expr '%' expr {           
+                | expr '%' expr {            
                                     expr* expression=new expr(arithexpr_e);
                                     expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
                                     expression->sym->setScopespace(getCurrentScopespace());
@@ -155,7 +156,19 @@ expr:             assignexpr {$$=$1; }
                                     $$=expression;
                                 }
                 | expr '>' expr {}
-                | expr GREATER_EQUAL expr {}
+                | expr GREATER_EQUAL expr {
+                    expr* expression=new expr(boolexpr_e);
+                    expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl,var_s);
+                    expression->sym->setScopespace(getCurrentScopespace());
+                    expression->sym->setOffset(0);
+                    expr* jumpExp = new expr(jump_e);
+
+                    emit(if_greatereq_op,NULL,$1,$3,labelLookahead()+3);
+                    emit(assign_op,expression,newexpr_constbool(0),NULL,getNextLabel(),yylineno);
+                    jumpExp->setJumpLab(labelLookahead()+2);
+                    emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);
+                    emit(assign_op,expression,newexpr_constbool(1),NULL,getNextLabel(),yylineno);
+                }
                 | expr '<' expr {}
                 | expr LESS_EQUAL expr {}
                 | expr EQUAL expr {}
@@ -683,4 +696,15 @@ emit_if_table(expr* e){
         emit(tablegetelem_op, result, e, e->getIndex(), getNextLabel(), yylineno);
         return result;
     }
+}
+
+expr* newexpr_constbool(bool a){
+    expr* retval;
+    retval = new expr(constbool_e);
+    if(!a){
+        retval->setBoolConst(0);
+    }else{
+        retval->setBoolConst(1);
+    }
+    return retval;
 }

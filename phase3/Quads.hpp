@@ -30,7 +30,8 @@ enum iopcode{
     funcend_op,
     tablecreate_op,
     tablegetelem_op,
-    tablesetelem_op
+    tablesetelem_op,
+    jump_op
 };
 
 enum expr_t{
@@ -49,7 +50,9 @@ enum expr_t{
     constbool_e,
     conststring_e,
 
-    nil_e
+    nil_e,
+
+    label_e
 };
 
 string opcodeToString(iopcode _opcode){
@@ -80,6 +83,7 @@ string opcodeToString(iopcode _opcode){
         case tablecreate_op:return "tablecreate";
         case tablegetelem_op:return "tablegetelem";
         case tablesetelem_op:return "tablesetelem";
+        case jump_op:return "jump";
         /*maybe throw error here uwu*/
     }
 }
@@ -91,6 +95,7 @@ class expr{
         double numConst;
         std::string strConst;
         unsigned char boolConst;
+        unsigned JumpLabel;
         expr* next;
     public:
         SymbolTableEntry* sym;
@@ -129,19 +134,27 @@ class expr{
         expr* getIndex(){
             return index;
         }
+
+        void setJumpLab(unsigned _label){
+            JumpLabel = _label;
+        }
+        unsigned getJumpLab(){
+            return JumpLabel;
+        }
         std::string to_String(){
             if(type == var_e)return sym->getName();
             if(type == tableitem_e)return "tableitem not handles yet";
             if(type == programfunc_e)return sym->getName();
             if(type == libraryfunc_e)"libraryfunc not handled yet";
             if(type == arithexpr_e)return sym->getName();
-            if(type == boolexpr_e)return "boolexp not handled yet";
+            if(type == boolexpr_e)return sym->getName();
             if(type == assignexpr_e)return sym->getName();
             if(type == newtable_e)return"newtable not handled yet";
             if(type == constnum_e)return std::to_string(numConst);
             if(type == constbool_e) return"constbool not handled yet";
             if(type == conststring_e)return"constring not handled yet";
             if(type == nil_e)return "nil";
+            if(type == jump_e)return std::to_string(JumpLabel);
             return "fuck";
         }
 };
