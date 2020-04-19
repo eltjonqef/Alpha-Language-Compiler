@@ -33,7 +33,7 @@ enum iopcode{
     tablesetelem_op,
     jump_op
 };
-
+bool reverseResultPrintOrder(iopcode opcd);
 enum expr_t{
     var_e,
     tableitem_e,
@@ -113,6 +113,9 @@ class expr{
         expr_t getType(){
             return type;
         }
+        void setType(expr_t _type){
+            type=_type;
+        }
         double getNumConst(){
             return numConst;
         }
@@ -153,7 +156,7 @@ class expr{
             if(type == assignexpr_e)return sym->getName();
             if(type == newtable_e)return"newtable not handled yet";
             if(type == constnum_e)return std::to_string(numConst);
-            if(type == constbool_e) return"constbool not handled yet";
+            if(type == constbool_e){if(boolConst == 1)return "true";return "false";}
             if(type == conststring_e)return"constring not handled yet";
             if(type == nil_e)return "nil";
             if(type == label_e)return std::to_string(JumpLabel);
@@ -196,20 +199,27 @@ class quad{
         unsigned getLine(){
             return line;
         }
+        void setArg1(expr* _arg1){
+            arg1 = _arg1;
+        }
+        void setResult(expr* _result){
+            result = _result;
+        }
         std::string toString(){
             std::string retval = "label: "+to_string(label)+" "+opcodeToString(op);
-            if((result != NULL)&&(!reverseResultPrintOrder())){retval = retval +" "+ result->to_String();}
+            if((result != NULL)&&(!reverseResultPrintOrder(op))){retval = retval +" "+ result->to_String();}
             if(arg1 != NULL){retval = retval +" "+arg1->to_String();}
             if(arg2 != NULL){retval = retval +" "+arg2->to_String();}
-            if((result != NULL)&&(reverseResultPrintOrder())){retval = retval +" "+ result->to_String();}
+            if((result != NULL)&&(reverseResultPrintOrder(op))){retval = retval +" "+ result->to_String();}
             return retval;
         }
         
 };
 std::vector<expr*>tableEntries;
 std::vector<quad> quads;
-unsigned labelCounter = 1;
+unsigned int labelCounter = 1;
 std::stack<expr*> funcExprStack;
+std::stack<unsigned int> ifQuadStack;
 
 /*
 #define EXPAND_SIZE 1024
@@ -231,13 +241,13 @@ expand(){
     total += EXPAND_SIZE;
 }*/
 
-unsigned getNextLabel(){
+unsigned int getNextLabel(){
     unsigned retval = labelCounter;
     labelCounter++;
     return retval;
 }
 
-unsigned labelLookahead(){
+unsigned int labelLookahead(){
     return labelCounter;
 }
 
@@ -254,4 +264,17 @@ bool reverseResultPrintOrder(iopcode opcd){
         return true;
     }
     return false;
+}
+
+void backpatchArg1(quad _quad,expr* _arg){
+    _quad.setArg1(_arg);
+}
+
+void backpatchResult(quad _quad,expr* _res){
+    _quad.setResult(_res);
+}
+
+quad getQuadFromLabel(unsigned int lbl){
+    assert(lbl>1);
+    return quads[lbl-1];
 }
