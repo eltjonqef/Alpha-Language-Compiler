@@ -220,6 +220,8 @@ std::vector<quad> quads;
 unsigned int labelCounter = 1;
 std::stack<expr*> funcExprStack;
 std::stack<unsigned int> ifQuadStack;
+std::stack<unsigned int> whileStartStack;
+std::stack<unsigned int> whileSecondStack;
 
 /*
 #define EXPAND_SIZE 1024
@@ -266,12 +268,18 @@ bool reverseResultPrintOrder(iopcode opcd){
     return false;
 }
 
-void backpatchArg1(quad _quad,expr* _arg){
-    _quad.setArg1(_arg);
-}
+void backpatchArg1(int index,expr* _arg){
+     quads[index].setArg1(_arg);
+     /*
+     *quad _quads = quads[index];
+     * _quads.setArg1(_arg);
+     * DOES NOT WORK, arg1 remains null after
+     * 
+     */
+}     
 
-void backpatchResult(quad _quad,expr* _res){
-    _quad.setResult(_res);
+void backpatchResult(int index,expr* _res){
+    quads[index].setResult(_res);
 }
 
 quad getQuadFromLabel(unsigned int lbl){

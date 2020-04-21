@@ -552,7 +552,7 @@ ifstmt:           IF '(' expr ')'{
                                 expr* expression = new expr(label_e);
                                 expression->setJumpLab(labelLookahead());
                                 cout<<"patching "<<labelLookahead()<<" at quad "<<getQuadFromLabel(ifQuadStack.top()).getLabel()<<endl;
-                                backpatchArg1(quads[ifQuadStack.top()-1],expression);
+                                backpatchArg1(ifQuadStack.top()-1,expression);
                                 cout<<"popped "<<ifQuadStack.top()<<"\n";
                                 ifQuadStack.pop();
                             }
@@ -566,7 +566,7 @@ ifstmt:           IF '(' expr ')'{
                             stmt {
                                 expr* expression = new expr(label_e);
                                 expression->setJumpLab(labelLookahead()+1);
-                                backpatchArg1(getQuadFromLabel(ifQuadStack.top()),expression);
+                                backpatchArg1(ifQuadStack.top()-1,expression);
                                 ifQuadStack.pop();
                                 ifQuadStack.push(labelLookahead());
                                 emit(jump_op,NULL,NULL,NULL,getNextLabel(),yylineno);
@@ -574,12 +574,38 @@ ifstmt:           IF '(' expr ')'{
                     ELSE stmt   {
                                 expr* expression = new expr(label_e);
                                 expression->setJumpLab(labelLookahead());
-                                backpatchArg1(getQuadFromLabel(ifQuadStack.top()),expression);
+                                backpatchArg1(ifQuadStack.top()-1,expression);
                                 ifQuadStack.pop();
                            }
                 ;
 
-whilestmt:        WHILE {nestedLoopCounter++;} '(' expr ')' stmt {nestedLoopCounter--;}
+whilestmt:        WHILE {nestedLoopCounter++;
+                            whileStartStack.push(labelLookahead());
+                        } 
+            '(' expr ')'{
+                            expr* expression = new expr(label_e);
+                            expression->setJumpLab(labelLookahead()+2);
+                            emit(if_eq_op,expression,$expr,newexpr_constbool(1),getNextLabel(),yylineno);
+
+                            whileSecondStack.push(labelLookahead());
+                            emit(jump_op,NULL,NULL,NULL,getNextLabel(),yylineno);
+                        } 
+                   stmt {
+                            nestedLoopCounter--;
+
+                            expr* expression = new expr(label_e);
+                            expression->setJumpLab(whileStartStack.top());
+                            whileStartStack.pop();
+                            cout<<"first jump set on "<<expression->getJumpLab()<<"\n";
+                            emit(jump_op,NULL,expression,NULL,getNextLabel(),yylineno);
+
+                            expr* expression2 = new expr(label_e);
+                            expression2->setJumpLab(labelLookahead());
+                            cout<<"backpatching on "<<whileSecondStack.top()<<" -> "<<expression2->getJumpLab()<<"\n";
+                            backpatchArg1(whileSecondStack.top()-1,expression2);
+                            whileSecondStack.pop();
+                            //must add continue-break stuff
+                        }
                 ;
 
 forstmt:          FOR {nestedLoopCounter++;} '(' elist ';' expr ';' elist ')' stmt {nestedLoopCounter--;}
