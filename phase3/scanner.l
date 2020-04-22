@@ -166,7 +166,8 @@ UNDEFINEDCHAR ("$")|("_d")|("~")|("?")|("#")|("&&")|("||")|("!")
             }
         }
     }
-   return STRING;
+    yylval.stringValue=strdup(tmp.c_str());
+    return STRING;
 }
 
 {MCOMMENT} {
