@@ -51,14 +51,13 @@
 %}
 
 
-
 %union {
+    unsigned int uintvalue;
     int intValue;
     char* stringValue;
     double doubleValue;
     class expr *expressionUnion;
-    class forprefix *forprefix;
-    class stmt_t *stmtLists;
+    class stmtLists *sttLists;
 }   
 
 %start program
@@ -80,20 +79,19 @@
 %type <expressionUnion> lvalue
 %type <expressionUnion> objectdef
 %type <expressionUnion> member
-%type <expressionUnion> ifstmt
 %type <expressionUnion> elist
 %type <expressionUnion> indexedelem
 %type <expressionUnion> indexed
 %type <forprefix> forprefix
 %type <uintvalue> N
 %type <uintvalue> M
-%type <stmtLists> stmt;
-%type <stmtLists> block;
-%type <stmtLists> loopstmt;
-%type <stmtLists> whilestmt;
-%type <stmtLists> forstmt;
-%type <stmtLists> ifstmt;
-
+%type <sttLists> ifstmt
+%type <sttLists> loopstmt
+%type <sttLists> stmt
+%type <sttLists> whilestmt
+%type <sttLists> forstmt
+%type <sttLists> funcdef
+%type <sttLists> block
 
 %right '='
 %left OR
@@ -117,44 +115,45 @@ program:          loopstmt {}
                 ;
 
 loopstmt:         loopstmt stmt {
-                                    $$ = new stmt_t();
-                                    
-                                    $$->breakList = mergelist($1->breakList,$2->breakList);
-                                    $$->continueList = mergelist($1->continueList,$2->continueList);
+                                    cout<<"loopstmt\n";
+                                   stmtLists* statement = new stmtLists();
+                                   statement->breaklist = mergelist($1->breaklist,$2->breaklist);
+                                   statement->continuelist = mergelist($1->continuelist,$2->continuelist);
+                                   $$ = statement; 
                                 }
-                | {$$ = new stmt_t();   }
+                | {$$ = new stmtLists();cout<<"empty\n";}
                 ;
-stmt:             expr ';' {$$=new stmt_t();}
+stmt:             expr ';' {$$ = new stmtLists();cout<<"exp\n";}
                 | ifstmt {$$=$1;}
-                | whilestmt {$$=$1;}
+                | whilestmt {$$=$1;cout<<"while\n";}
                 | forstmt {$$=$1;}
-                | {returnState=1;}returnstmt {returnState=0; if(!nestedFunctionCounter) {cout<<"ERROR at line "<<yylineno<<": return while not inside a function."<<endl;}$$=new stmt_t();}
-                | BREAK ';' {   
-                                if(!nestedLoopCounter) {
-                                    cout<<"ERROR at line "<<yylineno<<": break while not inside a loop."<<endl;
-                                }
-                                int hold = labelLookahead();
-                                expr* expression = new expr(label_e);
-                                expression->setJumpLab(0);
-                                emit(jump_op,NULL,expression,NULL,getNextLabel(),yylineno);
-                                $$ = new stmt_t();
-                                cout<<"HOLD "<<hold<<"\n";
-                                $$->breakList = newList(hold);
+                | {returnState=1;}returnstmt {returnState=0; if(!nestedFunctionCounter) {cout<<"ERROR at line "<<yylineno<<": return while not inside a function."<<endl;}
+                   $$ = new stmtLists(); }
+                | BREAK ';' {
+                            if(!nestedLoopCounter) {
+                                cout<<"ERROR at line "<<yylineno<<": break while not inside a loop."<<endl;
                             }
+                            stmtLists* statement = new stmtLists();
+                            statement->breaklist = labelLookahead();
+                            expr* expression = new expr(label_e);
+                            expression->setJumpLab(0);
+                            emit(jump_op,NULL,expression,NULL,getNextLabel(),yylineno);
+                            $$ = statement;
+                        }
                 | CONTINUE ';' {
                                     if(!nestedLoopCounter) {
                                         cout<<"ERROR at line "<<yylineno<<": continue while not inside a loop."<<endl;
                                     }
-                                    int hold = labelLookahead();
+                                    stmtLists* statement = new stmtLists();
+                                    statement->continuelist = labelLookahead();
                                     expr* expression = new expr(label_e);
                                     expression->setJumpLab(0);
                                     emit(jump_op,NULL,expression,NULL,getNextLabel(),yylineno);
-                                    $$ = new stmt_t();
-                                    $$->continueList = newList(hold);
-                               }
-                | block {$$=$1;}
-                | funcdef {$$=new stmt_t();}
-                | ';' {}
+                                    $$ = statement;
+                                }
+                | block {$$=$1;cout<<"block\n";}
+                | funcdef {$$=$1;}
+                | ';' {$$ = new stmtLists();cout<<";\n";}
                 ;
 
 expr:             assignexpr {$$=$1; }
@@ -473,11 +472,10 @@ objectdef:        '[' elist ']' {
                                     for(int i=0; $2; $2=$2->getNext()){
                                        emit(tablesetelem_op,expression,new expr(i++), $2, getNextLabel(), yylineno); 
                                     }
-                                    tableEntries.clear();
                                     $$=expression;
 
                                 }
-                | '[' indexed ']'{
+                | '[' indexed ']' {
                                     expr* expression=new expr(newtable_e);
                                     expression->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                                     expression->sym->setScopespace(getCurrentScopespace());
@@ -497,7 +495,7 @@ indexed:          indexedelem {$$=$1; $$->setNext(NULL);}
 indexedelem:      '{' expr ':' expr '}' {$4->setIndex($2); $$=$4;}
                 ;
 
-block:            '{' {currentScope++;} loopstmt {decreaseScope();} '}' {}
+block:            '{' {;currentScope++;} loopstmt {decreaseScope();} '}' {cout<<"block in\n";$$ = $loopstmt;cout<<"block out\n";}
                 ;
 
 funcdef:          FUNCTION {
@@ -514,18 +512,12 @@ funcdef:          FUNCTION {
                                 currentScope--;enterScopespace();
                                 saveAndResetFunctionOffset();
                             }
-                        ')' {
-                                loopCounterStack.push(nestedFunctionCounter);
-                                nestedFunctionCounter = 0;
-                            }
-                    block  {
+                ')' block  {
                                 nestedFunctionCounter--;
                                 exitScopespace();exitScopespace();
                                 getPrevFunctionOffset();
                                 emit(funcend_op,funcExprStack.top(),NULL,NULL,getNextLabel(),yylineno);
                                 funcExprStack.pop();
-                                nestedFunctionCounter = loopCounterStack.top();
-                                loopCounterStack.pop();
                             }
                 | FUNCTION IDENT {
                                     if(LookUpFunction($2)) {
@@ -549,8 +541,6 @@ funcdef:          FUNCTION {
                         ')'    {
                                     enterScopespace();
                                     saveAndResetFunctionOffset();
-                                    loopCounterStack.push(nestedFunctionCounter);
-                                    nestedFunctionCounter = 0;
                                 }
                         block   {
                                     nestedFunctionCounter--;
@@ -558,8 +548,6 @@ funcdef:          FUNCTION {
                                     getPrevFunctionOffset();
                                     emit(funcend_op,funcExprStack.top(),NULL,NULL,getNextLabel(),yylineno);
                                     funcExprStack.pop();
-                                    nestedFunctionCounter = loopCounterStack.top();
-                                    loopCounterStack.pop();
                                 }
                 ;
 
@@ -613,7 +601,7 @@ ifstmt:           IF '(' expr ')'{
                                 expr* expression = new expr(label_e);
                                 expression->setJumpLab(labelLookahead());
                                 cout<<"patching "<<labelLookahead()<<" at quad "<<getQuadFromLabel(ifQuadStack.top()).getLabel()<<endl;
-                                backpatchArg1(ifQuadStack.top()-1,expression);
+                                backpatchArg1(ifQuadStack.top(),expression);
                                 cout<<"popped "<<ifQuadStack.top()<<"\n";
                                 ifQuadStack.pop();
                             }
@@ -627,7 +615,7 @@ ifstmt:           IF '(' expr ')'{
                             stmt {
                                 expr* expression = new expr(label_e);
                                 expression->setJumpLab(labelLookahead()+1);
-                                backpatchArg1(ifQuadStack.top()-1,expression);
+                                backpatchArg1(ifQuadStack.top(),expression);
                                 ifQuadStack.pop();
                                 ifQuadStack.push(labelLookahead());
                                 emit(jump_op,NULL,NULL,NULL,getNextLabel(),yylineno);
@@ -635,7 +623,7 @@ ifstmt:           IF '(' expr ')'{
                     ELSE stmt   {
                                 expr* expression = new expr(label_e);
                                 expression->setJumpLab(labelLookahead());
-                                backpatchArg1(ifQuadStack.top()-1,expression);
+                                backpatchArg1(ifQuadStack.top(),expression);
                                 ifQuadStack.pop();
                            }
                 ;
@@ -652,6 +640,7 @@ whilestmt:        WHILE {nestedLoopCounter++;
                             emit(jump_op,NULL,NULL,NULL,getNextLabel(),yylineno);
                         } 
                    stmt {
+                            cout<<"up\n";
                             nestedLoopCounter--;
 
                             expr* expression = new expr(label_e);
@@ -662,41 +651,42 @@ whilestmt:        WHILE {nestedLoopCounter++;
 
                             expr* expression2 = new expr(label_e);
                             expression2->setJumpLab(labelLookahead());
-                            backpatchArg1(whileSecondStack.top()-1,expression2);
+                            cout<<"backpatching on "<<whileSecondStack.top()<<" -> "<<expression2->getJumpLab()<<"\n";
+                            backpatchArg1(whileSecondStack.top(),expression2);
                             whileSecondStack.pop();
-                            patchlist($stmt->breakList,labelLookahead());
-                            patchlist($stmt->continueList,whileStartStack.top());
+                            patchlist($stmt->breaklist,labelLookahead());
+                            patchlist($stmt->continuelist,whileStartStack.top());
                             whileStartStack.pop();
-                            //must add continue-break stuff
+                            $$ = $stmt;
+                            cout<<"down\n";
                         }
                 ;
 
-N: {$$=labelLookahead(); emit(jump_op, NULL, NULL, NULL, getNextLabel(), yylineno);}
-M: {$$=labelLookahead();}
-
-forprefix:              FOR {nestedLoopCounter++;} '(' elist ';' M expr ';' {
-                                                                            forprefix *forprx=new forprefix();
-                                                                            forprx->setTest($M);
-                                                                            forprx->setEnter(labelLookahead());
-                                                                            emit(if_eq_op,$expr, newexpr_constbool(1), 0, getNextLabel(),yylineno);
-                                                                            $$=forprx;
-                                                                          }
+forprefix:              FOR '(' elist ';' M expr ';' {
+                                                        forprefix *forprx=new forprefix();
+                                                        forprx->setTest($M);
+                                                        forprx->setEnter(labelLookahead());
+                                                        emit(if_eq_op,$expr, newexpr_constbool(1), NULL, getNextLabel(),yylineno);
+                                                        $$=forprx;
+                                                        nestedLoopCounter++;
+                                                    }
 forstmt:          forprefix N elist ')' N stmt N{
-                                                    nestedLoopCounter--;
+                                                    
                                                     expr *temp1= new expr(label_e);
-                                                    temp1->setJumpLab($5+1);
-                                                    backpatchArg1($1->getEnter(), temp1);
+                                                    temp1->setJumpLab($5 + 1);
+                                                    backpatchResult($1->getEnter(), temp1);
                                                     expr *temp2= new expr(label_e);
                                                     temp2->setJumpLab(labelLookahead());
-                                                    backpatchArg1($2, temp2);
+                                                    backpatchResult($2, temp2);
+                                                    
                                                     expr *temp3= new expr(label_e);
                                                     temp3->setJumpLab($1->getTest());
                                                     backpatchArg1($5, temp3);
                                                     
                                                     expr *temp4= new expr(label_e);
-                                                    temp4->setJumpLab($2+1);
+                                                    temp4->setJumpLab($2 + 1);
                                                     backpatchArg1($7, temp4);
-
+                                                    nestedLoopCounter--;
                                                 }
                 ;
 

@@ -5,7 +5,7 @@
 #include <vector>
 #include <stack>
 
-enum iopcode{
+enum iopcode{ 
     assign_op,
     add_op,
     sub_op,
@@ -154,16 +154,16 @@ class expr{
         }
         std::string to_String(){
             if(type == var_e)return sym->getName();
-            if(type == tableitem_e)return sym->getName();
+            if(type == tableitem_e)return "tableitem not handles yet";
             if(type == programfunc_e)return sym->getName();
-            if(type == libraryfunc_e) return sym->getName();
+            if(type == libraryfunc_e)"libraryfunc not handled yet";
             if(type == arithexpr_e)return sym->getName();
             if(type == boolexpr_e)return sym->getName();
             if(type == assignexpr_e)return sym->getName();
-            if(type == newtable_e)return sym->getName();
+            if(type == newtable_e)return"newtable not handled yet";
             if(type == constnum_e)return std::to_string(numConst);
             if(type == constbool_e){if(boolConst == 1)return "true";return "false";}
-            if(type == conststring_e)return strConst;
+            if(type == conststring_e)return"constring not handled yet";
             if(type == nil_e)return "nil";
             if(type == label_e)return std::to_string(JumpLabel);
             return "fuck";
@@ -223,54 +223,70 @@ class quad{
 };
 std::vector<expr*>tableEntries;
 std::vector<quad> quads;
-unsigned int labelCounter = 1;
+unsigned int labelCounter = 0;
 std::stack<expr*> funcExprStack;
 std::stack<unsigned int> ifQuadStack;
 std::stack<unsigned int> whileStartStack;
 std::stack<unsigned int> whileSecondStack;
-std::stack<int> loopCounterStack;
 
-class stmt_t{
+
+class stmtLists{
     public:
-        int breakList=0;
-        int continueList=0;
-        stmt_t(){
- 
-        }
+    int breaklist,continuelist;
+    stmtLists(){
+        breaklist = 0;
+        continuelist = 0;
+    }
 };
 
 int newList(int i){
-    quads[i-1].getArg1()->setJumpLab(0); 
-    return i-1;
+    std::cout<<"labcounter "<<labelCounter << " i is "<<i<<"\n";
+        quads[i].getArg1()->setJumpLab(0);
+        return i;
 }
 
 int mergelist(int l1,int l2){
-
-    std::cout<<"l1 - l2 "<<l1<<" - "<<l2<<"\n";
     if(!l1){
         return l2;
     }else if(!l2){
         return l1;
     }else{
-        int i = l1;
+        int i=l1;
         while(quads[i].getArg1()->getJumpLab()){
             i = quads[i].getArg1()->getJumpLab();
         }
         quads[i].getArg1()->setJumpLab(l2);
         return l1;
     }
-
 }
 
 void patchlist(int list,int label){
-    std::cout<<"label passed is "<<label<<"\n";
     while(list){
-        cout<<"next is "<<quads[list-1].getArg1()->getJumpLab();
-        int next = quads[list-1].getArg1()->getJumpLab();
-        quads[list-1].getArg1()->setJumpLab(label);
+        int next = quads[list].getArg1()->getJumpLab();
+        quads[list].getArg1()->setJumpLab(label);
         list = next;
     }
 }
+
+/*
+#define EXPAND_SIZE 1024
+#define CURR_SIZE   (total*sizeof(quad))
+#define NEW_SIZE    (EXPAND_SIZE*sizeof(quad)+CURR_SIZE )
+*/
+
+
+/* MIAS KAI XRHSIMOPOIOUME CPP DEN XREIAZETAI I EXPAND
+void
+expand(){
+    assert(total==currQuad);
+    quad* p=(quad*) malloc(NEW_SIZE);
+    if(quads){
+        memcpy(p,quads, CURR_SIZE);
+        free(quads);
+    }
+    quads = p;
+    total += EXPAND_SIZE;
+}*/
 
 unsigned int getNextLabel(){
     unsigned retval = labelCounter;
@@ -313,7 +329,7 @@ void backpatchResult(int index,expr* _res){
 
 quad getQuadFromLabel(unsigned int lbl){
     assert(lbl>1);
-    return quads[lbl-1];
+    return quads[lbl];
 }
 
 class forprefix{
