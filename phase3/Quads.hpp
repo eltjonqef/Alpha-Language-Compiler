@@ -166,7 +166,7 @@ class expr{
             if(type == conststring_e)return"constring not handled yet";
             if(type == nil_e)return "nil";
             if(type == label_e)return std::to_string(JumpLabel);
-            return "fuck";
+            return "err";
         }
 };
 

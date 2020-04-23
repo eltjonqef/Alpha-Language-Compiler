@@ -82,6 +82,7 @@
 %type <expressionUnion> elist
 %type <expressionUnion> indexedelem
 %type <expressionUnion> indexed
+%type <expressionUnion> returnstmt
 %type <forprefix> forprefix
 %type <uintvalue> N
 %type <uintvalue> M
@@ -127,8 +128,14 @@ stmt:             expr ';' {$$ = new stmtLists();cout<<"exp\n";}
                 | ifstmt {$$=$1;}
                 | whilestmt {$$=$1;cout<<"while\n";}
                 | forstmt {$$=$1;}
-                | {returnState=1;}returnstmt {returnState=0; if(!nestedFunctionCounter) {cout<<"ERROR at line "<<yylineno<<": return while not inside a function."<<endl;}
-                   $$ = new stmtLists(); }
+                | {returnState=1;}returnstmt {
+                                                returnState=0; 
+                                                if(!nestedFunctionCounter) {
+                                                    cout<<"ERROR at line "<<yylineno<<": return while not inside a function."<<endl;
+                                                }
+                                                emit();
+                                                $$ = new stmtLists(); 
+                                             }
                 | BREAK ';' {
                             if(!nestedLoopCounter) {
                                 cout<<"ERROR at line "<<yylineno<<": break while not inside a loop."<<endl;
@@ -690,8 +697,12 @@ forstmt:          forprefix N elist ')' N stmt N{
                                                 }
                 ;
 
-returnstmt:       RETURN ';' {}
-                | RETURN expr ';' {}
+returnstmt:       RETURN ';' {
+                                emit(ret_op,NULL,NULL,NULL,getNextLabel(),yylineno);
+                             }
+                | RETURN expr ';' {
+                                    emit(ret_op,NULL,$expr,NULL,getNextLabel(),yylineno);
+                                  }
                 ;
             
 %%
