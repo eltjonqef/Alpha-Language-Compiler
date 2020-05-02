@@ -31,7 +31,8 @@ enum iopcode{
     tablecreate_op,
     tablegetelem_op,
     tablesetelem_op,
-    jump_op
+    jump_op,
+    nop
 };
 bool reverseResultPrintOrder(iopcode opcd);
 enum expr_t{
@@ -84,6 +85,7 @@ string opcodeToString(iopcode _opcode){
         case tablegetelem_op:return "tablegetelem";
         case tablesetelem_op:return "tablesetelem";
         case jump_op:return "jump";
+        case nop:return "";
         /*maybe throw error here uwu*/
     }
 }
@@ -98,6 +100,8 @@ class expr{
         unsigned JumpLabel;
         expr* next;
     public:
+        int truelist;
+        int falselist;
         SymbolTableEntry* sym;
         expr(expr_t _type){
             type=_type;
@@ -154,16 +158,16 @@ class expr{
         }
         std::string to_String(){
             if(type == var_e)return sym->getName();
-            if(type == tableitem_e)return "tableitem not handles yet";
+            if(type == tableitem_e)return sym->getName();
             if(type == programfunc_e)return sym->getName();
-            if(type == libraryfunc_e)"libraryfunc not handled yet";
+            if(type == libraryfunc_e)return sym->getName();
             if(type == arithexpr_e)return sym->getName();
             if(type == boolexpr_e)return sym->getName();
             if(type == assignexpr_e)return sym->getName();
-            if(type == newtable_e)return"newtable not handled yet";
+            if(type == newtable_e)return sym->getName();
             if(type == constnum_e)return std::to_string(numConst);
             if(type == constbool_e){if(boolConst == 1)return "true";return "false";}
-            if(type == conststring_e)return"constring not handled yet";
+            if(type == conststring_e)return strConst;
             if(type == nil_e)return "nil";
             if(type == label_e)return std::to_string(JumpLabel);
             return "err";
@@ -246,6 +250,7 @@ int newList(int i){
 }
 
 int mergelist(int l1,int l2){
+    std::cout<<"in mergelist\n";
     if(!l1){
         return l2;
     }else if(!l2){
@@ -261,10 +266,20 @@ int mergelist(int l1,int l2){
 }
 
 void patchlist(int list,int label){
+    std::cout<<"patchlist with "<<list<<"\n";
     while(list){
-        int next = quads[list].getArg1()->getJumpLab();
-        quads[list].getArg1()->setJumpLab(label);
-        list = next;
+        std::cout<<"trying to patch "<<list<<"\n";
+        if(quads[list].getResult() == NULL){
+            std::cout<<"patching label for "<<list<<"\n";
+            int next = quads[list].getArg1()->getJumpLab();
+            quads[list].getArg1()->setJumpLab(label);
+            list = next;
+        }else{
+            std::cout<<"patching result for "<<list<<" with "<<label<<"\n";
+            int next = quads[list].getResult()->getJumpLab();
+            quads[list].getResult()->setJumpLab(label);
+            list = next;
+        }
     }
 }
 
