@@ -99,6 +99,7 @@ class expr{
         unsigned char boolConst;
         unsigned JumpLabel;
         expr* next;
+        expr* prev;
     public:
         int truelist;
         int falselist;
@@ -155,6 +156,12 @@ class expr{
         }
         expr* getNext(){
             return next;
+        }
+        void setPrev(expr* _prev){
+            prev=_prev;
+        }
+        expr* getPrev(){
+            return prev;
         }
         std::string to_String(){
             if(type == var_e)return sym->getName();
@@ -258,12 +265,14 @@ int mergelist(int l1,int l2){
     }else{
         int i=l1;
         while(quads[i].getArg1()->getJumpLab()){
+            std::cout<<quads[i].getArg1()->getJumpLab() <<" <- ";
             i = quads[i].getArg1()->getJumpLab();
         }
         quads[i].getArg1()->setJumpLab(l2);
+        std::cout<<"mergelist first three elemets <- "<<l1<<quads[l1].getArg1()->getJumpLab()<< " [] "<<quads[l2].getArg1()->getJumpLab()<<"\n";
         return l1;
     }
-}
+}  
 
 void patchlist(int list,int label){
     std::cout<<"patchlist with "<<list<<"\n";
@@ -276,7 +285,8 @@ void patchlist(int list,int label){
             list = next;
         }else{
             std::cout<<"patching result for "<<list<<" with "<<label<<"\n";
-            int next = quads[list].getResult()->getJumpLab();
+            int next = quads[list].getArg1()->getJumpLab();
+            std::cout<<"next is "<<next<<"\n";
             quads[list].getResult()->setJumpLab(label);
             list = next;
         }
@@ -365,5 +375,31 @@ class forprefix{
         }
         unsigned int getEnter(){
             return enter;
+        }
+};
+
+class call{
+
+    private:
+        expr* elist;
+        std::string name;
+        bool method;
+    public:
+        call(expr* _elist, std::string _name, bool _method){
+            elist=_elist;
+            name=_name;
+            method=_method;
+        }
+        expr* getEList(){
+            return elist;
+        }
+        std::string getName(){
+            return name;
+        }
+        bool getMethod(){
+            return method;
+        }
+        void setEList(expr* _elist){
+            elist=_elist;
         }
 };
