@@ -398,7 +398,7 @@ expr:             assignexpr {$$=$1; }
                 }
                 | term {
                     $$=$1;
-                    if($1->getType()==var_s){
+                    if($1->getType()==0){
                         $$->truelist=0;
                         $$->falselist=0;
                         $$->setJumpLab(0);
