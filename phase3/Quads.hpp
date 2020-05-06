@@ -99,7 +99,6 @@ class expr{
         unsigned char boolConst;
         unsigned JumpLabel;
         expr* next;
-        expr* prev;
     public:
         int truelist;
         int falselist;
@@ -157,12 +156,6 @@ class expr{
         expr* getNext(){
             return next;
         }
-        void setPrev(expr* _prev){
-            prev=_prev;
-        }
-        expr* getPrev(){
-            return prev;
-        }
         std::string to_String(){
             if(type == var_e)return sym->getName();
             if(type == tableitem_e)return sym->getName();
@@ -174,7 +167,7 @@ class expr{
             if(type == newtable_e)return sym->getName();
             if(type == constnum_e)return std::to_string(numConst);
             if(type == constbool_e){if(boolConst == 1)return "true";return "false";}
-            if(type == conststring_e)return strConst;
+            if(type == conststring_e)return getStringConst();
             if(type == nil_e)return "nil";
             if(type == label_e)return std::to_string(JumpLabel);
             return "err";
@@ -257,14 +250,16 @@ int newList(int i){
 }
 
 int mergelist(int l1,int l2){
-    std::cout<<"in mergelist\n";
+    std::cout<<"in mergelist with " <<l1<<"-"<<l2<<"\n";
     if(!l1){
         return l2;
     }else if(!l2){
         return l1;
     }else{
         int i=l1;
+        
         while(quads[i].getArg1()->getJumpLab()){
+            std::cout<<"in merlist type "<<quads[i].getArg1()->getType()<<"\n";
             std::cout<<quads[i].getArg1()->getJumpLab() <<" <- ";
             i = quads[i].getArg1()->getJumpLab();
         }
