@@ -454,7 +454,7 @@ term:             '(' expr ')' {$$=$2;}
                 | MINUS_MINUS lvalue {/*LookUpRvalue($2);*/
                                         expr *arrExpr=new expr(constnum_e);
                                         arrExpr->setNumConst(1);
-                                        emit(sub_op, $2, $2, arrExpr, yylineno, 0);
+                                        emit(sub_op, $2, $2, arrExpr, getNextLabel(), yylineno);
                                         expr* expression= new expr(arithexpr_e);
                                         expression->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                                         expression->sym->setScopespace(getCurrentScopespace());
