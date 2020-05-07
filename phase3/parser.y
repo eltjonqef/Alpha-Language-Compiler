@@ -1,4 +1,4 @@
-%{
+%{    
     #include <stdio.h>
     #include <iostream>
     #include <string>
@@ -8,7 +8,6 @@
     #include "Quads.hpp"
 
     
-
     int yyerror(string yaccProvideMessage);
     int yylex();
     void InitilizeLibraryFunctions();
@@ -123,25 +122,29 @@ program:          loopstmt {}
                 ;
 
 loopstmt:         loopstmt stmt {
-                                   /* cout<<"loopstmt\n";
+                                cout<<"loopstmt\n";
                                    stmtLists* statement = new stmtLists();
+                                   int a = $1->breaklist;
+                                   int b = $2->breaklist;
                                    statement->breaklist = mergelist($1->breaklist,$2->breaklist);
                                    statement->continuelist = mergelist($1->continuelist,$2->continuelist);
-                                   $$ = statement; */
+                                   cout<<"loopstmt breaklist"<<statement->breaklist<<"  AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n";
+                                   $$ = statement; 
                                 }
                 | {$$ = new stmtLists();cout<<"empty\n";}
                 ;
 stmt:             expr ';' {$$ = new stmtLists();cout<<"exp\n";}
-                | ifstmt {$$=$1;}
+                | ifstmt {$$=$1;cout<<"if\n";}
                 | whilestmt {$$=$1;cout<<"while\n";}
-                | forstmt {$$=$1;}
+                | forstmt {$$=$1;cout<<"for\n";}
                 | {returnState=1;}returnstmt {
                                                 /*returnState=0; 
                                                 if(!nestedFunctionCounter) {
                                                     cout<<"ERROR at line "<<yylineno<<": return while not inside a function."<<endl;
                                                 }
                                                 emit();
-                                                $$ = new stmtLists(); */
+                                                */
+                                                $$ = new stmtLists();
                                              }
                 | BREAK ';' {
                             if(!nestedLoopCounter) {
@@ -149,10 +152,13 @@ stmt:             expr ';' {$$ = new stmtLists();cout<<"exp\n";}
                             }
                             stmtLists* statement = new stmtLists();
                             statement->breaklist = labelLookahead();
+                            cout<<"break emited at "<<statement->breaklist<<"\n";
+                            cout<<"break label will be "<<labelLookahead()<<"\n";
                             expr* expression = new expr(label_e);
                             expression->setJumpLab(0);
                             emit(jump_op,NULL,expression,NULL,getNextLabel(),yylineno);
                             $$ = statement;
+                            cout<<"break\n";
                         }
                 | CONTINUE ';' {
                                     if(!nestedLoopCounter) {
@@ -160,14 +166,16 @@ stmt:             expr ';' {$$ = new stmtLists();cout<<"exp\n";}
                                     }
                                     stmtLists* statement = new stmtLists();
                                     statement->continuelist = labelLookahead();
+                                    cout<<"continue emited at "<<statement->continuelist<<"\n";
                                     expr* expression = new expr(label_e);
                                     expression->setJumpLab(0);
                                     emit(jump_op,NULL,expression,NULL,getNextLabel(),yylineno);
                                     $$ = statement;
+                                    cout<<"CONTINUE\n";
                                 }
                 | block {$$=$1;cout<<"block\n";}
-                | funcdef {/*$$=$1;*/}
-                | ';' {$$ = new stmtLists();cout<<";\n";}
+                | funcdef {$$ = new stmtLists();cout<<"funcdef\n";}
+                | ';' {$$ = new stmtLists();cout<<"wtfwtfwtf\n";}
                 ;
 
 expr:             assignexpr {$$=$1; }
@@ -786,14 +794,16 @@ idlist:           IDENT {
                 ;
 
 
-ifstmt:           IF '(' expr ')'{
+ifprefix:       IF '(' expr ')' {
                                     patchlist($expr->truelist,labelLookahead());
                                     patchlist($expr->falselist,labelLookahead()+2);
-                                    emit(assign_op,NULL,$expr,newexpr_constbool(1),getNextLabel(),yylineno);
-                                    expr* lab = new expr(label_e);
-                                    lab->setJumpLab(labelLookahead()+2);
-                                    emit(jump_op,NULL,lab,NULL,getNextLabel(),yylineno);
-                                    emit(assign_op,NULL,$expr,newexpr_constbool(0),getNextLabel(),yylineno);
+                                    if(($expr->getType()!=constnum_e)&&($expr->getType()!=assignexpr_e)){
+                                        emit(assign_op,NULL,$expr,newexpr_constbool(1),getNextLabel(),yylineno);
+                                        expr* lab = new expr(label_e);
+                                        lab->setJumpLab(labelLookahead()+2);
+                                        emit(jump_op,NULL,lab,NULL,getNextLabel(),yylineno);
+                                        emit(assign_op,NULL,$expr,newexpr_constbool(0),getNextLabel(),yylineno);
+                                    }    
 
                                     expr* expression = new expr(label_e);
                                     expression->setJumpLab(labelLookahead()+2);
@@ -802,43 +812,29 @@ ifstmt:           IF '(' expr ')'{
                                     cout<<"pushed "<<labelLookahead()<<"\n";
                                     emit(jump_op,NULL,NULL,NULL,getNextLabel(),yylineno);
                                  }
-                            stmt {
+                ;
+stmt1:          stmt {
+                        expr* expression = new expr(label_e);
+                        expression->setJumpLab(labelLookahead()+1);
+                        backpatchArg1(ifQuadStack.top(),expression);
+                        ifQuadStack.pop();
+                        ifQuadStack.push(labelLookahead());
+                        emit(jump_op,NULL,NULL,NULL,getNextLabel(),yylineno);
+                    }
+                ;
+
+ifstmt:         ifprefix stmt {
                                 expr* expression = new expr(label_e);
                                 expression->setJumpLab(labelLookahead());
-                                cout<<"patching "<<labelLookahead()<<" at quad "<<getQuadFromLabel(ifQuadStack.top()).getLabel()<<endl;
                                 backpatchArg1(ifQuadStack.top(),expression);
-                                cout<<"popped "<<ifQuadStack.top()<<"\n";
                                 ifQuadStack.pop();
                                 $$=$stmt;
                             }
-                | IF '(' expr ')'{
-                                    patchlist($expr->truelist,labelLookahead());
-                                    patchlist($expr->falselist,labelLookahead()+2);
-                                    emit(assign_op,NULL,$expr,newexpr_constbool(1),getNextLabel(),yylineno);
-                                    expr* lab = new expr(label_e);
-                                    lab->setJumpLab(labelLookahead()+2);
-                                    emit(jump_op,NULL,lab,NULL,getNextLabel(),yylineno);
-                                    emit(assign_op,NULL,$expr,newexpr_constbool(0),getNextLabel(),yylineno);
-
-                                    expr* expression = new expr(label_e);
-                                    expression->setJumpLab(labelLookahead()+2);
-                                    emit(if_eq_op,expression,$expr,newexpr_constbool(1),getNextLabel(),yylineno);
-                                    ifQuadStack.push(labelLookahead());
-                                    emit(jump_op,NULL,NULL,NULL,getNextLabel(),yylineno);
-                                 } 
-                            stmt {
+                | ifprefix stmt1 ELSE stmt   {
                                 expr* expression = new expr(label_e);
-                                expression->setJumpLab(labelLookahead()+1);
+                                expression->setJumpLab(labelLookahead());
                                 backpatchArg1(ifQuadStack.top(),expression);
-                                ifQuadStack.pop();
-                                ifQuadStack.push(labelLookahead());
-                                emit(jump_op,NULL,NULL,NULL,getNextLabel(),yylineno);
-                                } 
-                    ELSE stmt   {
-                                expr* expression = new expr(label_e);
-                                expression->setJumpLab(labelLookahead()+1);
-                                backpatchArg1(ifQuadStack.top(),expression);
-                                emit(jump_op,NULL,expression,NULL,getNextLabel(),yylineno);
+                                //emit(jump_op,NULL,expression,NULL,getNextLabel(),yylineno);
                                 ifQuadStack.pop();
                            }
                 ;
@@ -879,6 +875,7 @@ whilestmt:        WHILE {nestedLoopCounter++;
                             cout<<"backpatching on "<<whileSecondStack.top()<<" -> "<<expression2->getJumpLab()<<"\n";
                             backpatchArg1(whileSecondStack.top(),expression2);
                             whileSecondStack.pop();
+                            cout<<"breaklist candidate "<<$stmt->breaklist<<" and lookahead "<<labelLookahead()<<"\n";
                             patchlist($stmt->breaklist,labelLookahead());
                             patchlist($stmt->continuelist,whileStartStack.top());
                             whileStartStack.pop();
@@ -927,6 +924,8 @@ forstmt:          forprefix N elist ')' N stmt N{
                                                     temp4->setJumpLab($2 + 1);
                                                     backpatchArg1($7, temp4);
                                                     nestedLoopCounter--;
+                                                    $$ = $stmt;
+                                                    cout<<"for break "<<$$->breaklist<<"\n";
                                                 }
                 ;
 
@@ -1226,9 +1225,13 @@ expr* member_item(expr* lv, char* name){
 expr* make_call(expr* lv, expr* reversed_elist){
 
     expr* func=emit_if_table(lv);
+    vector<expr*> reverseVector;
     while(reversed_elist){
-        emit(param_op, reversed_elist, NULL, NULL, getNextLabel(),yylineno);
+        reverseVector.push_back(reversed_elist);
         reversed_elist=reversed_elist->getNext();
+    }
+    for(int i=reverseVector.size()-1; i>=0; i--){
+        emit(param_op, reverseVector[i], NULL, NULL, getNextLabel(),yylineno);
     }
     emit(call_op, func, NULL, NULL, getNextLabel(), yylineno);
     expr* result=new expr(var_e);

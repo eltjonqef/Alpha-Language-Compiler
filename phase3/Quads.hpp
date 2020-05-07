@@ -224,7 +224,7 @@ class quad{
             return retval;
         }
         
-};
+};   
 std::vector<expr*>tableEntries;
 std::vector<quad> quads;
 unsigned int labelCounter = 0;
@@ -275,7 +275,13 @@ void patchlist(int list,int label){
         std::cout<<"trying to patch "<<list<<"\n";
         if(quads[list].getResult() == NULL){
             std::cout<<"patching label for "<<list<<"\n";
-            int next = quads[list].getArg1()->getJumpLab();
+            std::cout<<"vector size is "<<quads.size()<<"\n";
+            int next;
+            if(quads.size()<list){
+                 next=0;
+            }else{
+             next = quads[list].getArg1()->getJumpLab();
+            }
             quads[list].getArg1()->setJumpLab(label);
             list = next;
         }else{
