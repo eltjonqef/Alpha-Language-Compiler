@@ -695,12 +695,12 @@ indexedelem:      '{' expr ':' expr '}' {$4->setIndex($2); $$=$4;
 block:            '{' {;currentScope++;} loopstmt {decreaseScope();} '}' {cout<<"block in\n";$$ = $loopstmt;cout<<"block out\n";}
                 ;
 
-funcdef:          FUNCTION {
+funcdef:          FUNCTION N {
                                 nestedFunctionCounter++; expr *expression=new expr(programfunc_e); 
                                 expression->sym=addToSymbolTable("$"+to_string(anonymousFuntionCounter++), currentScope, yylineno, USERFUNC,programfunc_s);
                                 funcExprStack.push(expression);
                                 emit(funcstart_op,expression,NULL,NULL,getNextLabel(),yylineno);
-                            }  
+                            }
                         '(' {
                                 currentScope++;
                                 enterScopespace();
@@ -714,13 +714,18 @@ funcdef:          FUNCTION {
                                 exitScopespace();exitScopespace();
                                 getPrevFunctionOffset();
                                 emit(funcend_op,funcExprStack.top(),NULL,NULL,getNextLabel(),yylineno);
+                                expr *temp1= new expr(label_e);
+                                temp1->setJumpLab(labelLookahead());
+                                backpatchResult($N, temp1);
+                                expr* lab = new expr(label_e);
+                                lab->setJumpLab(labelLookahead());
                                 $$=funcExprStack.top();
                                 $$->truelist=0;
                                 $$->falselist=0;
                                 $$->setJumpLab(0);
                                 funcExprStack.pop();
                             }
-                | FUNCTION IDENT {
+                | FUNCTION IDENT N{
                                     if(LookUpFunction($2)) {
                                         expr *expression=new expr(programfunc_e);
                                         expression->sym= addToSymbolTable($2, currentScope, yylineno, USERFUNC,programfunc_s); 
@@ -748,6 +753,9 @@ funcdef:          FUNCTION {
                                     exitScopespace();exitScopespace();
                                     getPrevFunctionOffset();
                                     emit(funcend_op,funcExprStack.top(),NULL,NULL,getNextLabel(),yylineno);
+                                    expr *temp1= new expr(label_e);
+                                    temp1->setJumpLab(labelLookahead());
+                                    backpatchResult($N, temp1);
                                     $$=funcExprStack.top();
                                     $$->truelist=0;
                                     $$->falselist=0;
@@ -1182,7 +1190,7 @@ void printSymbolTable() {
 }
 
 void printQuads(){
-    for(int i=0; i<quads.size(); i++){
+    for(int i=1; i<quads.size(); i++){
         cout<<quads[i].toString()<<endl;
     }
 }
