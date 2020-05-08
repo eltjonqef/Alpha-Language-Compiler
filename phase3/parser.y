@@ -1,4 +1,4 @@
-%{    
+%{  
     #include <stdio.h>
     #include <iostream>
     #include <string>
@@ -91,6 +91,7 @@
 %type <uintvalue> N
 %type <uintvalue> M
 %type <sttLists> ifstmt
+%type <sttLists> stmt1
 %type <sttLists> loopstmt
 %type <sttLists> stmt
 %type <sttLists> whilestmt
@@ -436,6 +437,8 @@ term:             '(' expr ')' {$$=$2;}
                                 $2->truelist = $2->falselist;
                                 $2->falselist = hold;
                                 $$ = $2;
+
+
                             }
                 | PLUS_PLUS lvalue  {/*LookUpRvalue($2);*/
                                         expr *arrExpr=new expr(constnum_e);
@@ -805,7 +808,9 @@ idlist:           IDENT {
 ifprefix:       IF '(' expr ')' {
                                     patchlist($expr->truelist,labelLookahead());
                                     patchlist($expr->falselist,labelLookahead()+2);
-                                    if(($expr->getType()!=constnum_e)&&($expr->getType()!=assignexpr_e)){
+                                    cout<<"if type "<<$expr->getType()<<"\n";
+                                    if(($expr->getType()==boolexpr_e)){
+                                        cout<<"in IF IF\n";
                                         emit(assign_op,NULL,$expr,newexpr_constbool(1),getNextLabel(),yylineno);
                                         expr* lab = new expr(label_e);
                                         lab->setJumpLab(labelLookahead()+2);
@@ -828,6 +833,7 @@ stmt1:          stmt {
                         ifQuadStack.pop();
                         ifQuadStack.push(labelLookahead());
                         emit(jump_op,NULL,NULL,NULL,getNextLabel(),yylineno);
+                        $$=$1;
                     }
                 ;
 
@@ -844,6 +850,9 @@ ifstmt:         ifprefix stmt {
                                 backpatchArg1(ifQuadStack.top(),expression);
                                 //emit(jump_op,NULL,expression,NULL,getNextLabel(),yylineno);
                                 ifQuadStack.pop();
+                                $stmt->breaklist = mergelist($stmt->breaklist,$stmt1->breaklist);
+                                $stmt->continuelist = mergelist($stmt->continuelist,$stmt1->continuelist);
+                                $$=$stmt;
                            }
                 ;
 
@@ -853,7 +862,8 @@ whilestmt:        WHILE {nestedLoopCounter++;
             '(' expr ')'{
                             patchlist($expr->truelist,labelLookahead());
                             patchlist($expr->falselist,labelLookahead()+2);
-                            if(($expr->getType()!=constnum_e)&&($expr->getType()!=assignexpr_e)){
+                            if(($expr->getType()==boolexpr_e)){
+                                cout<<"OOOOOO\n";
                                 emit(assign_op,NULL,$expr,newexpr_constbool(1),getNextLabel(),yylineno);
                                 expr* lab = new expr(label_e);
                                 lab->setJumpLab(labelLookahead()+2);
@@ -932,6 +942,10 @@ forstmt:          forprefix N elist ')' N stmt N{
                                                     temp4->setJumpLab($2 + 1);
                                                     backpatchArg1($7, temp4);
                                                     nestedLoopCounter--;
+                                                    
+                                                    patchlist($stmt->breaklist,labelLookahead());
+                                                    cout<<"continue list is at "<<$stmt->continuelist<<"\n";    
+                                                    patchlist($stmt->continuelist,$2+1);
                                                     $$ = $stmt;
                                                     cout<<"for break "<<$$->breaklist<<"\n";
                                                 }

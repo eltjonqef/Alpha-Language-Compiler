@@ -100,8 +100,8 @@ class expr{
         unsigned JumpLabel;
         expr* next;
     public:
-        int truelist;
-        int falselist;
+        int truelist=0;
+        int falselist=0;
         SymbolTableEntry* sym;
         expr(expr_t _type){
             type=_type;
