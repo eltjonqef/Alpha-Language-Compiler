@@ -647,14 +647,14 @@ term:             '(' expr ')' {$$=$2;}
                                
                                 cout<<"NOT LISTS t-f "<<expression->truelist<<"-"<<expression->falselist<<"\n";
                                 $$ = expression;
-                        if($expr->getType()==boolexpr_e){
+                        if($expr->getType()==constbool_e){
                             cout<<"not in boolean called\n";
                             int holder = $2->truelist;
                             $2->truelist = $2->falselist;
                             $2->falselist = holder;
                             expression->truelist=(expression->truelist,$2->truelist);
                             expression->falselist=(expression->falselist,$2->falselist);
-
+ cout<<"\tAAAAAAAAAAAAAAAAAAAAAAAt\t\tPATCHLIST"<<expression->falselist<<endl;
                         }   
                         $$=expression;     
                             }
