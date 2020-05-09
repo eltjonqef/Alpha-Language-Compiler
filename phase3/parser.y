@@ -122,7 +122,7 @@
 program:          loopstmt {}
                 ;
 
-loopstmt:         loopstmt stmt {
+loopstmt:         loopstmt stmt {tempVariableCount=0;
                                 cout<<"loopstmt\n";
                                    stmtLists* statement = new stmtLists();
                                    int a = $1->breaklist;
