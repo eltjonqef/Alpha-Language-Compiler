@@ -136,8 +136,8 @@ loopstmt:         loopstmt stmt {
                 ;
 stmt:             expr ';' {$$ = new stmtLists();cout<<"exp\n"; /*PROOF THAT IM RETARDED*/}
                 | ifstmt {$$=$1;cout<<"if\n";}
-                | whilestmt {$$=$1;cout<<"while\n";}
-                | forstmt {$$=$1;cout<<"for\n";}
+                | whilestmt {$1->breaklist=0;$1->continuelist=0;$$=$1;cout<<"while\n";}
+                | forstmt {$1->breaklist=0;$1->continuelist=0;$$=$1;cout<<"for\n";}
                 | {returnState=1;}returnstmt {
                                                 /*returnState=0; 
                                                 if(!nestedFunctionCounter) {
