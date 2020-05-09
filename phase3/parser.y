@@ -655,7 +655,7 @@ term:             '(' expr ')' {$$=$2;}
                             }
                 | PLUS_PLUS lvalue  {/*LookUpRvalue($2);*/
                                         if($2->getType() != tableitem_e){
-                                            expr *arrExpr=new expr(constnum_e);
+                                            expr *arrExpr=new expr(constnumInt_e);
                                             arrExpr->setNumConst(1);
                                             emit(add_op, $2, $2, arrExpr, getNextLabel(), yylineno);
                                             expr* expression= new expr(arithexpr_e);
@@ -678,7 +678,7 @@ term:             '(' expr ')' {$$=$2;}
                                             expression->sym->setScopespace(getCurrentScopespace());
                                             expression->sym->setOffset(0);
                                             emit(assign_op, expression, $1, NULL, getNextLabel(), yylineno);
-                                            expr *arrExpr=new expr(constnum_e);
+                                            expr *arrExpr=new expr(constnumInt_e);
                                             arrExpr->setNumConst(1);
                                             emit(add_op, $1, $1, arrExpr, getNextLabel(), yylineno);
                                             $$=expression; 
@@ -695,7 +695,7 @@ term:             '(' expr ')' {$$=$2;}
                                    }
                 | MINUS_MINUS lvalue {/*LookUpRvalue($2);*/
                                         if($2->getType() != tableitem_e){
-                                            expr *arrExpr=new expr(constnum_e);
+                                            expr *arrExpr=new expr(constnumInt_e);
                                             arrExpr->setNumConst(1);
                                             emit(sub_op, $2, $2, arrExpr, getNextLabel(), yylineno);
                                             expr* expression= new expr(arithexpr_e);
@@ -718,7 +718,7 @@ term:             '(' expr ')' {$$=$2;}
                                             expression->sym->setScopespace(getCurrentScopespace());
                                             expression->sym->setOffset(0);
                                             emit(assign_op, expression, $1, NULL, getNextLabel(), yylineno);
-                                            expr *arrExpr=new expr(constnum_e);
+                                            expr *arrExpr=new expr(constnumInt_e);
                                             arrExpr->setNumConst(1);
                                             emit(sub_op, $1, $1, arrExpr, getNextLabel(), yylineno);
                                             $$=expression; 
@@ -1016,8 +1016,8 @@ funcdef:          FUNCTION N {
                                 }
                 ;
 
-const:            INTCONST {expr *expression=new expr(constnum_e); expression->setNumConst($1);$$=expression;}
-                | DOUBLECONST {expr *expression=new expr(constnum_e); expression->setNumConst($1);$$=expression;}
+const:            INTCONST {expr *expression=new expr(constnumInt_e); expression->setNumConst($1);$$=expression;}
+                | DOUBLECONST {expr *expression=new expr(constnumDouble_e); expression->setNumConst($1);$$=expression;}
                 | STRING {expr *expression=new expr(conststring_e); expression->setStringConst($1);$$=expression;}
                 | NIL {expr *expression=new expr(nil_e); $$=expression;}
                 | TRUE {expr *expression=new expr(constbool_e); expression->setBoolConst(1);$$=expression;}

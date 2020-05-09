@@ -47,7 +47,8 @@ enum expr_t{
     assignexpr_e,
     newtable_e,
 
-    constnum_e,
+    constnumInt_e,
+    constnumDouble_e,
     constbool_e,
     conststring_e,
 
@@ -94,7 +95,8 @@ class expr{
     private:
         expr_t type;
         expr* index;
-        double numConst;
+        double numConstDouble;
+        int numConstInt;
         std::string strConst;
         unsigned char boolConst;
         unsigned JumpLabel;
@@ -110,9 +112,13 @@ class expr{
             type=conststring_e;
             strConst=strdup(s);
         }
+        expr(int _numConst){
+            type=constnumInt_e;
+            numConstInt=_numConst;
+        }
         expr(double _numConst){
-            type=constnum_e;
-            numConst=_numConst;
+            type=constnumDouble_e;
+            numConstDouble=_numConst;
         }
         expr_t getType(){
             return type;
@@ -120,11 +126,11 @@ class expr{
         void setType(expr_t _type){
             type=_type;
         }
-        double getNumConst(){
-            return numConst;
-        }
         void setNumConst(double _numConst){
-            numConst=_numConst;
+            numConstDouble=_numConst;
+        }
+        void setNumConst(int _numConst){
+            numConstInt=_numConst;
         }
         void setStringConst(std::string _strConst){
             strConst=_strConst;
@@ -165,7 +171,8 @@ class expr{
             if(type == boolexpr_e)return sym->getName();
             if(type == assignexpr_e)return sym->getName();
             if(type == newtable_e)return sym->getName();
-            if(type == constnum_e)return std::to_string(numConst);
+            if(type == constnumInt_e)return std::to_string(numConstInt);
+            if(type == constnumDouble_e)return std::to_string(numConstDouble);
             if(type == constbool_e){if(boolConst == 1)return "true";return "false";}
             if(type == conststring_e)return getStringConst();
             if(type == nil_e)return "nil";
