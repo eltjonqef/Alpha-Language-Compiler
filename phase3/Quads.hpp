@@ -173,8 +173,8 @@ class expr{
             if(type == newtable_e)return sym->getName();
             if(type == constnumInt_e)return std::to_string(numConstInt);
             if(type == constnumDouble_e)return std::to_string(numConstDouble);
-            if(type == constbool_e){if(boolConst == 1)return "true";return "false";}
-            if(type == conststring_e)return getStringConst();
+            if(type == constbool_e){if(boolConst == 1)return "'true'";return "'false'";}
+            if(type == conststring_e)return "\""+getStringConst()+"\"";
             if(type == nil_e)return "nil";
             if(type == label_e)return std::to_string(JumpLabel);
             return "err";

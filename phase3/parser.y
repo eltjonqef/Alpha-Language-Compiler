@@ -122,7 +122,7 @@
 program:          loopstmt {}
                 ;
 
-loopstmt:         loopstmt stmt {tempVariableCount=0;
+loopstmt:         loopstmt stmt {
                                 cout<<"loopstmt\n";
                                    stmtLists* statement = new stmtLists();
                                    int a = $1->breaklist;
@@ -513,25 +513,28 @@ expr:             assignexpr {$$=$1; }
                     expression->falselist=mergelist(expression->falselist,$3->falselist);
                     $$ = expression;
                 }
-                | expr AND M expr {
-                    int exp1true=0,exp1false=0;
-                    int exp2true=0,exp2false=0;
-                    if($1->getType() != boolexpr_e){
-                        exp1true = labelLookahead();
-                        exp1false = labelLookahead()+1;
-                        expr* ex1 = new expr(label_e);
-                        ex1->setJumpLab(0);
-                        cout<<"preorder "<<$1->getJumpLab()<<"\n";
-                        expr* ifjump = new expr(label_e);
-                        ifjump->setJumpLab(0);
-                        emit(if_eq_op,ifjump,$1,newexpr_constbool(1),getNextLabel(),yylineno);//add to truelist
-                        emit(jump_op,NULL,ex1,NULL,getNextLabel(),yylineno);//add to falselist
+                | expr AND {
+                                int exp1true=0,exp1false=0;
+                                if($1->getType() != boolexpr_e){
+                                exp1true = labelLookahead();
+                                exp1false = labelLookahead()+1;
+                                expr* ex1 = new expr(label_e);
+                                ex1->setJumpLab(0);
+                                cout<<"preorder "<<$1->getJumpLab()<<"\n";
+                                expr* ifjump = new expr(label_e);
+                                ifjump->setJumpLab(0);
+                                emit(if_eq_op,ifjump,$1,newexpr_constbool(1),getNextLabel(),yylineno);//add to truelist
+                                emit(jump_op,NULL,ex1,NULL,getNextLabel(),yylineno);//add to falselist
 
-                        $1->truelist = mergelist($1->truelist,exp1true);
-                        $1->falselist=mergelist($1->falselist,exp1false);
-                        $M = $M +2;
-                    }
-                    if($4->getType() != boolexpr_e){
+                                $1->truelist = mergelist($1->truelist,exp1true);
+                                $1->falselist=mergelist($1->falselist,exp1false);
+                                //$M = $M +2;
+                            }
+                    }M expr {
+                    
+                    int exp2true=0,exp2false=0;
+                    
+                    if($5->getType() != boolexpr_e){
                         exp2true = labelLookahead();
                         exp2false = labelLookahead()+1;
                         expr* ex2 = new expr(label_e);
@@ -539,29 +542,28 @@ expr:             assignexpr {$$=$1; }
                         expr* ifjump = new expr(label_e);
                         ifjump->setJumpLab(0);
 
-                        emit(if_eq_op,ifjump,$4,newexpr_constbool(1),getNextLabel(),yylineno);//add to truelist
+                        emit(if_eq_op,ifjump,$5,newexpr_constbool(1),getNextLabel(),yylineno);//add to truelist
                         emit(jump_op,NULL,ex2,NULL,getNextLabel(),yylineno);//add to falselist
 
-                        $4->truelist = mergelist($4->truelist,exp2true);
-                        $4->falselist = mergelist($4->falselist,exp2false);
+                        $5->truelist = mergelist($5->truelist,exp2true);
+                        $5->falselist = mergelist($5->falselist,exp2false);
                     }
 
 
                     patchlist($1->truelist,$M);
                     expr* expression = new expr(boolexpr_e);
                     expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
-                    expression->truelist = $4->truelist;
-                    cout<<"the falselists 1-4 "<<$1->falselist<<"-"<<$4->falselist<<"\n";
-                    expression->falselist = mergelist($1->falselist,$4->falselist);
+                    expression->truelist = $5->truelist;
+                    cout<<"the falselists 1-4 "<<$1->falselist<<"-"<<$5->falselist<<"\n";
+                    expression->falselist = mergelist($1->falselist,$5->falselist);
                     cout<<"after merge "<<expression->falselist<<"\n";
 
                     $$ = expression;
                     $$->setJumpLab(0);
                 }
-                | expr OR M expr {
-                  int exp1true=0,exp1false=0;
-                    int exp2true=0,exp2false=0;
-                    if($1->getType() != boolexpr_e){
+                | expr OR{
+                            int exp1true=0,exp1false=0;
+                            if($1->getType() != boolexpr_e){
                         exp1true = labelLookahead();
                         exp1false = labelLookahead()+1;
                         expr* ex1 = new expr(label_e);
@@ -575,9 +577,13 @@ expr:             assignexpr {$$=$1; }
                         $1->truelist = mergelist($1->truelist,exp1true);
                         cout<<"ex1 after "<<$1->truelist<<"\n";
                         $1->falselist=mergelist($1->falselist,exp1false);
-                        $M = $M +2;
+                        //$M = $M +2;
                     }
-                    if($4->getType() != boolexpr_e){
+                } M expr {
+                  
+                    int exp2true=0,exp2false=0;
+                    
+                    if($5->getType() != boolexpr_e){
                         exp2true = labelLookahead();
                         exp2false = labelLookahead()+1;
                         expr* ex2 = new expr(label_e);
@@ -585,20 +591,20 @@ expr:             assignexpr {$$=$1; }
                         expr* ifjump = new expr(label_e);
                         ifjump->setJumpLab(0);
 
-                        emit(if_eq_op,ifjump,$4,newexpr_constbool(1),getNextLabel(),yylineno);//add to truelist
+                        emit(if_eq_op,ifjump,$5,newexpr_constbool(1),getNextLabel(),yylineno);//add to truelist
                         emit(jump_op,NULL,ex2,NULL,getNextLabel(),yylineno);//add to falselist
                         cout<<"orex1 list - case = "<<$1->truelist<<" - "<<exp2true<<"\n";
-                        $4->truelist = mergelist($4->truelist,exp2true);
-                        cout<<"ex1 after "<<$4->truelist<<"\n";
-                        $4->falselist = mergelist($4->falselist,exp2false);
+                        $5->truelist = mergelist($5->truelist,exp2true);
+                        cout<<"ex1 after "<<$5->truelist<<"\n";
+                        $5->falselist = mergelist($5->falselist,exp2false);
                     }
                     
                     patchlist($1->falselist,$M);
                     expr* expression = new expr(boolexpr_e);
                     expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
-                    cout<<"true merges "<<$1->truelist<<" %^&* "<<$4->truelist<<"\n";
-                    expression->truelist = mergelist($1->truelist,$4->truelist);
-                    expression->falselist = $4->falselist;
+                    cout<<"true merges "<<$1->truelist<<" %^&* "<<$5->truelist<<"\n";
+                    expression->truelist = mergelist($1->truelist,$5->truelist);
+                    expression->falselist = $5->falselist;
                     $$ = expression;
                     $$->setJumpLab(0);
                 }
@@ -737,7 +743,7 @@ term:             '(' expr ')' {$$=$2;}
 
 assignexpr:       lvalue '=' expr {
                                     if($1->getType()==tableitem_e){
-                                            emit(tablesetelem_op, $1->getIndex(), $1, $3, getNextLabel(), yylineno);
+                                            emit(tablesetelem_op, $1,$1->getIndex(), $3, getNextLabel(), yylineno);
                                             expr* expression=emit_if_table($1);
                                             expression->setType(assignexpr_e);
                                             $$=expression;
@@ -813,11 +819,17 @@ lvalue:           IDENT {
                             }
                             $$=expression;
                         }   
-                | LOCAL IDENT {expr *expression=new expr(var_e);expression->sym=LookUpVariable($2, 1); if(expression->sym==NULL){
-                                    expression->sym=addToSymbolTable($2, currentScope, yylineno, LOCL,var_s);Flag=1;expression->sym->setOffset(currentOffset());expression->sym->setScopespace(getCurrentScopespace());incCurScopeOffset(); }
-                                    else if(libFunctions[$2])cout<<"ERROR at line "<<yylineno<<": Collision with library function"<<endl;
-
-                              } 
+                | LOCAL IDENT {   
+                            expr *expression=new expr(var_e);
+                            expression->sym=LookUpVariable($2,0);
+                            if(expression->sym==NULL){
+                                    expression->sym=addToSymbolTable($2, currentScope, yylineno,LOCL,var_s);
+                                    expression->sym->setOffset(currentOffset());
+                                    expression->sym->setScopespace(getCurrentScopespace());
+                                    incCurScopeOffset();
+                            }
+                            $$=expression;
+                        } 
                 | COLON_COLON IDENT { /*expr *expression=new expr(var_e); expression->sym=LookUpScope($2, 0); Flag=1;*/}
                 | member {$$=$1;}
                 ;
