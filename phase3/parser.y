@@ -134,7 +134,7 @@ loopstmt:         loopstmt stmt {
                                 }
                 | {$$ = new stmtLists();cout<<"empty\n";}
                 ;
-stmt:             expr ';' {$$ = new stmtLists();cout<<"exp\n";}
+stmt:             expr ';' {$$ = new stmtLists();cout<<"exp\n"; /*PROOF THAT IM RETARDED*/}
                 | ifstmt {$$=$1;cout<<"if\n";}
                 | whilestmt {$$=$1;cout<<"while\n";}
                 | forstmt {$$=$1;cout<<"for\n";}
@@ -221,6 +221,38 @@ expr:             assignexpr {$$=$1; }
                                     $$=expression;
                                 }
                 | expr '>' expr {
+                    if($1->getType()==boolexpr_e){
+                        patchlist($1->truelist,labelLookahead());
+                        patchlist($1->falselist,labelLookahead()+2);
+                        expr* expression = new expr(boolexpr_e);
+                        expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
+                        expression->sym->setScopespace(getCurrentScopespace());
+                        expression->sym->setOffset(0);
+                        expression->setJumpLab(0);
+                        expr* jumpExp = new expr(label_e);
+                        jumpExp->setJumpLab(labelLookahead()+3);
+
+                        emit(assign_op,NULL,expression,newexpr_constbool(1),getNextLabel(),yylineno);
+                        emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);
+                        emit(assign_op,NULL,expression,newexpr_constbool(0),getNextLabel(),yylineno);
+                        $1=expression;
+                    }
+                    if($3->getType()==boolexpr_e){
+                        patchlist($3->truelist,labelLookahead());
+                        patchlist($3->falselist,labelLookahead()+2);
+                        expr* expression = new expr(boolexpr_e);
+                        expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
+                        expression->sym->setScopespace(getCurrentScopespace());
+                        expression->sym->setOffset(0);
+                        expression->setJumpLab(0);
+                        expr* jumpExp = new expr(label_e);
+                        jumpExp->setJumpLab(labelLookahead()+3);
+
+                        emit(assign_op,NULL,expression,newexpr_constbool(1),getNextLabel(),yylineno);
+                        emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);
+                        emit(assign_op,NULL,expression,newexpr_constbool(0),getNextLabel(),yylineno);
+                        $3=expression;
+                    }
                     expr* expression=new expr(boolexpr_e);
                     expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                     expression->sym->setScopespace(getCurrentScopespace());
@@ -237,6 +269,38 @@ expr:             assignexpr {$$=$1; }
                     $$ = expression;
                 }
                 | expr GREATER_EQUAL expr {
+                    if($1->getType()==boolexpr_e){
+                        patchlist($1->truelist,labelLookahead());
+                        patchlist($1->falselist,labelLookahead()+2);
+                        expr* expression = new expr(boolexpr_e);
+                        expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
+                        expression->sym->setScopespace(getCurrentScopespace());
+                        expression->sym->setOffset(0);
+                        expression->setJumpLab(0);
+                        expr* jumpExp = new expr(label_e);
+                        jumpExp->setJumpLab(labelLookahead()+3);
+
+                        emit(assign_op,NULL,expression,newexpr_constbool(1),getNextLabel(),yylineno);
+                        emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);
+                        emit(assign_op,NULL,expression,newexpr_constbool(0),getNextLabel(),yylineno);
+                        $1=expression;
+                    }
+                    if($3->getType()==boolexpr_e){
+                        patchlist($3->truelist,labelLookahead());
+                        patchlist($3->falselist,labelLookahead()+2);
+                        expr* expression = new expr(boolexpr_e);
+                        expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
+                        expression->sym->setScopespace(getCurrentScopespace());
+                        expression->sym->setOffset(0);
+                        expression->setJumpLab(0);
+                        expr* jumpExp = new expr(label_e);
+                        jumpExp->setJumpLab(labelLookahead()+3);
+
+                        emit(assign_op,NULL,expression,newexpr_constbool(1),getNextLabel(),yylineno);
+                        emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);
+                        emit(assign_op,NULL,expression,newexpr_constbool(0),getNextLabel(),yylineno);
+                        $3=expression;
+                    }
                     expr* expression=new expr(boolexpr_e);
                     expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                     expression->sym->setScopespace(getCurrentScopespace());
@@ -253,6 +317,38 @@ expr:             assignexpr {$$=$1; }
                     $$ = expression;
                 }
                 | expr '<' expr {
+                    if($1->getType()==boolexpr_e){
+                        patchlist($1->truelist,labelLookahead());
+                        patchlist($1->falselist,labelLookahead()+2);
+                        expr* expression = new expr(boolexpr_e);
+                        expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
+                        expression->sym->setScopespace(getCurrentScopespace());
+                        expression->sym->setOffset(0);
+                        expression->setJumpLab(0);
+                        expr* jumpExp = new expr(label_e);
+                        jumpExp->setJumpLab(labelLookahead()+3);
+
+                        emit(assign_op,NULL,expression,newexpr_constbool(1),getNextLabel(),yylineno);
+                        emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);
+                        emit(assign_op,NULL,expression,newexpr_constbool(0),getNextLabel(),yylineno);
+                        $1=expression;
+                    }
+                    if($3->getType()==boolexpr_e){
+                        patchlist($3->truelist,labelLookahead());
+                        patchlist($3->falselist,labelLookahead()+2);
+                        expr* expression = new expr(boolexpr_e);
+                        expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
+                        expression->sym->setScopespace(getCurrentScopespace());
+                        expression->sym->setOffset(0);
+                        expression->setJumpLab(0);
+                        expr* jumpExp = new expr(label_e);
+                        jumpExp->setJumpLab(labelLookahead()+3);
+
+                        emit(assign_op,NULL,expression,newexpr_constbool(1),getNextLabel(),yylineno);
+                        emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);
+                        emit(assign_op,NULL,expression,newexpr_constbool(0),getNextLabel(),yylineno);
+                        $3=expression;
+                    }
                     expr* expression=new expr(boolexpr_e);
                     expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                     expression->sym->setScopespace(getCurrentScopespace());
@@ -269,6 +365,38 @@ expr:             assignexpr {$$=$1; }
                     $$ = expression;
                 }
                 | expr LESS_EQUAL expr {
+                    if($1->getType()==boolexpr_e){
+                        patchlist($1->truelist,labelLookahead());
+                        patchlist($1->falselist,labelLookahead()+2);
+                        expr* expression = new expr(boolexpr_e);
+                        expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
+                        expression->sym->setScopespace(getCurrentScopespace());
+                        expression->sym->setOffset(0);
+                        expression->setJumpLab(0);
+                        expr* jumpExp = new expr(label_e);
+                        jumpExp->setJumpLab(labelLookahead()+3);
+
+                        emit(assign_op,NULL,expression,newexpr_constbool(1),getNextLabel(),yylineno);
+                        emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);
+                        emit(assign_op,NULL,expression,newexpr_constbool(0),getNextLabel(),yylineno);
+                        $1=expression;
+                    }
+                    if($3->getType()==boolexpr_e){
+                        patchlist($3->truelist,labelLookahead());
+                        patchlist($3->falselist,labelLookahead()+2);
+                        expr* expression = new expr(boolexpr_e);
+                        expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
+                        expression->sym->setScopespace(getCurrentScopespace());
+                        expression->sym->setOffset(0);
+                        expression->setJumpLab(0);
+                        expr* jumpExp = new expr(label_e);
+                        jumpExp->setJumpLab(labelLookahead()+3);
+
+                        emit(assign_op,NULL,expression,newexpr_constbool(1),getNextLabel(),yylineno);
+                        emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);
+                        emit(assign_op,NULL,expression,newexpr_constbool(0),getNextLabel(),yylineno);
+                        $3=expression;
+                    }
                     expr* expression=new expr(boolexpr_e);
                     expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                     expression->sym->setScopespace(getCurrentScopespace());
@@ -285,6 +413,39 @@ expr:             assignexpr {$$=$1; }
                     $$ = expression;
                 }
                 | expr EQUAL expr {
+
+                    if($1->getType()==boolexpr_e){
+                        patchlist($1->truelist,labelLookahead());
+                        patchlist($1->falselist,labelLookahead()+2);
+                        expr* expression = new expr(boolexpr_e);
+                        expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
+                        expression->sym->setScopespace(getCurrentScopespace());
+                        expression->sym->setOffset(0);
+                        expression->setJumpLab(0);
+                        expr* jumpExp = new expr(label_e);
+                        jumpExp->setJumpLab(labelLookahead()+3);
+
+                        emit(assign_op,NULL,expression,newexpr_constbool(1),getNextLabel(),yylineno);
+                        emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);
+                        emit(assign_op,NULL,expression,newexpr_constbool(0),getNextLabel(),yylineno);
+                        $1=expression;
+                    }
+                    if($3->getType()==boolexpr_e){
+                        patchlist($3->truelist,labelLookahead());
+                        patchlist($3->falselist,labelLookahead()+2);
+                        expr* expression = new expr(boolexpr_e);
+                        expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
+                        expression->sym->setScopespace(getCurrentScopespace());
+                        expression->sym->setOffset(0);
+                        expression->setJumpLab(0);
+                        expr* jumpExp = new expr(label_e);
+                        jumpExp->setJumpLab(labelLookahead()+3);
+
+                        emit(assign_op,NULL,expression,newexpr_constbool(1),getNextLabel(),yylineno);
+                        emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);
+                        emit(assign_op,NULL,expression,newexpr_constbool(0),getNextLabel(),yylineno);
+                        $3=expression;
+                    }
                     expr* expression=new expr(boolexpr_e);
                     expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                     expression->sym->setScopespace(getCurrentScopespace());
@@ -298,9 +459,42 @@ expr:             assignexpr {$$=$1; }
                     emit(if_eq_op,ifJumpExp,$1,$3,getNextLabel(),yylineno);
                     jumpExp->setJumpLab(0);
                     emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);
+
                     $$ = expression;
                 }
                 | expr NOT_EQUAL expr {
+                    if($1->getType()==boolexpr_e){
+                        patchlist($1->truelist,labelLookahead());
+                        patchlist($1->falselist,labelLookahead()+2);
+                        expr* expression = new expr(boolexpr_e);
+                        expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
+                        expression->sym->setScopespace(getCurrentScopespace());
+                        expression->sym->setOffset(0);
+                        expression->setJumpLab(0);
+                        expr* jumpExp = new expr(label_e);
+                        jumpExp->setJumpLab(labelLookahead()+3);
+
+                        emit(assign_op,NULL,expression,newexpr_constbool(1),getNextLabel(),yylineno);
+                        emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);
+                        emit(assign_op,NULL,expression,newexpr_constbool(0),getNextLabel(),yylineno);
+                        $1=expression;
+                    }
+                    if($3->getType()==boolexpr_e){
+                        patchlist($3->truelist,labelLookahead());
+                        patchlist($3->falselist,labelLookahead()+2);
+                        expr* expression = new expr(boolexpr_e);
+                        expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
+                        expression->sym->setScopespace(getCurrentScopespace());
+                        expression->sym->setOffset(0);
+                        expression->setJumpLab(0);
+                        expr* jumpExp = new expr(label_e);
+                        jumpExp->setJumpLab(labelLookahead()+3);
+
+                        emit(assign_op,NULL,expression,newexpr_constbool(1),getNextLabel(),yylineno);
+                        emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);
+                        emit(assign_op,NULL,expression,newexpr_constbool(0),getNextLabel(),yylineno);
+                        $3=expression;
+                    }
                     expr* expression=new expr(boolexpr_e);
                     expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                     expression->sym->setScopespace(getCurrentScopespace());
@@ -314,6 +508,10 @@ expr:             assignexpr {$$=$1; }
                     emit(if_noteq_op,ifJumpExp,$1,$3,getNextLabel(),yylineno);
                     jumpExp->setJumpLab(0);
                     emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);
+                    expression->truelist=mergelist(expression->truelist,$1->truelist);
+                    expression->truelist=mergelist(expression->truelist,$3->truelist);
+                    expression->falselist=mergelist(expression->falselist,$1->falselist);
+                    expression->falselist=mergelist(expression->falselist,$3->falselist);
                     $$ = expression;
                 }
                 | expr AND M expr {
@@ -408,6 +606,7 @@ expr:             assignexpr {$$=$1; }
                 | term {
                     $$=$1;
                     if($1->getType()==0){
+                        cout<"IN TERM RESET\n"; 
                         $$->truelist=0;
                         $$->falselist=0;
                         $$->setJumpLab(0);
@@ -425,20 +624,34 @@ term:             '(' expr ')' {$$=$2;}
                                 $$=expression;
                               }
                 | NOT expr  {
-                                /*
+                        
+                                cout<<"not in non boolean called\n";
                                 expr* expression=new expr(boolexpr_e);
-                                expression->sym=addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
-                                expression->sym->setOffset(0);
+                                expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                                 expression->sym->setScopespace(getCurrentScopespace());
-                                emit(not_op, expression, $2, NULL, getNextLabel(), yylineno);
-                                $$=expression;
-                                */
-                                int hold = $2->truelist;
-                                $2->truelist = $2->falselist;
-                                $2->falselist = hold;
-                                $$ = $2;
+                                expression->sym->setOffset(0);
+                                expr* jumpExp = new expr(label_e);
+                                expr* ifJumpExp = new expr(label_e);
+                                ifJumpExp->setJumpLab(0);
+                                expression->truelist = labelLookahead()+1;
+                                expression->falselist = labelLookahead();
 
+                                emit(if_eq_op,ifJumpExp,$2,newexpr_constbool(1),getNextLabel(),yylineno);
+                                jumpExp->setJumpLab(0);
+                                emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);                                
+                               
+                                cout<<"NOT LISTS t-f "<<expression->truelist<<"-"<<expression->falselist<<"\n";
+                                $$ = expression;
+                        if($expr->getType()==boolexpr_e){
+                            cout<<"not in boolean called\n";
+                            int holder = $2->truelist;
+                            $2->truelist = $2->falselist;
+                            $2->falselist = holder;
+                            expression->truelist=(expression->truelist,$2->truelist);
+                            expression->falselist=(expression->falselist,$2->falselist);
 
+                        }   
+                        $$=expression;     
                             }
                 | PLUS_PLUS lvalue  {/*LookUpRvalue($2);*/
                                         expr *arrExpr=new expr(constnum_e);
