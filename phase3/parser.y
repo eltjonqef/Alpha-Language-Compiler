@@ -413,7 +413,6 @@ expr:             assignexpr {$$=$1; }
                     $$ = expression;
                 }
                 | expr EQUAL expr {
-
                     if($1->getType()==boolexpr_e){
                         patchlist($1->truelist,labelLookahead());
                         patchlist($1->falselist,labelLookahead()+2);
@@ -1169,7 +1168,7 @@ forprefix:              FOR '(' elist ';' M expr ';' {
                                                         }
 
                                                         forprx->setEnter(labelLookahead());
-                                                        emit(if_eq_op,$expr, newexpr_constbool(1), NULL, getNextLabel(),yylineno);
+                                                        emit(if_eq_op,NULL, $expr, newexpr_constbool(1), getNextLabel(),yylineno);
                                                         $$=forprx;
                                                         nestedLoopCounter++;
                                                     }
@@ -1257,7 +1256,7 @@ SymbolType getGlobLocl(){
 
 string nextVariableName(){
     string numberInString = to_string(tempVariableCount);
-    string RetVal = "_t"+numberInString;
+    string RetVal = "^"+numberInString;
     tempVariableCount++;
     return RetVal;
 }
