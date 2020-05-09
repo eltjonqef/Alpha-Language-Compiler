@@ -654,48 +654,84 @@ term:             '(' expr ')' {$$=$2;}
                         $$=expression;     
                             }
                 | PLUS_PLUS lvalue  {/*LookUpRvalue($2);*/
-                                        expr *arrExpr=new expr(constnum_e);
-                                        arrExpr->setNumConst(1);
-                                        emit(add_op, $2, $2, arrExpr, getNextLabel(), yylineno);
-                                        expr* expression= new expr(arithexpr_e);
-                                        expression->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
-                                        expression->sym->setScopespace(getCurrentScopespace());
-                                        expression->sym->setOffset(0);
-                                        emit(assign_op, expression, $2, NULL, getNextLabel(), yylineno);
-                                        $$=expression;
+                                        if($2->getType() != tableitem_e){
+                                            expr *arrExpr=new expr(constnum_e);
+                                            arrExpr->setNumConst(1);
+                                            emit(add_op, $2, $2, arrExpr, getNextLabel(), yylineno);
+                                            expr* expression= new expr(arithexpr_e);
+                                            expression->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
+                                            expression->sym->setScopespace(getCurrentScopespace());
+                                            expression->sym->setOffset(0);
+                                            emit(assign_op, expression, $2, NULL, getNextLabel(), yylineno);
+                                            $$=expression;
+                                        }
+                                        else{
+                                            $$=emit_if_table($2);
+                                            emit(add_op, $$, $$, new expr(1), getNextLabel(), yylineno);
+                                            emit(tablesetelem_op, $2,$2->getIndex(), $$,getNextLabel(), yylineno);
+                                        }
                                     }
                 | lvalue PLUS_PLUS {/*LookUpRvalue($1);*/
-                                        expr* expression= new expr(arithexpr_e);
-                                        expression->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
-                                        expression->sym->setScopespace(getCurrentScopespace());
-                                        expression->sym->setOffset(0);
-                                        emit(assign_op, expression, $1, NULL, getNextLabel(), yylineno);
-                                        expr *arrExpr=new expr(constnum_e);
-                                        arrExpr->setNumConst(1);
-                                        emit(add_op, $1, $1, arrExpr, getNextLabel(), yylineno);
-                                        $$=expression; 
+                                        if($1->getType() != tableitem_e){
+                                            expr* expression= new expr(arithexpr_e);
+                                            expression->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
+                                            expression->sym->setScopespace(getCurrentScopespace());
+                                            expression->sym->setOffset(0);
+                                            emit(assign_op, expression, $1, NULL, getNextLabel(), yylineno);
+                                            expr *arrExpr=new expr(constnum_e);
+                                            arrExpr->setNumConst(1);
+                                            emit(add_op, $1, $1, arrExpr, getNextLabel(), yylineno);
+                                            $$=expression; 
+                                        }
+                                        else{
+                                            expr *temp=new expr(arithexpr_e);
+                                            temp->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
+                                            $$=emit_if_table($1);
+                                            emit(assign_op, temp, $$, NULL, getNextLabel(), yylineno);
+                                            emit(add_op, $$, $$, new expr(1), getNextLabel(), yylineno);
+                                            emit(tablesetelem_op, $1,$1->getIndex(), $$,getNextLabel(), yylineno);
+                                            $$=temp;
+                                        }
                                    }
                 | MINUS_MINUS lvalue {/*LookUpRvalue($2);*/
-                                        expr *arrExpr=new expr(constnum_e);
-                                        arrExpr->setNumConst(1);
-                                        emit(sub_op, $2, $2, arrExpr, getNextLabel(), yylineno);
-                                        expr* expression= new expr(arithexpr_e);
-                                        expression->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
-                                        expression->sym->setScopespace(getCurrentScopespace());
-                                        expression->sym->setOffset(0);
-                                        emit(assign_op, expression, $2, NULL, getNextLabel(), yylineno);
-                                        $$=expression;
+                                        if($2->getType() != tableitem_e){
+                                            expr *arrExpr=new expr(constnum_e);
+                                            arrExpr->setNumConst(1);
+                                            emit(sub_op, $2, $2, arrExpr, getNextLabel(), yylineno);
+                                            expr* expression= new expr(arithexpr_e);
+                                            expression->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
+                                            expression->sym->setScopespace(getCurrentScopespace());
+                                            expression->sym->setOffset(0);
+                                            emit(assign_op, expression, $2, NULL, getNextLabel(), yylineno);
+                                            $$=expression;
+                                        }
+                                        else{
+                                            $$=emit_if_table($2);
+                                            emit(sub_op, $$, $$, new expr(1), getNextLabel(), yylineno);
+                                            emit(tablesetelem_op, $2,$2->getIndex(), $$,getNextLabel(), yylineno);
+                                        }
                                      }
                 | lvalue MINUS_MINUS {/*LookUpRvalue($1);*/
-                                        expr* expression= new expr(arithexpr_e);
-                                        expression->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
-                                        expression->sym->setScopespace(getCurrentScopespace());
-                                        expression->sym->setOffset(0);
-                                        emit(assign_op, expression, $1, NULL, getNextLabel(), yylineno);
-                                        expr *arrExpr=new expr(constnum_e);
-                                        arrExpr->setNumConst(1);
-                                        emit(sub_op, $1, $1, arrExpr, getNextLabel(), yylineno);
-                                        $$=expression; 
+                                        if($1->getType() != tableitem_e){
+                                            expr* expression= new expr(arithexpr_e);
+                                            expression->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
+                                            expression->sym->setScopespace(getCurrentScopespace());
+                                            expression->sym->setOffset(0);
+                                            emit(assign_op, expression, $1, NULL, getNextLabel(), yylineno);
+                                            expr *arrExpr=new expr(constnum_e);
+                                            arrExpr->setNumConst(1);
+                                            emit(sub_op, $1, $1, arrExpr, getNextLabel(), yylineno);
+                                            $$=expression; 
+                                        }
+                                        else{
+                                            expr *temp=new expr(arithexpr_e);
+                                            temp->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
+                                            $$=emit_if_table($1);
+                                            emit(assign_op, temp, $$, NULL, getNextLabel(), yylineno);
+                                            emit(sub_op, $$, $$, new expr(1), getNextLabel(), yylineno);
+                                            emit(tablesetelem_op, $1,$1->getIndex(), $$,getNextLabel(), yylineno);
+                                            $$=temp;
+                                        }
                                      }
                 | primary {$$=$1;}
                 ;
