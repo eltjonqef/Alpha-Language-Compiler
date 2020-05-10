@@ -850,7 +850,17 @@ lvalue:           IDENT {
                             }
                             $$=expression;
                         } 
-                | COLON_COLON IDENT { /*expr *expression=new expr(var_e); expression->sym=LookUpScope($2, 0); Flag=1;*/}
+                | COLON_COLON IDENT {   
+                            expr *expression=new expr(var_e);
+                            expression->sym=LookUpVariable($2,0);
+                            if(expression->sym==NULL){
+                                    expression->sym=addToSymbolTable($2, currentScope, yylineno,GLOB,var_s);
+                                    expression->sym->setOffset(currentOffset());
+                                    expression->sym->setScopespace(getCurrentScopespace());
+                                    incCurScopeOffset();
+                            }
+                            $$=expression;
+                        } 
                 | member {$$=$1;}
                 ;
 
