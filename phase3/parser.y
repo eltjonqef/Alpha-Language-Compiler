@@ -413,7 +413,6 @@ expr:             assignexpr {$$=$1; }
                     $$ = expression;
                 }
                 | expr EQUAL expr {
-
                     if($1->getType()==boolexpr_e){
                         patchlist($1->truelist,labelLookahead());
                         patchlist($1->falselist,labelLookahead()+2);
@@ -514,25 +513,28 @@ expr:             assignexpr {$$=$1; }
                     expression->falselist=mergelist(expression->falselist,$3->falselist);
                     $$ = expression;
                 }
-                | expr AND M expr {
-                    int exp1true=0,exp1false=0;
-                    int exp2true=0,exp2false=0;
-                    if($1->getType() != boolexpr_e){
-                        exp1true = labelLookahead();
-                        exp1false = labelLookahead()+1;
-                        expr* ex1 = new expr(label_e);
-                        ex1->setJumpLab(0);
-                        cout<<"preorder "<<$1->getJumpLab()<<"\n";
-                        expr* ifjump = new expr(label_e);
-                        ifjump->setJumpLab(0);
-                        emit(if_eq_op,ifjump,$1,newexpr_constbool(1),getNextLabel(),yylineno);//add to truelist
-                        emit(jump_op,NULL,ex1,NULL,getNextLabel(),yylineno);//add to falselist
+                | expr AND {
+                                int exp1true=0,exp1false=0;
+                                if($1->getType() != boolexpr_e){
+                                exp1true = labelLookahead();
+                                exp1false = labelLookahead()+1;
+                                expr* ex1 = new expr(label_e);
+                                ex1->setJumpLab(0);
+                                cout<<"preorder "<<$1->getJumpLab()<<"\n";
+                                expr* ifjump = new expr(label_e);
+                                ifjump->setJumpLab(0);
+                                emit(if_eq_op,ifjump,$1,newexpr_constbool(1),getNextLabel(),yylineno);//add to truelist
+                                emit(jump_op,NULL,ex1,NULL,getNextLabel(),yylineno);//add to falselist
 
-                        $1->truelist = mergelist($1->truelist,exp1true);
-                        $1->falselist=mergelist($1->falselist,exp1false);
-                        $M = $M +2;
-                    }
-                    if($4->getType() != boolexpr_e){
+                                $1->truelist = mergelist($1->truelist,exp1true);
+                                $1->falselist=mergelist($1->falselist,exp1false);
+                                //$M = $M +2;
+                            }
+                    }M expr {
+                    
+                    int exp2true=0,exp2false=0;
+                    
+                    if($5->getType() != boolexpr_e){
                         exp2true = labelLookahead();
                         exp2false = labelLookahead()+1;
                         expr* ex2 = new expr(label_e);
@@ -540,29 +542,28 @@ expr:             assignexpr {$$=$1; }
                         expr* ifjump = new expr(label_e);
                         ifjump->setJumpLab(0);
 
-                        emit(if_eq_op,ifjump,$4,newexpr_constbool(1),getNextLabel(),yylineno);//add to truelist
+                        emit(if_eq_op,ifjump,$5,newexpr_constbool(1),getNextLabel(),yylineno);//add to truelist
                         emit(jump_op,NULL,ex2,NULL,getNextLabel(),yylineno);//add to falselist
 
-                        $4->truelist = mergelist($4->truelist,exp2true);
-                        $4->falselist = mergelist($4->falselist,exp2false);
+                        $5->truelist = mergelist($5->truelist,exp2true);
+                        $5->falselist = mergelist($5->falselist,exp2false);
                     }
 
 
                     patchlist($1->truelist,$M);
                     expr* expression = new expr(boolexpr_e);
                     expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
-                    expression->truelist = $4->truelist;
-                    cout<<"the falselists 1-4 "<<$1->falselist<<"-"<<$4->falselist<<"\n";
-                    expression->falselist = mergelist($1->falselist,$4->falselist);
+                    expression->truelist = $5->truelist;
+                    cout<<"the falselists 1-4 "<<$1->falselist<<"-"<<$5->falselist<<"\n";
+                    expression->falselist = mergelist($1->falselist,$5->falselist);
                     cout<<"after merge "<<expression->falselist<<"\n";
 
                     $$ = expression;
                     $$->setJumpLab(0);
                 }
-                | expr OR M expr {
-                  int exp1true=0,exp1false=0;
-                    int exp2true=0,exp2false=0;
-                    if($1->getType() != boolexpr_e){
+                | expr OR{
+                            int exp1true=0,exp1false=0;
+                            if($1->getType() != boolexpr_e){
                         exp1true = labelLookahead();
                         exp1false = labelLookahead()+1;
                         expr* ex1 = new expr(label_e);
@@ -576,9 +577,13 @@ expr:             assignexpr {$$=$1; }
                         $1->truelist = mergelist($1->truelist,exp1true);
                         cout<<"ex1 after "<<$1->truelist<<"\n";
                         $1->falselist=mergelist($1->falselist,exp1false);
-                        $M = $M +2;
+                        //$M = $M +2;
                     }
-                    if($4->getType() != boolexpr_e){
+                } M expr {
+                  
+                    int exp2true=0,exp2false=0;
+                    
+                    if($5->getType() != boolexpr_e){
                         exp2true = labelLookahead();
                         exp2false = labelLookahead()+1;
                         expr* ex2 = new expr(label_e);
@@ -586,20 +591,20 @@ expr:             assignexpr {$$=$1; }
                         expr* ifjump = new expr(label_e);
                         ifjump->setJumpLab(0);
 
-                        emit(if_eq_op,ifjump,$4,newexpr_constbool(1),getNextLabel(),yylineno);//add to truelist
+                        emit(if_eq_op,ifjump,$5,newexpr_constbool(1),getNextLabel(),yylineno);//add to truelist
                         emit(jump_op,NULL,ex2,NULL,getNextLabel(),yylineno);//add to falselist
                         cout<<"orex1 list - case = "<<$1->truelist<<" - "<<exp2true<<"\n";
-                        $4->truelist = mergelist($4->truelist,exp2true);
-                        cout<<"ex1 after "<<$4->truelist<<"\n";
-                        $4->falselist = mergelist($4->falselist,exp2false);
+                        $5->truelist = mergelist($5->truelist,exp2true);
+                        cout<<"ex1 after "<<$5->truelist<<"\n";
+                        $5->falselist = mergelist($5->falselist,exp2false);
                     }
                     
                     patchlist($1->falselist,$M);
                     expr* expression = new expr(boolexpr_e);
                     expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
-                    cout<<"true merges "<<$1->truelist<<" %^&* "<<$4->truelist<<"\n";
-                    expression->truelist = mergelist($1->truelist,$4->truelist);
-                    expression->falselist = $4->falselist;
+                    cout<<"true merges "<<$1->truelist<<" %^&* "<<$5->truelist<<"\n";
+                    expression->truelist = mergelist($1->truelist,$5->truelist);
+                    expression->falselist = $5->falselist;
                     $$ = expression;
                     $$->setJumpLab(0);
                 }
@@ -642,67 +647,103 @@ term:             '(' expr ')' {$$=$2;}
                                
                                 cout<<"NOT LISTS t-f "<<expression->truelist<<"-"<<expression->falselist<<"\n";
                                 $$ = expression;
-                        if($expr->getType()==boolexpr_e){
+                        if($expr->getType()==constbool_e){
                             cout<<"not in boolean called\n";
                             int holder = $2->truelist;
                             $2->truelist = $2->falselist;
                             $2->falselist = holder;
                             expression->truelist=(expression->truelist,$2->truelist);
                             expression->falselist=(expression->falselist,$2->falselist);
-
+ cout<<"\tAAAAAAAAAAAAAAAAAAAAAAAt\t\tPATCHLIST"<<expression->falselist<<endl;
                         }   
                         $$=expression;     
                             }
                 | PLUS_PLUS lvalue  {/*LookUpRvalue($2);*/
-                                        expr *arrExpr=new expr(constnum_e);
-                                        arrExpr->setNumConst(1);
-                                        emit(add_op, $2, $2, arrExpr, getNextLabel(), yylineno);
-                                        expr* expression= new expr(arithexpr_e);
-                                        expression->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
-                                        expression->sym->setScopespace(getCurrentScopespace());
-                                        expression->sym->setOffset(0);
-                                        emit(assign_op, expression, $2, NULL, getNextLabel(), yylineno);
-                                        $$=expression;
+                                        if($2->getType() != tableitem_e){
+                                            expr *arrExpr=new expr(constnumInt_e);
+                                            arrExpr->setNumConst(1);
+                                            emit(add_op, $2, $2, arrExpr, getNextLabel(), yylineno);
+                                            expr* expression= new expr(arithexpr_e);
+                                            expression->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
+                                            expression->sym->setScopespace(getCurrentScopespace());
+                                            expression->sym->setOffset(0);
+                                            emit(assign_op, expression, $2, NULL, getNextLabel(), yylineno);
+                                            $$=expression;
+                                        }
+                                        else{
+                                            $$=emit_if_table($2);
+                                            emit(add_op, $$, $$, new expr(1), getNextLabel(), yylineno);
+                                            emit(tablesetelem_op, $2,$2->getIndex(), $$,getNextLabel(), yylineno);
+                                        }
                                     }
                 | lvalue PLUS_PLUS {/*LookUpRvalue($1);*/
-                                        expr* expression= new expr(arithexpr_e);
-                                        expression->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
-                                        expression->sym->setScopespace(getCurrentScopespace());
-                                        expression->sym->setOffset(0);
-                                        emit(assign_op, expression, $1, NULL, getNextLabel(), yylineno);
-                                        expr *arrExpr=new expr(constnum_e);
-                                        arrExpr->setNumConst(1);
-                                        emit(add_op, $1, $1, arrExpr, getNextLabel(), yylineno);
-                                        $$=expression; 
+                                        if($1->getType() != tableitem_e){
+                                            expr* expression= new expr(arithexpr_e);
+                                            expression->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
+                                            expression->sym->setScopespace(getCurrentScopespace());
+                                            expression->sym->setOffset(0);
+                                            emit(assign_op, expression, $1, NULL, getNextLabel(), yylineno);
+                                            expr *arrExpr=new expr(constnumInt_e);
+                                            arrExpr->setNumConst(1);
+                                            emit(add_op, $1, $1, arrExpr, getNextLabel(), yylineno);
+                                            $$=expression; 
+                                        }
+                                        else{
+                                            expr *temp=new expr(arithexpr_e);
+                                            temp->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
+                                            $$=emit_if_table($1);
+                                            emit(assign_op, temp, $$, NULL, getNextLabel(), yylineno);
+                                            emit(add_op, $$, $$, new expr(1), getNextLabel(), yylineno);
+                                            emit(tablesetelem_op, $1,$1->getIndex(), $$,getNextLabel(), yylineno);
+                                            $$=temp;
+                                        }
                                    }
                 | MINUS_MINUS lvalue {/*LookUpRvalue($2);*/
-                                        expr *arrExpr=new expr(constnum_e);
-                                        arrExpr->setNumConst(1);
-                                        emit(sub_op, $2, $2, arrExpr, getNextLabel(), yylineno);
-                                        expr* expression= new expr(arithexpr_e);
-                                        expression->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
-                                        expression->sym->setScopespace(getCurrentScopespace());
-                                        expression->sym->setOffset(0);
-                                        emit(assign_op, expression, $2, NULL, getNextLabel(), yylineno);
-                                        $$=expression;
+                                        if($2->getType() != tableitem_e){
+                                            expr *arrExpr=new expr(constnumInt_e);
+                                            arrExpr->setNumConst(1);
+                                            emit(sub_op, $2, $2, arrExpr, getNextLabel(), yylineno);
+                                            expr* expression= new expr(arithexpr_e);
+                                            expression->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
+                                            expression->sym->setScopespace(getCurrentScopespace());
+                                            expression->sym->setOffset(0);
+                                            emit(assign_op, expression, $2, NULL, getNextLabel(), yylineno);
+                                            $$=expression;
+                                        }
+                                        else{
+                                            $$=emit_if_table($2);
+                                            emit(sub_op, $$, $$, new expr(1), getNextLabel(), yylineno);
+                                            emit(tablesetelem_op, $2,$2->getIndex(), $$,getNextLabel(), yylineno);
+                                        }
                                      }
                 | lvalue MINUS_MINUS {/*LookUpRvalue($1);*/
-                                        expr* expression= new expr(arithexpr_e);
-                                        expression->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
-                                        expression->sym->setScopespace(getCurrentScopespace());
-                                        expression->sym->setOffset(0);
-                                        emit(assign_op, expression, $1, NULL, getNextLabel(), yylineno);
-                                        expr *arrExpr=new expr(constnum_e);
-                                        arrExpr->setNumConst(1);
-                                        emit(sub_op, $1, $1, arrExpr, getNextLabel(), yylineno);
-                                        $$=expression; 
+                                        if($1->getType() != tableitem_e){
+                                            expr* expression= new expr(arithexpr_e);
+                                            expression->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
+                                            expression->sym->setScopespace(getCurrentScopespace());
+                                            expression->sym->setOffset(0);
+                                            emit(assign_op, expression, $1, NULL, getNextLabel(), yylineno);
+                                            expr *arrExpr=new expr(constnumInt_e);
+                                            arrExpr->setNumConst(1);
+                                            emit(sub_op, $1, $1, arrExpr, getNextLabel(), yylineno);
+                                            $$=expression; 
+                                        }
+                                        else{
+                                            expr *temp=new expr(arithexpr_e);
+                                            temp->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
+                                            $$=emit_if_table($1);
+                                            emit(assign_op, temp, $$, NULL, getNextLabel(), yylineno);
+                                            emit(sub_op, $$, $$, new expr(1), getNextLabel(), yylineno);
+                                            emit(tablesetelem_op, $1,$1->getIndex(), $$,getNextLabel(), yylineno);
+                                            $$=temp;
+                                        }
                                      }
                 | primary {$$=$1;}
                 ;
 
 assignexpr:       lvalue '=' expr {
                                     if($1->getType()==tableitem_e){
-                                            emit(tablesetelem_op, $1->getIndex(), $1, $3, getNextLabel(), yylineno);
+                                            emit(tablesetelem_op, $1,$1->getIndex(), $3, getNextLabel(), yylineno);
                                             expr* expression=emit_if_table($1);
                                             expression->setType(assignexpr_e);
                                             $$=expression;
@@ -756,7 +797,7 @@ primary:          lvalue {
                 | call {}
                 | objectdef {$$=$1;}
                 | '(' funcdef ')' {$$=$2;}
-                | const {$$=$1;}
+                | const {$$->setJumpLab(0);$$=$1;}
                 ;
 
    
@@ -778,11 +819,17 @@ lvalue:           IDENT {
                             }
                             $$=expression;
                         }   
-                | LOCAL IDENT {expr *expression=new expr(var_e);expression->sym=LookUpVariable($2, 1); if(expression->sym==NULL){
-                                    expression->sym=addToSymbolTable($2, currentScope, yylineno, LOCL,var_s);Flag=1;expression->sym->setOffset(currentOffset());expression->sym->setScopespace(getCurrentScopespace());incCurScopeOffset(); }
-                                    else if(libFunctions[$2])cout<<"ERROR at line "<<yylineno<<": Collision with library function"<<endl;
-
-                              } 
+                | LOCAL IDENT {   
+                            expr *expression=new expr(var_e);
+                            expression->sym=LookUpVariable($2,0);
+                            if(expression->sym==NULL){
+                                    expression->sym=addToSymbolTable($2, currentScope, yylineno,LOCL,var_s);
+                                    expression->sym->setOffset(currentOffset());
+                                    expression->sym->setScopespace(getCurrentScopespace());
+                                    incCurScopeOffset();
+                            }
+                            $$=expression;
+                        } 
                 | COLON_COLON IDENT { /*expr *expression=new expr(var_e); expression->sym=LookUpScope($2, 0); Flag=1;*/}
                 | member {$$=$1;}
                 ;
@@ -807,9 +854,9 @@ call:             call '(' elist ')' {$$=make_call($1, $3);}
                                         $1=emit_if_table($1);
                                         if($2->getMethod()){
                                             expr* t=$1;
-                                            //$1=emit_if_table(member_item(t, strdup($2->getName().c_str())));
-                                            //t->setNext($2->getEList());
-                                            //$2->setEList(t);
+                                            $1=emit_if_table(member_item(t, strdup($2->getName().c_str())));
+                                            t->setNext($2->getEList());
+                                            $2->setEList(t);
                                         }    
                                         $$=make_call($1, $2->getEList());
                                     }
@@ -916,6 +963,7 @@ funcdef:          FUNCTION N {
                                 expression->sym=addToSymbolTable("$"+to_string(anonymousFuntionCounter++), currentScope, yylineno, USERFUNC,programfunc_s);
                                 funcExprStack.push(expression);
                                 emit(funcstart_op,expression,NULL,NULL,getNextLabel(),yylineno);
+                                returnStack.push(0);
                             }
                         '(' {
                                 currentScope++;
@@ -940,6 +988,9 @@ funcdef:          FUNCTION N {
                                 $$->falselist=0;
                                 $$->setJumpLab(0);
                                 funcExprStack.pop();
+                                cout<<"PUNCHPUCNH "<<returnStack.top()<<"\n";
+                                patchlist(returnStack.top(),labelLookahead()-1);
+                                returnStack.pop();
                             }
                 | FUNCTION IDENT N{
                                     if(LookUpFunction($2)) {
@@ -948,6 +999,7 @@ funcdef:          FUNCTION N {
                                         nestedFunctionCounter++;
                                         funcExprStack.push(expression);
                                         emit(funcstart_op,expression,NULL,NULL,getNextLabel(),yylineno);
+                                        returnStack.push(0);
                                     }else{
                                         assert(0);
                                     }
@@ -977,11 +1029,14 @@ funcdef:          FUNCTION N {
                                     $$->falselist=0;
                                     $$->setJumpLab(0);
                                     funcExprStack.pop();
+                                    cout<<"PUNCHPUCNH "<<returnStack.top()<<"\n";
+                                    patchlist(returnStack.top(),labelLookahead()-1);
+                                    returnStack.pop();
                                 }
                 ;
 
-const:            INTCONST {expr *expression=new expr(constnum_e); expression->setNumConst($1);$$=expression;}
-                | DOUBLECONST {expr *expression=new expr(constnum_e); expression->setNumConst($1);$$=expression;}
+const:            INTCONST {expr *expression=new expr(constnumInt_e); expression->setNumConst($1);$$=expression;}
+                | DOUBLECONST {expr *expression=new expr(constnumDouble_e); expression->setNumConst($1);$$=expression;}
                 | STRING {expr *expression=new expr(conststring_e); expression->setStringConst($1);$$=expression;}
                 | NIL {expr *expression=new expr(nil_e); $$=expression;}
                 | TRUE {expr *expression=new expr(constbool_e); expression->setBoolConst(1);$$=expression;}
@@ -1133,7 +1188,7 @@ forprefix:              FOR '(' elist ';' M expr ';' {
                                                         }
 
                                                         forprx->setEnter(labelLookahead());
-                                                        emit(if_eq_op,$expr, newexpr_constbool(1), NULL, getNextLabel(),yylineno);
+                                                        emit(if_eq_op,NULL, $expr, newexpr_constbool(1), getNextLabel(),yylineno);
                                                         $$=forprx;
                                                         nestedLoopCounter++;
                                                     }
@@ -1166,6 +1221,19 @@ forstmt:          forprefix N elist ')' N stmt N{
 
 returnstmt:       RETURN ';' {
                                 emit(ret_op,NULL,NULL,NULL,getNextLabel(),yylineno);
+                                expr* jumpEx = new expr(label_e);
+                                jumpEx->setJumpLab(0);
+                                int labelHold = labelLookahead();
+                                emit(jump_op,NULL,jumpEx,NULL,getNextLabel(),yylineno);
+
+                                if(returnStack.top()==0){
+                                    returnStack.pop();
+                                    returnStack.push(labelHold);
+                                }else{
+                                    int hold = mergelist(returnStack.top(),labelHold);
+                                    returnStack.pop();
+                                    returnStack.push(hold);
+                                }
                              }
                 | RETURN expr ';' {
                                     if($expr->getType()==boolexpr_e){
@@ -1178,6 +1246,20 @@ returnstmt:       RETURN ';' {
                                         emit(assign_op,NULL,$expr,newexpr_constbool(0),getNextLabel(),yylineno);
                                     }
                                     emit(ret_op,NULL,$expr,NULL,getNextLabel(),yylineno);
+
+                                    expr* jumpEx = new expr(label_e);
+                                    jumpEx->setJumpLab(0);
+                                    int labelHold = labelLookahead();
+                                    emit(jump_op,NULL,jumpEx,NULL,getNextLabel(),yylineno);
+
+                                    if(returnStack.top()==0){
+                                        returnStack.pop();
+                                        returnStack.push(labelHold);
+                                    }else{
+                                        int hold = mergelist(returnStack.top(),labelHold);
+                                        returnStack.pop();
+                                        returnStack.push(hold);
+                                    }
                                   }
                 ;
             
@@ -1221,7 +1303,7 @@ SymbolType getGlobLocl(){
 
 string nextVariableName(){
     string numberInString = to_string(tempVariableCount);
-    string RetVal = "_t"+numberInString;
+    string RetVal = "^"+numberInString;
     tempVariableCount++;
     return RetVal;
 }
