@@ -1225,8 +1225,9 @@ returnstmt:       RETURN ';' {
                                 jumpEx->setJumpLab(0);
                                 int labelHold = labelLookahead();
                                 emit(jump_op,NULL,jumpEx,NULL,getNextLabel(),yylineno);
-
-                                if(returnStack.top()==0){
+                                if(returnStack.empty()){
+                                        assert("return out of context" && 0);
+                                }else if(returnStack.top()==0){
                                     returnStack.pop();
                                     returnStack.push(labelHold);
                                 }else{
@@ -1251,8 +1252,10 @@ returnstmt:       RETURN ';' {
                                     jumpEx->setJumpLab(0);
                                     int labelHold = labelLookahead();
                                     emit(jump_op,NULL,jumpEx,NULL,getNextLabel(),yylineno);
-
-                                    if(returnStack.top()==0){
+                                    if(returnStack.empty()){
+                                        assert("return out of context" && 0);
+                                    }
+                                    else if(returnStack.top()==0){
                                         returnStack.pop();
                                         returnStack.push(labelHold);
                                     }else{
