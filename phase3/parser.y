@@ -904,8 +904,52 @@ methodcall:       DOT_DOT IDENT '(' elist ')'   {
                                                 }
                 ;
 
-elist:            expr {$$=$1; $$->setNext(NULL);}
-                | expr ',' elist {$1->setNext($3); $$=$1;}
+elist:            expr {
+                            if($expr->getType() != boolexpr_e){
+                                $$=$1; $$->setNext(NULL);  
+                            }else{
+                                patchlist($expr->truelist,labelLookahead());
+                                patchlist($expr->falselist,labelLookahead()+2);
+
+                                expr* exr = new expr(assignexpr_e);
+                                exr->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
+                                exr->sym->setScopespace(getCurrentScopespace());
+                                exr->sym->setOffset(0);
+
+                                emit(assign_op,exr,newexpr_constbool(1),NULL,getNextLabel(),yylineno);
+
+                                expr* jumpEx = new expr(label_e);
+                                jumpEx->setJumpLab(labelLookahead()+2);
+                                emit(jump_op,NULL,jumpEx,NULL,getNextLabel(),yylineno);
+
+                                emit(assign_op,exr,newexpr_constbool(0),NULL,getNextLabel(),yylineno);
+                                $$=exr;
+                                $$->setNext(NULL);
+                            }
+                       }
+                | expr ',' elist {
+                                    if($expr->getType()!=boolexpr_e){
+                                        $1->setNext($3); $$=$1;
+                                    }else{
+                                        patchlist($expr->truelist,labelLookahead());
+                                        patchlist($expr->falselist,labelLookahead()+2);
+
+                                        expr* exr = new expr(assignexpr_e);
+                                        exr->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
+                                        exr->sym->setScopespace(getCurrentScopespace());
+                                        exr->sym->setOffset(0);
+
+                                        emit(assign_op,exr,newexpr_constbool(1),NULL,getNextLabel(),yylineno);
+
+                                        expr* jumpEx = new expr(label_e);
+                                        jumpEx->setJumpLab(labelLookahead()+2);
+                                        emit(jump_op,NULL,jumpEx,NULL,getNextLabel(),yylineno);
+
+                                        emit(assign_op,exr,newexpr_constbool(0),NULL,getNextLabel(),yylineno);
+                                        exr->setNext($3);
+                                        $$=exr;
+                                    }    
+                                }
                 |{$$=NULL;}
                 ;
 
