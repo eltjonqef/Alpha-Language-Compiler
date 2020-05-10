@@ -239,7 +239,7 @@ std::stack<expr*> funcExprStack;
 std::stack<unsigned int> ifQuadStack;
 std::stack<unsigned int> whileStartStack;
 std::stack<unsigned int> whileSecondStack;
-
+std::stack<int> returnStack;
 
 class stmtLists{
     public:

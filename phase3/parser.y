@@ -797,7 +797,7 @@ primary:          lvalue {
                 | call {}
                 | objectdef {$$=$1;}
                 | '(' funcdef ')' {$$=$2;}
-                | const {$$=$1;}
+                | const {$$->setJumpLab(0);$$=$1;}
                 ;
 
    
@@ -963,6 +963,7 @@ funcdef:          FUNCTION N {
                                 expression->sym=addToSymbolTable("$"+to_string(anonymousFuntionCounter++), currentScope, yylineno, USERFUNC,programfunc_s);
                                 funcExprStack.push(expression);
                                 emit(funcstart_op,expression,NULL,NULL,getNextLabel(),yylineno);
+                                returnStack.push(0);
                             }
                         '(' {
                                 currentScope++;
@@ -987,6 +988,9 @@ funcdef:          FUNCTION N {
                                 $$->falselist=0;
                                 $$->setJumpLab(0);
                                 funcExprStack.pop();
+                                cout<<"PUNCHPUCNH "<<returnStack.top()<<"\n";
+                                patchlist(returnStack.top(),labelLookahead()-1);
+                                returnStack.pop();
                             }
                 | FUNCTION IDENT N{
                                     if(LookUpFunction($2)) {
@@ -995,6 +999,7 @@ funcdef:          FUNCTION N {
                                         nestedFunctionCounter++;
                                         funcExprStack.push(expression);
                                         emit(funcstart_op,expression,NULL,NULL,getNextLabel(),yylineno);
+                                        returnStack.push(0);
                                     }else{
                                         assert(0);
                                     }
@@ -1024,6 +1029,9 @@ funcdef:          FUNCTION N {
                                     $$->falselist=0;
                                     $$->setJumpLab(0);
                                     funcExprStack.pop();
+                                    cout<<"PUNCHPUCNH "<<returnStack.top()<<"\n";
+                                    patchlist(returnStack.top(),labelLookahead()-1);
+                                    returnStack.pop();
                                 }
                 ;
 
@@ -1213,6 +1221,19 @@ forstmt:          forprefix N elist ')' N stmt N{
 
 returnstmt:       RETURN ';' {
                                 emit(ret_op,NULL,NULL,NULL,getNextLabel(),yylineno);
+                                expr* jumpEx = new expr(label_e);
+                                jumpEx->setJumpLab(0);
+                                int labelHold = labelLookahead();
+                                emit(jump_op,NULL,jumpEx,NULL,getNextLabel(),yylineno);
+
+                                if(returnStack.top()==0){
+                                    returnStack.pop();
+                                    returnStack.push(labelHold);
+                                }else{
+                                    int hold = mergelist(returnStack.top(),labelHold);
+                                    returnStack.pop();
+                                    returnStack.push(hold);
+                                }
                              }
                 | RETURN expr ';' {
                                     if($expr->getType()==boolexpr_e){
@@ -1225,6 +1246,20 @@ returnstmt:       RETURN ';' {
                                         emit(assign_op,NULL,$expr,newexpr_constbool(0),getNextLabel(),yylineno);
                                     }
                                     emit(ret_op,NULL,$expr,NULL,getNextLabel(),yylineno);
+
+                                    expr* jumpEx = new expr(label_e);
+                                    jumpEx->setJumpLab(0);
+                                    int labelHold = labelLookahead();
+                                    emit(jump_op,NULL,jumpEx,NULL,getNextLabel(),yylineno);
+
+                                    if(returnStack.top()==0){
+                                        returnStack.pop();
+                                        returnStack.push(labelHold);
+                                    }else{
+                                        int hold = mergelist(returnStack.top(),labelHold);
+                                        returnStack.pop();
+                                        returnStack.push(hold);
+                                    }
                                   }
                 ;
             
