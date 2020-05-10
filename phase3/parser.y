@@ -134,7 +134,27 @@ loopstmt:         loopstmt stmt {
                                 }
                 | {$$ = new stmtLists();cout<<"empty\n";}
                 ;
-stmt:             expr ';' {$$ = new stmtLists();cout<<"exp\n"; /*PROOF THAT IM RETARDED*/}
+stmt:             expr ';' {$$ = new stmtLists();
+                                if($expr->getType()==boolexpr_e){
+                                    patchlist($expr->truelist,labelLookahead());
+                                        patchlist($expr->falselist,labelLookahead()+2);
+
+                                        expr* exr = new expr(assignexpr_e);
+                                        exr->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
+                                        exr->sym->setScopespace(getCurrentScopespace());
+                                        exr->sym->setOffset(0);
+
+                                        emit(assign_op,exr,newexpr_constbool(1),NULL,getNextLabel(),yylineno);
+
+                                        expr* jumpEx = new expr(label_e);
+                                        jumpEx->setJumpLab(labelLookahead()+2);
+                                        emit(jump_op,NULL,jumpEx,NULL,getNextLabel(),yylineno);
+
+                                        emit(assign_op,exr,newexpr_constbool(0),NULL,getNextLabel(),yylineno);
+
+                                }
+                                /*PROOF THAT IM RETARDED*/
+                            }
                 | ifstmt {$$=$1;cout<<"if\n";}
                 | whilestmt {$1->breaklist=0;$1->continuelist=0;$$=$1;cout<<"while\n";}
                 | forstmt {$1->breaklist=0;$1->continuelist=0;$$=$1;cout<<"for\n";}
