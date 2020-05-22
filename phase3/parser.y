@@ -1072,6 +1072,8 @@ block:            '{' {;currentScope++;} loopstmt {decreaseScope();} '}' {cout<<
 funcdef:          FUNCTION N {
                                 nestedFunctionCounter++; expr *expression=new expr(programfunc_e); 
                                 expression->sym=addToSymbolTable("$"+to_string(anonymousFuntionCounter++), currentScope, yylineno, USERFUNC,programfunc_s);
+                                expression->sym->setOffset(currentOffset());
+                                incCurScopeOffset();
                                 funcExprStack.push(expression);
                                 emit(funcstart_op,expression,NULL,NULL,getNextLabel(),yylineno);
                                 returnStack.push(0);
@@ -1107,6 +1109,8 @@ funcdef:          FUNCTION N {
                                     if(LookUpFunction($2)) {
                                         expr *expression=new expr(programfunc_e);
                                         expression->sym= addToSymbolTable($2, currentScope, yylineno, USERFUNC,programfunc_s); 
+                                        expression->sym->setOffset(currentOffset());
+                                        incCurScopeOffset();
                                         nestedFunctionCounter++;
                                         funcExprStack.push(expression);
                                         emit(funcstart_op,expression,NULL,NULL,getNextLabel(),yylineno);
