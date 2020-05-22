@@ -597,6 +597,9 @@ expr:             assignexpr {$$=$1; }
                     patchlist($1->truelist,$M);
                     expr* expression = new expr(boolexpr_e);
                     expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
+                    expression->sym->setScopespace(getCurrentScopespace());
+                    expression->sym->setOffset(currentOffset());
+                    incCurScopeOffset();
                     expression->truelist = $5->truelist;
                     cout<<"the falselists 1-4 "<<$1->falselist<<"-"<<$5->falselist<<"\n";
                     expression->falselist = mergelist($1->falselist,$5->falselist);
@@ -646,6 +649,9 @@ expr:             assignexpr {$$=$1; }
                     patchlist($1->falselist,$M);
                     expr* expression = new expr(boolexpr_e);
                     expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
+                    expression->sym->setScopespace(getCurrentScopespace());
+                    expression->sym->setOffset(currentOffset());
+                    incCurScopeOffset();
                     cout<<"true merges "<<$1->truelist<<" %^&* "<<$5->truelist<<"\n";
                     expression->truelist = mergelist($1->truelist,$5->truelist);
                     expression->falselist = $5->falselist;
@@ -781,6 +787,9 @@ term:             '(' expr ')' {$$=$2;}
                                         else{
                                             expr *temp=new expr(arithexpr_e);
                                             temp->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
+                                            temp->sym->setScopespace(getCurrentScopespace());
+                                            temp->sym->setOffset(currentOffset());
+                                            incCurScopeOffset();
                                             $$=emit_if_table($1);
                                             emit(assign_op, temp, $$, NULL, getNextLabel(), yylineno);
                                             emit(sub_op, $$, $$, new expr(1), getNextLabel(), yylineno);
@@ -1072,8 +1081,11 @@ block:            '{' {;currentScope++;} loopstmt {decreaseScope();} '}' {cout<<
 funcdef:          FUNCTION N {
                                 nestedFunctionCounter++; expr *expression=new expr(programfunc_e); 
                                 expression->sym=addToSymbolTable("$"+to_string(anonymousFuntionCounter++), currentScope, yylineno, USERFUNC,programfunc_s);
+                                expression->sym->setScopespace(getCurrentScopespace());
                                 expression->sym->setOffset(currentOffset());
+                                cout<<"FUNCTION OFFSET IS "<<currentOffset()<<"\n";
                                 incCurScopeOffset();
+                                cout<<"AFTER INCREASE IS "<<currentOffset()<<"\n";
                                 funcExprStack.push(expression);
                                 emit(funcstart_op,expression,NULL,NULL,getNextLabel(),yylineno);
                                 returnStack.push(0);
@@ -1108,9 +1120,12 @@ funcdef:          FUNCTION N {
                 | FUNCTION IDENT N{
                                     if(LookUpFunction($2)) {
                                         expr *expression=new expr(programfunc_e);
-                                        expression->sym= addToSymbolTable($2, currentScope, yylineno, USERFUNC,programfunc_s); 
+                                        expression->sym= addToSymbolTable($2, currentScope, yylineno, USERFUNC,programfunc_s);
+                                        expression->sym->setScopespace(getCurrentScopespace()); 
                                         expression->sym->setOffset(currentOffset());
+                                        cout<<"FUNCTION OFFSET IS "<<currentOffset()<<"\n";
                                         incCurScopeOffset();
+                                        cout<<"AFTER INCREASE IS "<<currentOffset()<<"\n";
                                         nestedFunctionCounter++;
                                         funcExprStack.push(expression);
                                         emit(funcstart_op,expression,NULL,NULL,getNextLabel(),yylineno);
@@ -1631,6 +1646,9 @@ emit_if_table(expr* e){
     else{
         expr *result= new expr(var_e);
         result->sym=addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
+        result->sym->setScopespace(getCurrentScopespace());
+        result->sym->setOffset(currentOffset());
+        incCurScopeOffset();
         emit(tablegetelem_op, result, e, e->getIndex(), getNextLabel(), yylineno);
         return result;
     }
@@ -1671,6 +1689,9 @@ expr* make_call(expr* lv, expr* reversed_elist){
     emit(call_op, func, NULL, NULL, getNextLabel(), yylineno);
     expr* result=new expr(var_e);
     result->sym=addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
+    result->sym->setScopespace(getCurrentScopespace());
+    result->sym->setOffset(currentOffset());
+    incCurScopeOffset();
     emit(getretval_op, NULL, NULL, result, getNextLabel(), yylineno);
     return result;
 }

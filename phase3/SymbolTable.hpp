@@ -157,9 +157,6 @@ class SymbolTableEntry {
         symbol_t getType_t(){return type_t;}
         scopespace_t getScopespace(){return space;}
         unsigned getOffset(){
-            if(UnionFlag == 1){
-                return 0;
-            }
             return offset;
         }
 
