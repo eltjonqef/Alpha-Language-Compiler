@@ -142,7 +142,8 @@ stmt:             expr ';' {$$ = new stmtLists();
                                         expr* exr = new expr(assignexpr_e);
                                         exr->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
                                         exr->sym->setScopespace(getCurrentScopespace());
-                                        exr->sym->setOffset(0);
+                                        exr->sym->setOffset(currentOffset());
+                                        incCurScopeOffset();
 
                                         emit(assign_op,exr,newexpr_constbool(1),NULL,getNextLabel(),yylineno);
 
@@ -204,7 +205,8 @@ expr:             assignexpr {$$=$1; }
                                     expr* expression=new expr(arithexpr_e);
                                     expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
                                     expression->sym->setScopespace(getCurrentScopespace());
-                                    expression->sym->setOffset(0);
+                                    expression->sym->setOffset(currentOffset());
+                                    incCurScopeOffset();
                                     emit(add_op, expression, $1, $3, getNextLabel(), yylineno);
                                     $$=expression;
                                 }
@@ -212,7 +214,8 @@ expr:             assignexpr {$$=$1; }
                                     expr* expression=new expr(arithexpr_e);
                                     expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
                                     expression->sym->setScopespace(getCurrentScopespace());
-                                    expression->sym->setOffset(0);
+                                    expression->sym->setOffset(currentOffset());
+                                    incCurScopeOffset();
                                     emit(sub_op, expression, $1, $3, getNextLabel(), yylineno);
                                     $$=expression;
                                 }
@@ -220,7 +223,8 @@ expr:             assignexpr {$$=$1; }
                                     expr* expression=new expr(arithexpr_e);
                                     expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
                                     expression->sym->setScopespace(getCurrentScopespace());
-                                    expression->sym->setOffset(0);
+                                    expression->sym->setOffset(currentOffset());
+                                    incCurScopeOffset();
                                     emit(mul_op, expression, $1, $3, getNextLabel(), yylineno);
                                     $$=expression;
                                 }
@@ -229,14 +233,16 @@ expr:             assignexpr {$$=$1; }
                                     expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
                                     expression->sym->setScopespace(getCurrentScopespace());
                                     emit(div_op, expression, $1, $3, getNextLabel(),yylineno);
-                                    expression->sym->setOffset(0);
+                                    expression->sym->setOffset(currentOffset());
+                                    incCurScopeOffset();
                                     $$=expression;
                                 }
                 | expr '%' expr {            
                                     expr* expression=new expr(arithexpr_e);
                                     expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
                                     expression->sym->setScopespace(getCurrentScopespace());
-                                    expression->sym->setOffset(0);
+                                    expression->sym->setOffset(currentOffset());
+                                    incCurScopeOffset();
                                     emit(mod_op, expression, $1, $3, getNextLabel(), yylineno);
                                     $$=expression;
                                 }
@@ -247,7 +253,8 @@ expr:             assignexpr {$$=$1; }
                         expr* expression = new expr(boolexpr_e);
                         expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                         expression->sym->setScopespace(getCurrentScopespace());
-                        expression->sym->setOffset(0);
+                        expression->sym->setOffset(currentOffset());
+                        incCurScopeOffset();
                         expression->setJumpLab(0);
                         expr* jumpExp = new expr(label_e);
                         jumpExp->setJumpLab(labelLookahead()+3);
@@ -263,7 +270,8 @@ expr:             assignexpr {$$=$1; }
                         expr* expression = new expr(boolexpr_e);
                         expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                         expression->sym->setScopespace(getCurrentScopespace());
-                        expression->sym->setOffset(0);
+                        expression->sym->setOffset(currentOffset());
+                        incCurScopeOffset();
                         expression->setJumpLab(0);
                         expr* jumpExp = new expr(label_e);
                         jumpExp->setJumpLab(labelLookahead()+3);
@@ -276,7 +284,8 @@ expr:             assignexpr {$$=$1; }
                     expr* expression=new expr(boolexpr_e);
                     expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                     expression->sym->setScopespace(getCurrentScopespace());
-                    expression->sym->setOffset(0);
+                    expression->sym->setOffset(currentOffset());
+                    incCurScopeOffset();
                     expr* jumpExp = new expr(label_e);
                     expr* ifJumpExp = new expr(label_e);
                     ifJumpExp->setJumpLab(0);
@@ -295,7 +304,8 @@ expr:             assignexpr {$$=$1; }
                         expr* expression = new expr(boolexpr_e);
                         expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                         expression->sym->setScopespace(getCurrentScopespace());
-                        expression->sym->setOffset(0);
+                        expression->sym->setOffset(currentOffset());
+                        incCurScopeOffset();
                         expression->setJumpLab(0);
                         expr* jumpExp = new expr(label_e);
                         jumpExp->setJumpLab(labelLookahead()+3);
@@ -311,7 +321,8 @@ expr:             assignexpr {$$=$1; }
                         expr* expression = new expr(boolexpr_e);
                         expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                         expression->sym->setScopespace(getCurrentScopespace());
-                        expression->sym->setOffset(0);
+                        expression->sym->setOffset(currentOffset());
+                        incCurScopeOffset();
                         expression->setJumpLab(0);
                         expr* jumpExp = new expr(label_e);
                         jumpExp->setJumpLab(labelLookahead()+3);
@@ -324,7 +335,8 @@ expr:             assignexpr {$$=$1; }
                     expr* expression=new expr(boolexpr_e);
                     expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                     expression->sym->setScopespace(getCurrentScopespace());
-                    expression->sym->setOffset(0);
+                    expression->sym->setOffset(currentOffset());
+                    incCurScopeOffset();
                     expr* jumpExp = new expr(label_e);
                     expr* ifJumpExp = new expr(label_e);
                     ifJumpExp->setJumpLab(0);
@@ -343,7 +355,8 @@ expr:             assignexpr {$$=$1; }
                         expr* expression = new expr(boolexpr_e);
                         expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                         expression->sym->setScopespace(getCurrentScopespace());
-                        expression->sym->setOffset(0);
+                        expression->sym->setOffset(currentOffset());
+                        incCurScopeOffset();
                         expression->setJumpLab(0);
                         expr* jumpExp = new expr(label_e);
                         jumpExp->setJumpLab(labelLookahead()+3);
@@ -359,7 +372,8 @@ expr:             assignexpr {$$=$1; }
                         expr* expression = new expr(boolexpr_e);
                         expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                         expression->sym->setScopespace(getCurrentScopespace());
-                        expression->sym->setOffset(0);
+                        expression->sym->setOffset(currentOffset());
+                        incCurScopeOffset();
                         expression->setJumpLab(0);
                         expr* jumpExp = new expr(label_e);
                         jumpExp->setJumpLab(labelLookahead()+3);
@@ -372,7 +386,8 @@ expr:             assignexpr {$$=$1; }
                     expr* expression=new expr(boolexpr_e);
                     expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                     expression->sym->setScopespace(getCurrentScopespace());
-                    expression->sym->setOffset(0);
+                    expression->sym->setOffset(currentOffset());
+                    incCurScopeOffset();
                     expr* jumpExp = new expr(label_e);
                     expr* ifJumpExp = new expr(label_e);
                     ifJumpExp->setJumpLab(0);
@@ -391,7 +406,8 @@ expr:             assignexpr {$$=$1; }
                         expr* expression = new expr(boolexpr_e);
                         expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                         expression->sym->setScopespace(getCurrentScopespace());
-                        expression->sym->setOffset(0);
+                        expression->sym->setOffset(currentOffset());
+                        incCurScopeOffset();
                         expression->setJumpLab(0);
                         expr* jumpExp = new expr(label_e);
                         jumpExp->setJumpLab(labelLookahead()+3);
@@ -407,7 +423,8 @@ expr:             assignexpr {$$=$1; }
                         expr* expression = new expr(boolexpr_e);
                         expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                         expression->sym->setScopespace(getCurrentScopespace());
-                        expression->sym->setOffset(0);
+                        expression->sym->setOffset(currentOffset());
+                        incCurScopeOffset();
                         expression->setJumpLab(0);
                         expr* jumpExp = new expr(label_e);
                         jumpExp->setJumpLab(labelLookahead()+3);
@@ -420,7 +437,8 @@ expr:             assignexpr {$$=$1; }
                     expr* expression=new expr(boolexpr_e);
                     expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                     expression->sym->setScopespace(getCurrentScopespace());
-                    expression->sym->setOffset(0);
+                    expression->sym->setOffset(currentOffset());
+                    incCurScopeOffset();
                     expr* jumpExp = new expr(label_e);
                     expr* ifJumpExp = new expr(label_e);
                     ifJumpExp->setJumpLab(0);
@@ -439,7 +457,8 @@ expr:             assignexpr {$$=$1; }
                         expr* expression = new expr(boolexpr_e);
                         expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                         expression->sym->setScopespace(getCurrentScopespace());
-                        expression->sym->setOffset(0);
+                        expression->sym->setOffset(currentOffset());
+                        incCurScopeOffset();
                         expression->setJumpLab(0);
                         expr* jumpExp = new expr(label_e);
                         jumpExp->setJumpLab(labelLookahead()+3);
@@ -455,7 +474,8 @@ expr:             assignexpr {$$=$1; }
                         expr* expression = new expr(boolexpr_e);
                         expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                         expression->sym->setScopespace(getCurrentScopespace());
-                        expression->sym->setOffset(0);
+                        expression->sym->setOffset(currentOffset());
+                        incCurScopeOffset();
                         expression->setJumpLab(0);
                         expr* jumpExp = new expr(label_e);
                         jumpExp->setJumpLab(labelLookahead()+3);
@@ -468,7 +488,8 @@ expr:             assignexpr {$$=$1; }
                     expr* expression=new expr(boolexpr_e);
                     expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                     expression->sym->setScopespace(getCurrentScopespace());
-                    expression->sym->setOffset(0);
+                    expression->sym->setOffset(currentOffset());
+                    incCurScopeOffset();
                     expr* jumpExp = new expr(label_e);
                     expr* ifJumpExp = new expr(label_e);
                     ifJumpExp->setJumpLab(0);
@@ -488,7 +509,8 @@ expr:             assignexpr {$$=$1; }
                         expr* expression = new expr(boolexpr_e);
                         expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                         expression->sym->setScopespace(getCurrentScopespace());
-                        expression->sym->setOffset(0);
+                        expression->sym->setOffset(currentOffset());
+                        incCurScopeOffset();
                         expression->setJumpLab(0);
                         expr* jumpExp = new expr(label_e);
                         jumpExp->setJumpLab(labelLookahead()+3);
@@ -504,7 +526,8 @@ expr:             assignexpr {$$=$1; }
                         expr* expression = new expr(boolexpr_e);
                         expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                         expression->sym->setScopespace(getCurrentScopespace());
-                        expression->sym->setOffset(0);
+                        expression->sym->setOffset(currentOffset());
+                        incCurScopeOffset();
                         expression->setJumpLab(0);
                         expr* jumpExp = new expr(label_e);
                         jumpExp->setJumpLab(labelLookahead()+3);
@@ -517,7 +540,8 @@ expr:             assignexpr {$$=$1; }
                     expr* expression=new expr(boolexpr_e);
                     expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                     expression->sym->setScopespace(getCurrentScopespace());
-                    expression->sym->setOffset(0);
+                    expression->sym->setOffset(currentOffset());
+                    incCurScopeOffset();
                     expr* jumpExp = new expr(label_e);
                     expr* ifJumpExp = new expr(label_e);
                     ifJumpExp->setJumpLab(0);
@@ -644,7 +668,8 @@ term:             '(' expr ')' {$$=$2;}
                                 expr* expression = new expr(arithexpr_e);
                                 expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                                 expression->sym->setScopespace(getCurrentScopespace());
-                                expression->sym->setOffset(0);
+                                expression->sym->setOffset(currentOffset());
+                                incCurScopeOffset();
                                 emit(uminus_op,expression,$2,NULL,getNextLabel(),yylineno);
                                 $$=expression;
                               }
@@ -654,7 +679,8 @@ term:             '(' expr ')' {$$=$2;}
                                 expr* expression=new expr(boolexpr_e);
                                 expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                                 expression->sym->setScopespace(getCurrentScopespace());
-                                expression->sym->setOffset(0);
+                                expression->sym->setOffset(currentOffset());
+                                incCurScopeOffset();
                                 expr* jumpExp = new expr(label_e);
                                 expr* ifJumpExp = new expr(label_e);
                                 ifJumpExp->setJumpLab(0);
@@ -686,7 +712,8 @@ term:             '(' expr ')' {$$=$2;}
                                             expr* expression= new expr(arithexpr_e);
                                             expression->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                                             expression->sym->setScopespace(getCurrentScopespace());
-                                            expression->sym->setOffset(0);
+                                            expression->sym->setOffset(currentOffset());
+                                            incCurScopeOffset();
                                             emit(assign_op, expression, $2, NULL, getNextLabel(), yylineno);
                                             $$=expression;
                                         }
@@ -701,7 +728,8 @@ term:             '(' expr ')' {$$=$2;}
                                             expr* expression= new expr(arithexpr_e);
                                             expression->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                                             expression->sym->setScopespace(getCurrentScopespace());
-                                            expression->sym->setOffset(0);
+                                            expression->sym->setOffset(currentOffset());
+                                            incCurScopeOffset();
                                             emit(assign_op, expression, $1, NULL, getNextLabel(), yylineno);
                                             expr *arrExpr=new expr(constnumInt_e);
                                             arrExpr->setNumConst(1);
@@ -726,7 +754,8 @@ term:             '(' expr ')' {$$=$2;}
                                             expr* expression= new expr(arithexpr_e);
                                             expression->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                                             expression->sym->setScopespace(getCurrentScopespace());
-                                            expression->sym->setOffset(0);
+                                            expression->sym->setOffset(currentOffset());
+                                            incCurScopeOffset();
                                             emit(assign_op, expression, $2, NULL, getNextLabel(), yylineno);
                                             $$=expression;
                                         }
@@ -741,7 +770,8 @@ term:             '(' expr ')' {$$=$2;}
                                             expr* expression= new expr(arithexpr_e);
                                             expression->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                                             expression->sym->setScopespace(getCurrentScopespace());
-                                            expression->sym->setOffset(0);
+                                            expression->sym->setOffset(currentOffset());
+                                            incCurScopeOffset();
                                             emit(assign_op, expression, $1, NULL, getNextLabel(), yylineno);
                                             expr *arrExpr=new expr(constnumInt_e);
                                             arrExpr->setNumConst(1);
@@ -776,7 +806,8 @@ assignexpr:       lvalue '=' expr {
                                         expr* exr = new expr(assignexpr_e);
                                         exr->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
                                         exr->sym->setScopespace(getCurrentScopespace());
-                                        exr->sym->setOffset(0);
+                                        exr->sym->setOffset(currentOffset());
+                                        incCurScopeOffset();
 
                                         emit(assign_op,exr,newexpr_constbool(1),NULL,getNextLabel(),yylineno);
 
@@ -791,7 +822,8 @@ assignexpr:       lvalue '=' expr {
                                         expr* expression=new expr(assignexpr_e);
                                         expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
                                         expression->sym->setScopespace(getCurrentScopespace());
-                                        expression->sym->setOffset(0);
+                                        expression->sym->setOffset(currentOffset());
+                                        incCurScopeOffset();
                                         emit(assign_op, expression,$1, NULL, getNextLabel(), yylineno);
                                         $$=expression;
                                     }
@@ -800,7 +832,8 @@ assignexpr:       lvalue '=' expr {
                                         expr* expression=new expr(assignexpr_e);
                                         expression->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
                                         expression->sym->setScopespace(getCurrentScopespace());
-                                        expression->sym->setOffset(0);
+                                        expression->sym->setOffset(currentOffset());
+                                        incCurScopeOffset();
                                         emit(assign_op, expression,$1, NULL, getNextLabel(), yylineno);
                                         $$=expression;
                                     }
@@ -924,7 +957,8 @@ elist:            expr {
                                 expr* exr = new expr(assignexpr_e);
                                 exr->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
                                 exr->sym->setScopespace(getCurrentScopespace());
-                                exr->sym->setOffset(0);
+                                exr->sym->setOffset(currentOffset());
+                                incCurScopeOffset();
 
                                 emit(assign_op,exr,newexpr_constbool(1),NULL,getNextLabel(),yylineno);
 
@@ -947,7 +981,8 @@ elist:            expr {
                                         expr* exr = new expr(assignexpr_e);
                                         exr->sym = addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
                                         exr->sym->setScopespace(getCurrentScopespace());
-                                        exr->sym->setOffset(0);
+                                        exr->sym->setOffset(currentOffset());
+                                        incCurScopeOffset();
 
                                         emit(assign_op,exr,newexpr_constbool(1),NULL,getNextLabel(),yylineno);
 
@@ -967,7 +1002,8 @@ objectdef:        '[' elist ']' {
                                     expr* expression=new expr(newtable_e);
                                     expression->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                                     expression->sym->setScopespace(getCurrentScopespace());
-                                    expression->sym->setOffset(0);
+                                    expression->sym->setOffset(currentOffset());
+                                    incCurScopeOffset();
                                     emit(tablecreate_op, expression, NULL, NULL, getNextLabel(), yylineno);
                                     for(int i=0; $2; $2=$2->getNext()){
                                        emit(tablesetelem_op,expression,new expr(i++), $2, getNextLabel(), yylineno); 
@@ -979,7 +1015,8 @@ objectdef:        '[' elist ']' {
                                     expr* expression=new expr(newtable_e);
                                     expression->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                                     expression->sym->setScopespace(getCurrentScopespace());
-                                    expression->sym->setOffset(0);
+                                    expression->sym->setOffset(currentOffset());
+                                    incCurScopeOffset();
                                     emit(tablecreate_op, expression, NULL, NULL, getNextLabel(), yylineno);
                                     for(int i=0; $2; $2=$2->getNext()){
                                         emit(tablesetelem_op, expression, $2->getIndex(), $2, getNextLabel(), yylineno);
