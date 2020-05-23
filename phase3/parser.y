@@ -6,6 +6,7 @@
     #include <map>
     #include <vector>
     #include "Quads.hpp"
+    #include "generateCode.hpp"
 
     
     int yyerror(string yaccProvideMessage);
@@ -676,7 +677,7 @@ term:             '(' expr ')' {$$=$2;}
                                 expression->sym->setScopespace(getCurrentScopespace());
                                 expression->sym->setOffset(currentOffset());
                                 incCurScopeOffset();
-                                emit(mul_op,expression,new expr(-1),$2,getNextLabel(),yylineno);
+                                emit(uminus_op,expression,$2,NULL,getNextLabel(),yylineno);
                                 $$=expression;
                               }
                 | NOT expr  {
@@ -1351,7 +1352,7 @@ forstmt:          forprefix N elist ')' N stmt N{
                 ;
 
 returnstmt:       RETURN ';' {
-                                emit(assign_op,NULL,NULL,NULL,getNextLabel(),yylineno);
+                                emit(ret_op,NULL,NULL,NULL,getNextLabel(),yylineno);
                                 expr* jumpEx = new expr(label_e);
                                 jumpEx->setJumpLab(0);
                                 int labelHold = labelLookahead();
@@ -1377,7 +1378,7 @@ returnstmt:       RETURN ';' {
                                         emit(jump_op,NULL,lab,NULL,getNextLabel(),yylineno);
                                         emit(assign_op,NULL,$expr,newexpr_constbool(0),getNextLabel(),yylineno);
                                     }
-                                    emit(assign_op,NULL,$expr,NULL,getNextLabel(),yylineno);
+                                    emit(ret_op,NULL,$expr,NULL,getNextLabel(),yylineno);
 
                                     expr* jumpEx = new expr(label_e);
                                     jumpEx->setJumpLab(0);

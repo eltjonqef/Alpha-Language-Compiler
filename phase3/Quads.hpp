@@ -6,6 +6,7 @@
 #include <stack>
 
 enum iopcode{ 
+    
     assign_op,
     add_op,
     sub_op,
@@ -128,6 +129,12 @@ class expr{
         }
         void setNumConst(double _numConst){
             numConstDouble=_numConst;
+        }
+        int getIntConst(){
+            return numConstInt;
+        }
+        double getDoubleConst(){
+            return numConstDouble;
         }
         void setNumConst(int _numConst){
             numConstInt=_numConst;
