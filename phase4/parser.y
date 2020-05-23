@@ -1385,6 +1385,8 @@ main(int argc, char** argv){
     
     printSymbolTable();
     printQuads();
+    generate();
+    printInstructions();
     return 0;
 }
 

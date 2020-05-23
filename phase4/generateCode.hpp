@@ -1,6 +1,7 @@
+#pragma once
 #include <map>
 using namespace std;
-
+#include "Quads.hpp"
 enum vmarg_t{
 
     global_a,
@@ -87,6 +88,7 @@ void make_operand(expr *e, vmarg *arg){
                 default:
                     assert(0);
             }
+            break;
         }
         case constbool_e:{
             arg->setVal(e->getBoolConst());
@@ -127,7 +129,7 @@ void make_operand(expr *e, vmarg *arg){
     }
 }
 
-enum vmopcode{ 
+enum vmopcode_t{ 
 
     assign_vm,
     add_vm,
@@ -154,40 +156,90 @@ enum vmopcode{
     nop_vm
 };
 
+class instruction{
 
-void generate(vmopcode opcode, quad *_quad){
-    cout<<"\n";
+    private:
+        vmopcode_t opcode;
+        vmarg *result;
+        vmarg *arg1;
+        vmarg *arg2;
+        unsigned srcLine;
+    public:
+        instruction(){
+            result=new vmarg();
+            arg1=new vmarg();
+            arg2=new vmarg();
+        }
+        void setOpCode(vmopcode_t _opcode){
+            opcode=_opcode;
+        }
+        vmopcode_t getOP(){
+            return opcode;
+        }
+        void setResult(vmarg *_result){
+            result=_result;
+        }
+        vmarg *getResult(){
+            return result;
+        }
+        vmarg *getArg1(){
+            return arg1;
+        }
+        vmarg *getArg2(){
+            return arg2;
+        }
+        void setArg1(vmarg *_arg1){
+            arg1=_arg1;
+        }
+        void setArg2(vmarg *_arg2){
+            arg2=_arg2;
+        }
+        void setSrcLine(unsigned _srcLine){
+            srcLine=_srcLine;
+        }
+};
+
+vector<instruction*> instructionVector;
+
+void generate_Simple(vmopcode_t op,quad quad){
+
+    instruction *t=new instruction();
+    t->setOpCode(op);
+    make_operand(quad.getResult(), t->getResult());
+    make_operand(quad.getArg1(), t->getArg1());
+    make_operand(quad.getArg2(), t->getArg2());
+    instructionVector.push_back(t);   
 }
 
-typedef void (*generator_func_t)(quad*);
+typedef void (*generator_func_t)(quad);
 
-void generate_ASSIGN(quad *quad){}
-void generate_ADD(quad *quad){}
-void generate_SUB(quad *quad){}
-void generate_MUL(quad *quad){}
-void generate_DIV(quad *quad){}
-void generate_MOD(quad *quad){}
-void generate_UMINUS(quad *quad){}
-void generate_AND(quad *quad){}
-void generate_OR(quad *quad){}
-void generate_NOT(quad *quad){}
-void generate_IF_EQ(quad *quad){}
-void generate_IF_NOTEQ(quad *quad){}
-void generate_IF_LESSEQ(quad *quad){}
-void generate_IF_GREATEREQ(quad *quad){}
-void generate_IF_LESS(quad *quad){}
-void generate_IF_GREATER(quad *quad){}
-void generate_CALL(quad *quad){}
-void generate_PARAM(quad *quad){}
-void generate_RET(quad *quad){}
-void generate_GETRETVAL(quad *quad){}
-void generate_FUNCSTART(quad *quad){}
-void generate_FUNCEND(quad *quad){}
-void generate_NEWTABLE(quad *quad){}
-void generate_TABLEGETELEM(quad *quad){}
-void generate_TABLESETELEM(quad *quad){}
-void generate_JUMP(quad *quad){}
-void generate_NOP(quad *quad){}
+void generate_ASSIGN(quad quad){}
+void generate_ADD(quad quad){generate_Simple(add_vm, quad);}
+void generate_SUB(quad quad){}
+void generate_MUL(quad quad){}
+void generate_DIV(quad quad){}
+void generate_MOD(quad quad){}
+void generate_UMINUS(quad quad){}
+void generate_AND(quad quad){}
+void generate_OR(quad quad){}
+void generate_NOT(quad quad){}
+void generate_IF_EQ(quad quad){}
+void generate_IF_NOTEQ(quad quad){}
+void generate_IF_LESSEQ(quad quad){}
+void generate_IF_GREATEREQ(quad quad){}
+void generate_IF_LESS(quad quad){}
+void generate_IF_GREATER(quad quad){}
+void generate_CALL(quad quad){}
+void generate_PARAM(quad quad){}
+void generate_RET(quad quad){}
+void generate_GETRETVAL(quad quad){}
+void generate_FUNCSTART(quad quad){}
+void generate_FUNCEND(quad quad){}
+void generate_NEWTABLE(quad quad){}
+void generate_TABLEGETELEM(quad quad){}
+void generate_TABLESETELEM(quad quad){}
+void generate_JUMP(quad quad){}
+void generate_NOP(quad quad){}
 
 generator_func_t generators[]={
     
@@ -220,27 +272,24 @@ generator_func_t generators[]={
     generate_NOP
 };
 
+void generate(){
+    for(int i=0; i<quads.size(); i++){
+        (*generators[quads[i].getOP()])(quads[i]);
+    }
+}
 
-class instruction{
-
-    private:
-        vmopcode opcode;
-        vmarg *result;
-        vmarg *arg1;
-        vmarg *arg2;
-        unsigned srcLine;
-    public:
-        instruction(){}
-        void setResult(vmarg *_result){
-            result=_result;
+void printInstructions(){
+    
+    for(int i=0; i<instructionVector.size(); i++){
+        switch(instructionVector[i]->getOP()){
+            case assign_vm:{
+                cout<<"ASSIGN"<<" "<<instructionVector[i]->getResult()->getVal()<<" "<<instructionVector[i]->getArg1()->getVal()<<" "<<instructionVector[i]->getArg2()->getVal()<<endl;
+                break;
+            }
+            case add_vm:{
+                cout<<"ADD"<<" "<<instructionVector[i]->getResult()->getVal()<<" "<<instructionVector[i]->getArg1()->getVal()<<" "<<instructionVector[i]->getArg2()->getVal()<<endl;
+                break;
+            }
         }
-        void setArg1(vmarg *_arg1){
-            arg1=_arg1;
-        }
-        void setArg2(vmarg *_arg2){
-            arg2=_arg2;
-        }
-        void setSrcLine(unsigned _srcLine){
-            srcLine=_srcLine;
-        }
-};
+    }
+}

@@ -1,3 +1,5 @@
+#pragma once
+
 #include "SymbolTable.hpp"
 #include <string>
 #include <assert.h>
