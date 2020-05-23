@@ -170,10 +170,7 @@ class SymbolTableEntry {
             return "";
         }
         std::string Scopespace_toString(){ //programvar,functionlocal,formalarg
-            if(UnionFlag == 1){
-                return "N>A";
-            }
-            switch (getCurrentScopespace())
+            switch (space)
             {
                 case programvar:return"programvar";
                 case functionlocal:return"functionlocal";

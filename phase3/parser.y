@@ -1181,6 +1181,7 @@ idlist:           IDENT {
                                     expr *expression=new expr(var_e);expression->sym=addToSymbolTable($1, currentScope, yylineno, FORMAL,var_s);
                                     expression->sym->setOffset(currentOffset());
                                     expression->sym->setScopespace(getCurrentScopespace());
+                                    cout<<"expression->sym->setScopespace(getCurrentScopespace());"<<expression->sym->getScopespace()<<endl;
                                     incCurScopeOffset();
                                 }
                             }
