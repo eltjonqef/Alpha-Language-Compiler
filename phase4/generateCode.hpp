@@ -36,6 +36,17 @@ class vmarg{
 map<string, int> stringMap;
 map<int, int> intMap;
 map<double, int> doubleMap;
+unsigned instructionLabel=0;
+
+unsigned instructionLabelLookahead(){
+    return instructionLabel;
+}
+
+unsigned getInstructionLabel(){
+    unsigned holder = instructionLabel;
+    instructionLabel++;
+    return holder;
+}
 
 unsigned consts_newString(string _string){
 
@@ -208,16 +219,25 @@ void generate_Simple(vmopcode_t op,quad quad){
     make_operand(quad.getResult(), t->getResult());
     make_operand(quad.getArg1(), t->getArg1());
     make_operand(quad.getArg2(), t->getArg2());
+    quad->setTaddress(instructionLabelLookahead());
     instructionVector.push_back(t);   
 }
 
+void generate_relational(vmopcode_t op,quad quad){
+    instruction *t = new instruction();
+    t->setOpCode(op);
+    make_operand(quad.getArg1(),t->getArg1());
+    make_operand(quad.getArg2(),t->getArg2());
+    quad->setTaddress(instructionLabelLookahead());
+    instructionVector.push_back(t);
+}
 typedef void (*generator_func_t)(quad);
 
-void generate_ASSIGN(quad quad){}
+void generate_ASSIGN(quad quad){generate_Simple(assign_vm,quad);}
 void generate_ADD(quad quad){generate_Simple(add_vm, quad);}
-void generate_SUB(quad quad){}
-void generate_MUL(quad quad){}
-void generate_DIV(quad quad){}
+void generate_SUB(quad quad){generate_Simple(sub_vm,quad);}
+void generate_MUL(quad quad){generate_Simple(mul_vm,quad);}
+void generate_DIV(quad quad){generate_Simple(div_vm,quad);}
 void generate_MOD(quad quad){}
 void generate_UMINUS(quad quad){}
 void generate_AND(quad quad){}
@@ -235,11 +255,11 @@ void generate_RET(quad quad){}
 void generate_GETRETVAL(quad quad){}
 void generate_FUNCSTART(quad quad){}
 void generate_FUNCEND(quad quad){}
-void generate_NEWTABLE(quad quad){}
-void generate_TABLEGETELEM(quad quad){}
-void generate_TABLESETELEM(quad quad){}
+void generate_NEWTABLE(quad quad){generate_Simple(tablecreate_vm,quad);}
+void generate_TABLEGETELEM(quad quad){generate_Simple(tablegetelem_vm,quad);}
+void generate_TABLESETELEM(quad quad){generate_Simple(tablesetelem_vm,quad);}
 void generate_JUMP(quad quad){}
-void generate_NOP(quad quad){}
+void generate_NOP(quad quad){}//slide 18
 
 generator_func_t generators[]={
     

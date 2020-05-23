@@ -198,6 +198,7 @@ class quad{
         expr* arg2 = NULL;
         unsigned label;
         unsigned line;
+        unsigned taddress;
     public:
         quad(iopcode _op,expr* _result,expr* _arg1, expr* _arg2, unsigned _label, unsigned _line){
             op = _op;
@@ -231,6 +232,13 @@ class quad{
         void setResult(expr* _result){
             result = _result;
         }
+
+        void setTaddress(unsigned taddr){
+            taddress = taddr;
+        }
+        unsigned getTaddress(){
+            return taddress;
+        }
         std::string toString(){
             std::string retval = "label: "+to_string(label)+" "+opcodeToString(op);
             if((result != NULL)&&(!reverseResultPrintOrder(op))){retval = retval +" "+ result->to_String();}
@@ -240,6 +248,7 @@ class quad{
             return retval;
         }
         
+
 };   
 std::vector<expr*>tableEntries;
 std::vector<quad> quads;
