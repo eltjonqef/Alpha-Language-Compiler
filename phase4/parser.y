@@ -124,16 +124,14 @@ program:          loopstmt {}
                 ;
 
 loopstmt:         loopstmt stmt {
-                                cout<<"loopstmt\n";
                                    stmtLists* statement = new stmtLists();
                                    int a = $1->breaklist;
                                    int b = $2->breaklist;
                                    statement->breaklist = mergelist($1->breaklist,$2->breaklist);
                                    statement->continuelist = mergelist($1->continuelist,$2->continuelist);
-                                   cout<<"loopstmt breaklist"<<statement->breaklist<<"  AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n";
                                    $$ = statement; 
                                 }
-                | {$$ = new stmtLists();cout<<"empty\n";}
+                | {$$ = new stmtLists();}
                 ;
 stmt:             expr ';' {$$ = new stmtLists();
                                 if($expr->getType()==boolexpr_e){
@@ -157,9 +155,9 @@ stmt:             expr ';' {$$ = new stmtLists();
                                 }
                                 /*PROOF THAT IM RETARDED*/
                             }
-                | ifstmt {$$=$1;cout<<"if\n";}
-                | whilestmt {$1->breaklist=0;$1->continuelist=0;$$=$1;cout<<"while\n";}
-                | forstmt {$1->breaklist=0;$1->continuelist=0;$$=$1;cout<<"for\n";}
+                | ifstmt {$$=$1;}
+                | whilestmt {$1->breaklist=0;$1->continuelist=0;$$=$1;}
+                | forstmt {$1->breaklist=0;$1->continuelist=0;$$=$1;}
                 | {returnState=1;}returnstmt {
                                                 /*returnState=0; 
                                                 if(!nestedFunctionCounter) {
@@ -175,13 +173,10 @@ stmt:             expr ';' {$$ = new stmtLists();
                             }
                             stmtLists* statement = new stmtLists();
                             statement->breaklist = labelLookahead();
-                            cout<<"break emited at "<<statement->breaklist<<"\n";
-                            cout<<"break label will be "<<labelLookahead()<<"\n";
                             expr* expression = new expr(label_e);
                             expression->setJumpLab(0);
                             emit(jump_op,NULL,expression,NULL,getNextLabel(),yylineno);
                             $$ = statement;
-                            cout<<"break\n";
                         }
                 | CONTINUE ';' {
                                     if(!nestedLoopCounter) {
@@ -189,16 +184,14 @@ stmt:             expr ';' {$$ = new stmtLists();
                                     }
                                     stmtLists* statement = new stmtLists();
                                     statement->continuelist = labelLookahead();
-                                    cout<<"continue emited at "<<statement->continuelist<<"\n";
                                     expr* expression = new expr(label_e);
                                     expression->setJumpLab(0);
                                     emit(jump_op,NULL,expression,NULL,getNextLabel(),yylineno);
                                     $$ = statement;
-                                    cout<<"CONTINUE\n";
                                 }
-                | block {$$=$1;cout<<"block\n";}
-                | funcdef {$$ = new stmtLists();cout<<"funcdef\n";}
-                | ';' {$$ = new stmtLists();cout<<"wtfwtfwtf\n";}
+                | block {$$=$1;}
+                | funcdef {$$ = new stmtLists();}
+                | ';' {$$ = new stmtLists();}
                 ;
 
 expr:             assignexpr {$$=$1; }
@@ -565,7 +558,6 @@ expr:             assignexpr {$$=$1; }
                                 exp1false = labelLookahead()+1;
                                 expr* ex1 = new expr(label_e);
                                 ex1->setJumpLab(0);
-                                cout<<"preorder "<<$1->getJumpLab()<<"\n";
                                 expr* ifjump = new expr(label_e);
                                 ifjump->setJumpLab(0);
                                 emit(if_eq_op,ifjump,$1,newexpr_constbool(1),getNextLabel(),yylineno);//add to truelist
@@ -602,9 +594,7 @@ expr:             assignexpr {$$=$1; }
                     expression->sym->setOffset(currentOffset());
                     incCurScopeOffset();
                     expression->truelist = $5->truelist;
-                    cout<<"the falselists 1-4 "<<$1->falselist<<"-"<<$5->falselist<<"\n";
                     expression->falselist = mergelist($1->falselist,$5->falselist);
-                    cout<<"after merge "<<expression->falselist<<"\n";
 
                     $$ = expression;
                     $$->setJumpLab(0);
@@ -620,10 +610,8 @@ expr:             assignexpr {$$=$1; }
                         ifjump->setJumpLab(0);
                         emit(if_eq_op,ifjump,$1,newexpr_constbool(1),getNextLabel(),yylineno);//add to truelist
                         emit(jump_op,NULL,ex1,NULL,getNextLabel(),yylineno);//add to falselist
-                        cout<<"orex1 list - case = "<<$1->truelist<<" - "<<exp1true<<"\n";
 
                         $1->truelist = mergelist($1->truelist,exp1true);
-                        cout<<"ex1 after "<<$1->truelist<<"\n";
                         $1->falselist=mergelist($1->falselist,exp1false);
                         //$M = $M +2;
                     }
@@ -641,9 +629,7 @@ expr:             assignexpr {$$=$1; }
 
                         emit(if_eq_op,ifjump,$5,newexpr_constbool(1),getNextLabel(),yylineno);//add to truelist
                         emit(jump_op,NULL,ex2,NULL,getNextLabel(),yylineno);//add to falselist
-                        cout<<"orex1 list - case = "<<$1->truelist<<" - "<<exp2true<<"\n";
                         $5->truelist = mergelist($5->truelist,exp2true);
-                        cout<<"ex1 after "<<$5->truelist<<"\n";
                         $5->falselist = mergelist($5->falselist,exp2false);
                     }
                     
@@ -653,7 +639,6 @@ expr:             assignexpr {$$=$1; }
                     expression->sym->setScopespace(getCurrentScopespace());
                     expression->sym->setOffset(currentOffset());
                     incCurScopeOffset();
-                    cout<<"true merges "<<$1->truelist<<" %^&* "<<$5->truelist<<"\n";
                     expression->truelist = mergelist($1->truelist,$5->truelist);
                     expression->falselist = $5->falselist;
                     $$ = expression;
@@ -662,7 +647,6 @@ expr:             assignexpr {$$=$1; }
                 | term {
                     $$=$1;
                     if($1->getType()==0){
-                        cout<"IN TERM RESET\n"; 
                         $$->truelist=0;
                         $$->falselist=0;
                         $$->setJumpLab(0);
@@ -682,7 +666,6 @@ term:             '(' expr ')' {$$=$2;}
                               }
                 | NOT expr  {
                         
-                                cout<<"not in non boolean called\n";
                                 expr* expression=new expr(boolexpr_e);
                                 expression->sym = addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
                                 expression->sym->setScopespace(getCurrentScopespace());
@@ -698,16 +681,13 @@ term:             '(' expr ')' {$$=$2;}
                                 jumpExp->setJumpLab(0);
                                 emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);                                
                                
-                                cout<<"NOT LISTS t-f "<<expression->truelist<<"-"<<expression->falselist<<"\n";
                                 $$ = expression;
                         if($expr->getType()==boolexpr_e){
-                            cout<<"not in boolean called\n";
                             int holder = $2->truelist;
                             $2->truelist = $2->falselist;
                             $2->falselist = holder;
                             expression->truelist=mergelist(expression->truelist,$2->truelist);
                             expression->falselist=mergelist(expression->falselist,$2->falselist);
-                            cout<<"AYAYAYAYAYAYAYA\n";
                         }   
                         $$=expression;     
                             }
@@ -809,7 +789,6 @@ assignexpr:       lvalue '=' expr {
                                             $$=expression;
                                         }
                                     else if($3->getType()==boolexpr_e){
-                                        cout<<" in asexpr as exp\n";
                                         patchlist($3->truelist,labelLookahead());
                                         patchlist($3->falselist,labelLookahead()+2);
 
@@ -1076,7 +1055,7 @@ indexedelem:      '{' expr ':' expr '}' {$4->setIndex($2); $$=$4;
                                         }
                 ;
 
-block:            '{' {;currentScope++;} loopstmt {decreaseScope();} '}' {cout<<"block in\n";$$ = $loopstmt;cout<<"block out\n";}
+block:            '{' {;currentScope++;} loopstmt {decreaseScope();} '}' {$$ = $loopstmt;}
                 ;
 
 funcdef:          FUNCTION N {
@@ -1084,9 +1063,7 @@ funcdef:          FUNCTION N {
                                 expression->sym=addToSymbolTable("$"+to_string(anonymousFuntionCounter++), currentScope, yylineno, USERFUNC,programfunc_s);
                                 expression->sym->setScopespace(getCurrentScopespace());
                                 expression->sym->setOffset(currentOffset());
-                                cout<<"FUNCTION OFFSET IS "<<currentOffset()<<"\n";
                                 incCurScopeOffset();
-                                cout<<"AFTER INCREASE IS "<<currentOffset()<<"\n";
                                 funcExprStack.push(expression);
                                 emit(funcstart_op,expression,NULL,NULL,getNextLabel(),yylineno);
                                 returnStack.push(0);
@@ -1114,7 +1091,6 @@ funcdef:          FUNCTION N {
                                 $$->falselist=0;
                                 $$->setJumpLab(0);
                                 funcExprStack.pop();
-                                cout<<"PUNCHPUCNH "<<returnStack.top()<<"\n";
                                 patchlist(returnStack.top(),labelLookahead()-1);
                                 returnStack.pop();
                             }
@@ -1124,9 +1100,7 @@ funcdef:          FUNCTION N {
                                         expression->sym= addToSymbolTable($2, currentScope, yylineno, USERFUNC,programfunc_s);
                                         expression->sym->setScopespace(getCurrentScopespace()); 
                                         expression->sym->setOffset(currentOffset());
-                                        cout<<"FUNCTION OFFSET IS "<<currentOffset()<<"\n";
                                         incCurScopeOffset();
-                                        cout<<"AFTER INCREASE IS "<<currentOffset()<<"\n";
                                         nestedFunctionCounter++;
                                         funcExprStack.push(expression);
                                         emit(funcstart_op,expression,NULL,NULL,getNextLabel(),yylineno);
@@ -1160,7 +1134,6 @@ funcdef:          FUNCTION N {
                                     $$->falselist=0;
                                     $$->setJumpLab(0);
                                     funcExprStack.pop();
-                                    cout<<"PUNCHPUCNH "<<returnStack.top()<<"\n";
                                     patchlist(returnStack.top(),labelLookahead()-1);
                                     returnStack.pop();
                                 }
@@ -1182,7 +1155,6 @@ idlist:           IDENT {
                                     expr *expression=new expr(var_e);expression->sym=addToSymbolTable($1, currentScope, yylineno, FORMAL,var_s);
                                     expression->sym->setOffset(currentOffset());
                                     expression->sym->setScopespace(getCurrentScopespace());
-                                    cout<<"expression->sym->setScopespace(getCurrentScopespace());"<<expression->sym->getScopespace()<<endl;
                                     incCurScopeOffset();
                                 }
                             }
@@ -1208,9 +1180,7 @@ idlist:           IDENT {
 ifprefix:       IF '(' expr ')' {
                                     patchlist($expr->truelist,labelLookahead());
                                     patchlist($expr->falselist,labelLookahead()+2);
-                                    cout<<"if type "<<$expr->getType()<<"\n";
                                     if(($expr->getType()==boolexpr_e)){
-                                        cout<<"in IF IF\n";
                                         emit(assign_op,NULL,$expr,newexpr_constbool(1),getNextLabel(),yylineno);
                                         expr* lab = new expr(label_e);
                                         lab->setJumpLab(labelLookahead()+2);
@@ -1222,7 +1192,6 @@ ifprefix:       IF '(' expr ')' {
                                     expression->setJumpLab(labelLookahead()+2);
                                     emit(if_eq_op,expression,$expr,newexpr_constbool(1),getNextLabel(),yylineno);
                                     ifQuadStack.push(labelLookahead());
-                                    cout<<"pushed "<<labelLookahead()<<"\n";
                                     emit(jump_op,NULL,NULL,NULL,getNextLabel(),yylineno);
                                  }
                 ;
@@ -1263,7 +1232,6 @@ whilestmt:        WHILE {nestedLoopCounter++;
                             patchlist($expr->truelist,labelLookahead());
                             patchlist($expr->falselist,labelLookahead()+2);
                             if(($expr->getType()==boolexpr_e)){
-                                cout<<"OOOOOO\n";
                                 emit(assign_op,NULL,$expr,newexpr_constbool(1),getNextLabel(),yylineno);
                                 expr* lab = new expr(label_e);
                                 lab->setJumpLab(labelLookahead()+2);
@@ -1272,33 +1240,27 @@ whilestmt:        WHILE {nestedLoopCounter++;
                             }
                             expr* expression = new expr(label_e);
                             expression->setJumpLab(labelLookahead()+2);
-                            cout<<"while jump created to "<<expression->getJumpLab()<<"\n";
                             emit(if_eq_op,expression,$expr,newexpr_constbool(1),getNextLabel(),yylineno);
 
                             whileSecondStack.push(labelLookahead());
                             emit(jump_op,NULL,NULL,NULL,getNextLabel(),yylineno);
                         } 
                    stmt {
-                            cout<<"up\n";
                             nestedLoopCounter--;
 
                             expr* expression = new expr(label_e);
                             expression->setJumpLab(whileStartStack.top());
                             
-                            cout<<"first jump set on "<<expression->getJumpLab()<<"\n";
                             emit(jump_op,NULL,expression,NULL,getNextLabel(),yylineno);
 
                             expr* expression2 = new expr(label_e);
                             expression2->setJumpLab(labelLookahead());
-                            cout<<"backpatching on "<<whileSecondStack.top()<<" -> "<<expression2->getJumpLab()<<"\n";
                             backpatchArg1(whileSecondStack.top(),expression2);
                             whileSecondStack.pop();
-                            cout<<"breaklist candidate "<<$stmt->breaklist<<" and lookahead "<<labelLookahead()<<"\n";
                             patchlist($stmt->breaklist,labelLookahead());
                             patchlist($stmt->continuelist,whileStartStack.top());
                             whileStartStack.pop();
                             $$ = $stmt;
-                            cout<<"down\n";
                         }
                 ;
 
@@ -1344,10 +1306,8 @@ forstmt:          forprefix N elist ')' N stmt N{
                                                     nestedLoopCounter--;
                                                     
                                                     patchlist($stmt->breaklist,labelLookahead());
-                                                    cout<<"continue list is at "<<$stmt->continuelist<<"\n";    
                                                     patchlist($stmt->continuelist,$2+1);
                                                     $$ = $stmt;
-                                                    cout<<"for break "<<$$->breaklist<<"\n";
                                                 }
                 ;
 

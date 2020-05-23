@@ -258,13 +258,11 @@ class stmtLists{
 };
 
 int newList(int i){
-    std::cout<<"labcounter "<<labelCounter << " i is "<<i<<"\n";
         quads[i].getArg1()->setJumpLab(0);
         return i;
 }
 
 int mergelist(int l1,int l2){
-    std::cout<<"in mergelist with " <<l1<<"-"<<l2<<"\n";
     if(!l1){
         return l2;
     }else if(!l2){
@@ -273,23 +271,16 @@ int mergelist(int l1,int l2){
         int i=l1;
         
         while(quads[i].getArg1()->getJumpLab()){
-            std::cout<<"in merlist type "<<quads[i].getArg1()->getType()<<"\n";
-            std::cout<<quads[i].getArg1()->getJumpLab() <<" <- ";
             i = quads[i].getArg1()->getJumpLab();
         }
         quads[i].getArg1()->setJumpLab(l2);
-        std::cout<<"mergelist first three elemets <- "<<l1<<quads[l1].getArg1()->getJumpLab()<< " [] "<<quads[l2].getArg1()->getJumpLab()<<"\n";
         return l1;
     }
 }  
 
 void patchlist(int list,int label){
-    std::cout<<"patchlist with "<<list<<"\n";
     while(list){
-        std::cout<<"trying to patch "<<list<<"\n";
         if(quads[list].getResult() == NULL){
-            std::cout<<"patching label for "<<list<<"\n";
-            std::cout<<"vector size is "<<quads.size()<<"\n";
             int next;
             if(quads.size()<list){
                  next=0;
@@ -299,9 +290,7 @@ void patchlist(int list,int label){
             quads[list].getArg1()->setJumpLab(label);
             list = next;
         }else{
-            std::cout<<"patching result for "<<list<<" with "<<label<<"\n";
             int next = quads[list].getArg1()->getJumpLab();
-            std::cout<<"next is "<<next<<"\n";
             quads[list].getResult()->setJumpLab(label);
             list = next;
         }
