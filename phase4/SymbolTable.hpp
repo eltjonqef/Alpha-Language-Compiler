@@ -1,5 +1,5 @@
 #pragma once
-
+  
 #include <string>      
 #include <stack>
 #include <assert.h>
@@ -138,6 +138,7 @@ class SymbolTableEntry {
         scopespace_t space;
         unsigned offset;
         int UnionFlag; //0 for variable , 1 for function
+        unsigned taddress;
 
     public:
         SymbolTableEntry(std::string _name, int _scope, int _line, SymbolType _type,symbol_t _symtype) {
@@ -155,7 +156,12 @@ class SymbolTableEntry {
             type = _type;
             type_t = _symtype;
         }
-
+        void setTaddress(unsigned _taddress){
+            taddress=_taddress;
+        }
+        unsigned getTaddress(){
+            return taddress;
+        }
         symbol_t getType_t(){return type_t;}
         scopespace_t getScopespace(){return space;}
         unsigned getOffset(){

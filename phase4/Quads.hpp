@@ -36,7 +36,7 @@ enum iopcode{
     tablesetelem_op,
     jump_op,
     nop
-};
+};  
 bool reverseResultPrintOrder(iopcode opcd);
 enum expr_t{
     var_e,

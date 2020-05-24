@@ -2,6 +2,7 @@
 #include <map>
 using namespace std;
 #include "Quads.hpp"
+#include <stack>
 enum vmarg_t{
 
     global_a,
@@ -14,6 +15,8 @@ enum vmarg_t{
     nil_a,
     userfunc_a,
     libfunc_a,
+    label_a,
+    retval_a
 };
 
 class vmarg{
@@ -35,9 +38,11 @@ class vmarg{
 
 class incompleteJump{
     public:
-        unsigned instructionNo;
+        unsigned instrNo;
         unsigned iaddress;
 };
+vector<incompleteJump> incompleteJumps;
+vector<incompleteJump> incompleteIfJumps;
 map<string, int> stringMap;
 map<int, int> intMap;
 map<double, int> doubleMap;
@@ -58,7 +63,7 @@ unsigned consts_newString(string _string){
 
     if(!stringMap[_string])
         stringMap[_string]=stringMap.size();
-    
+
     return stringMap[_string];
 
 }
@@ -78,18 +83,25 @@ unsigned consts_newNumber(double _number){
     return doubleMap[_number];
 }
 
+unsigned userfuncs_newfunc(SymbolTableEntry *sym){
+
+}
+
 unsigned libfuncs_newUsed(string _libfunc){
 
 }
 
 void make_operand(expr *e, vmarg *arg){
-
-    switch(e->getType()){
-        
+    if(e==NULL){
+        arg=NULL;
+        return;
+    }
+    switch(e->getType()){       
         case var_e:
         case tableitem_e:
         case arithexpr_e:
         case boolexpr_e:
+        case arithexpr_e:
         case newtable_e: {
             arg->setVal(e->sym->getOffset());
             switch(e->sym->getScopespace()){
@@ -133,7 +145,7 @@ void make_operand(expr *e, vmarg *arg){
         }
         case programfunc_e:{
             arg->setType(userfunc_a);
-            //arg->setVal(e->sym->taddress); DEN EXW TIN PARAMIKRI IDEA TI EINAI TO TADDRESS
+            arg->setVal(e->sym->getTaddress());
             break;
         }
         case libraryfunc_e:{
@@ -147,7 +159,7 @@ void make_operand(expr *e, vmarg *arg){
 }
 
 void make_retval_operand(vmarg* arg){
-    arg->setType(ret_vm);
+    arg->setType(retval_a);
 }
 enum vmopcode_t{ 
 
@@ -228,46 +240,64 @@ void generate_Simple(vmopcode_t op,quad quad){
     make_operand(quad.getResult(), t->getResult());
     make_operand(quad.getArg1(), t->getArg1());
     make_operand(quad.getArg2(), t->getArg2());
-    quad->setTaddress(instructionLabelLookahead());
+    quad.setTaddress(getInstructionLabel());
     instructionVector.push_back(t);  
-    //todo add emit
 }
 
 void generate_relational(vmopcode_t op,quad quad){
     instruction *t = new instruction();
     t->setOpCode(op);
-    make_operand(quad.getArg1(),t->getArg1());
-    make_operand(quad.getArg2(),t->getArg2());
-    if(quad.getResult()<currentProssesedQuad){
-        if((quad.getTaddress() == NULL)||(quad.getTaddress() < 0)){
-            assert(0);
+    t->getResult()->setType(label_a);
+    if(op != jump_vm){
+        make_operand(quad.getArg1(),t->getArg1());
+        make_operand(quad.getArg2(),t->getArg2());
+            
+        if(quad.getResult()->getJumpLab()<currentProssesedQuad){
+            if((quad.getTaddress() <= 0)){
+                assert(0);
+            }
+            t->getResult()->setVal(quads[quad.getResult()->getJumpLab()].getTaddress());
+        }else{
+            incompleteJump ij = incompleteJump();
+            ij.instrNo = instructionLabelLookahead();
+            ij.iaddress  = quad.getResult()->getJumpLab();
+            incompleteIfJumps.push_back(ij);
         }
-        t->setResult(quad.getTaddress());
     }else{
-        //todo add incomplete jump
+        if(quad.getArg1()->getJumpLab()<currentProssesedQuad){
+            if((quad.getTaddress() <= 0)){
+                assert(0);
+            }
+            t->getResult()->setVal(quads[quad.getArg1()->getJumpLab()].getTaddress());
+        }else{
+            incompleteJump ij = incompleteJump();
+            ij.instrNo = instructionLabelLookahead();
+            ij.iaddress = quad.getArg1()->getJumpLab();
+            incompleteIfJumps.push_back(ij);
+        }
     }
-    quad->setTaddress(instructionLabelLookahead());
+    quad.setTaddress(getInstructionLabel());
     instructionVector.push_back(t);
-    //todo add emit
+}
+     
+
+void patch_incomplete_jumps(){
+    for(vector<incompleteJump>::iterator it = incompleteJumps.begin();it != incompleteJumps.end();++it){
+        if(it->iaddress == currentProssesedQuad){
+            instructionVector[it->instrNo]->getResult()->setVal(currentProssesedQuad);
+        }else{
+            instructionVector[it->instrNo]->getResult()->setVal(quads[it->iaddress].getTaddress());
+        }
+    }
+    for(vector<incompleteJump>::iterator it = incompleteIfJumps.begin();it != incompleteIfJumps.end();++it){
+        if(it->iaddress == currentProssesedQuad){
+            instructionVector[it->instrNo]->getResult()->setVal(currentProssesedQuad);
+        }else{
+            instructionVector[it->instrNo]->getResult()->setVal(quads[it->iaddress].getTaddress());
+        }
+    }
 }
 
-void generate_call(quad quad){
-    quad.setTaddress(instructionLabelLookahead());
-    instruction *t = new instruction();
-    t->setOpCode(call_vm);
-    make_operand(quad.getArg1(),t->getArg1());
-    //todo add emit
-
-}
-
-void generate_retval(quad quad){
-    quad.setTaddress(instructionLabelLookahead());
-    instruction *t = new instruction();
-    t->setOpCode(assign_vm);
-    make_operand(quad.getResultt(),t->getResult());
-    make_retval_operand(t->getArg1());
-    //todo emit(t)
-}
 
 typedef void (*generator_func_t)(quad);
 
@@ -289,21 +319,95 @@ void generate_OR(quad quad){}
 void generate_NOT(quad quad){}
 void generate_IF_EQ(quad quad){generate_relational(if_eq_vm, quad);}
 void generate_IF_NOTEQ(quad quad){generate_relational(if_noteq_vm, quad);}
-void generate_IF_LESSEQ(quad quad){}
-void generate_IF_GREATEREQ(quad quad){}
-void generate_IF_LESS(quad quad){}
-void generate_IF_GREATER(quad quad){}
-void generate_CALL(quad quad){}
-void generate_PARAM(quad quad){}
-void generate_RET(quad quad){}
-void generate_GETRETVAL(quad quad){}
-void generate_FUNCSTART(quad quad){}
-void generate_FUNCEND(quad quad){}
+void generate_IF_LESSEQ(quad quad){generate_relational(if_lesseq_vm, quad);}
+void generate_IF_GREATEREQ(quad quad){generate_relational(if_greatereq_vm, quad);}
+void generate_IF_LESS(quad quad){generate_relational(if_less_vm, quad);}
+void generate_IF_GREATER(quad quad){generate_relational(if_greater_vm, quad);}
+
+void generate_CALL(quad quad){
+    quad.setTaddress(instructionLabelLookahead());
+    instruction *t = new instruction();
+    t->setOpCode(call_vm);
+    make_operand(quad.getArg1(),t->getArg1());
+    instructionVector.push_back(t);    
+}
+
+void generate_PARAM(quad quad){
+    quad.setTaddress(instructionLabelLookahead());
+    instruction *t=new instruction();
+    t->setOpCode(param_vm);
+    make_operand(quad.getArg1(), t->getArg1());
+    make_operand(quad.getArg2(), t->getArg2());
+    instructionVector.push_back(t);
+}
+class function{
+    private:
+        SymbolTableEntry* sym;
+        vector<unsigned> returnList;
+    public:
+        function(SymbolTableEntry* _sym){
+            sym=_sym;
+        }
+        vector<unsigned> getReturnList(){
+            return returnList;
+        }
+};
+stack<function*> functionStack;
+void generate_RET(quad quad){  
+    quad.setTaddress(instructionLabelLookahead());
+    instruction *t=new instruction();
+    t->setOpCode(assign_vm);
+    make_retval_operand(t->getResult());
+    make_operand(quad.getArg1(), t->getArg1());
+    instructionVector.push_back(t);
+    function *f=functionStack.top();
+    f->getReturnList().push_back(instructionLabelLookahead());
+
+}
+void generate_GETRETVAL(quad quad){
+    quad.setTaddress(instructionLabelLookahead());
+    instruction *t = new instruction();
+    t->setOpCode(assign_vm);
+    make_operand(quad.getResult(),t->getResult());
+    make_retval_operand(t->getArg1());
+    instructionVector.push_back(t);
+}
+
+
+void generate_FUNCSTART(quad quad){
+    SymbolTableEntry* f=quad.getResult()->sym;
+    f->setTaddress(getInstructionLabel());
+    quad.setTaddress(getInstructionLabel());
+    functionStack.push(new function(f));
+    //PREPEI NA FTIAKSOUME TA PEdIA GIA TO PINAKA TOU FUNCTION
+    //THELEI ALAGES APO PROIGOUMENI FASH
+    instruction *t=new instruction();
+    t->setOpCode(funcenter_vm);
+    make_operand(quad.getResult(), t->getResult());
+    instructionVector.push_back(t);
+}
+void generate_FUNCEND(quad quad){
+    function *f=functionStack.top();
+    functionStack.pop();
+    //to do BACKpatch returnList
+    f->getReturnList()
+    quad.setTaddress(getInstructionLabel());
+    instruction *t=new instruction();
+    t->setOpCode(funcexit_vm);
+    make_operand(quad.getResult(), t->getResult());
+    instructionVector.push_back(t);
+}
 void generate_NEWTABLE(quad quad){generate_Simple(tablecreate_vm,quad);}
 void generate_TABLEGETELEM(quad quad){generate_Simple(tablegetelem_vm,quad);}
 void generate_TABLESETELEM(quad quad){generate_Simple(tablesetelem_vm,quad);}
-void generate_JUMP(quad quad){}
-void generate_NOP(quad quad){}//slide 18
+void generate_JUMP(quad quad){
+    generate_relational(jump_vm,quad);
+}
+void generate_NOP(quad quad){
+    instruction *t = new instruction();
+    t->setOpCode(nop_vm);
+    instructionVector.push_back(t);
+}
 
 generator_func_t generators[]={
     
@@ -339,21 +443,61 @@ generator_func_t generators[]={
 void generate(){
     for(int i=0; i<quads.size(); i++){
         (*generators[quads[i].getOP()])(quads[i]);
+        currentProssesedQuad++;
     }
 }
+string opcodeToString(vmopcode_t _opcode){
 
+    vmopcode_t temp=_opcode;
+    switch(temp){
+        case assign_vm: return "ASSIGN";
+        case add_vm: return "ADD";
+        case sub_vm: return "SUB";
+        case mul_vm: return "MUL";
+        case div_vm: return "DIV";
+        case mod_vm: return "MOD";
+        case if_eq_vm: return "IFEQ";
+        case if_noteq_vm: return "IFNEQ";
+        case if_lesseq_vm: return "IFLESSEQ";
+        case if_greatereq_vm: return "IFGREATEREQ";
+        case if_less_vm: return "IFLESS";
+        case if_greater_vm: return "IFGREATER";
+        case call_vm: return "CALL";
+        case param_vm: return "PARAM";
+        case ret_vm: return "RETURN";
+        case getretval_vm: return "GETRETVAL";
+        case funcenter_vm: return "FUNCENTER";
+        case funcexit_vm: return "FUNCEXIT";
+        case tablecreate_vm: return "CREATETABLE";
+        case tablegetelem_vm: return "TABLEGETELEM";
+        case tablesetelem_vm: return "TABLESETELEM";
+        case jump_vm: return "JUMP";
+        case nop_vm: return "";
+    }        
+}
+string vmarg_tToString(vmarg_t type){
+
+    vmarg_t temp=type;
+    switch(temp){
+        case global_a: return "GLOBAL";
+        case local_a: return "LOCAL";
+        case formal_a: return "FORMAL";
+        case bool_a: return "BOOL";
+        case string_a: return "STRING";
+        case int_a: return "INT";
+        case double_a: return "DOUBLE";
+        case nil_a: return "NIL";
+        case userfunc_a: return "USERFUNC";
+        case libfunc_a: return "LIBFUNC";
+    }
+}
 void printInstructions(){
     
-    for(int i=0; i<instructionVector.size(); i++){
-        switch(instructionVector[i]->getOP()){
-            case assign_vm:{
-                cout<<"ASSIGN"<<" "<<instructionVector[i]->getResult()->getVal()<<" "<<instructionVector[i]->getArg1()->getVal()<<" "<<instructionVector[i]->getArg2()->getVal()<<endl;
-                break;
-            }
-            case add_vm:{
-                cout<<"ADD"<<" "<<instructionVector[i]->getResult()->getVal()<<" "<<instructionVector[i]->getArg1()->getVal()<<" "<<instructionVector[i]->getArg2()->getVal()<<endl;
-                break;
-            }
-        }
+    for(int i=1; i<instructionVector.size(); i++){
+        cout<<opcodeToString(instructionVector[i]->getOP());
+        if(instructionVector[i]->getResult()){cout<<" ("<<vmarg_tToString(instructionVector[i]->getResult()->getType())<<")"<<instructionVector[i]->getResult()->getVal();}
+        if(instructionVector[i]->getArg1()){cout<<" ("<<vmarg_tToString(instructionVector[i]->getArg1()->getType())<<")"<<instructionVector[i]->getArg1()->getVal();}
+        if(instructionVector[i]->getArg2()){cout<<" ("<<vmarg_tToString(instructionVector[i]->getArg2()->getType())<<")"<<instructionVector[i]->getArg2()->getVal();}
+        cout<<endl;
     }
 }
