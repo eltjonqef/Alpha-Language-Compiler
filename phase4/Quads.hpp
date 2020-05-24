@@ -211,6 +211,9 @@ class quad{
         iopcode getOP(){
             return op;
         }
+        void setOP(iopcode _op){
+            op=_op;
+        }
         expr* getResult(){
             return result;
         }
@@ -228,6 +231,9 @@ class quad{
         }
         void setArg1(expr* _arg1){
             arg1 = _arg1;
+        }
+        void setArg2(expr* _arg2){
+            arg2 = _arg2;
         }
         void setResult(expr* _result){
             result = _result;

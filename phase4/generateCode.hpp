@@ -33,10 +33,16 @@ class vmarg{
         unsigned getVal(){return val;}        
 };
 
+class incompleteJump{
+    public:
+        unsigned instructionNo;
+        unsigned iaddress;
+};
 map<string, int> stringMap;
 map<int, int> intMap;
 map<double, int> doubleMap;
 unsigned instructionLabel=0;
+unsigned currentProssesedQuad = 0;
 
 unsigned instructionLabelLookahead(){
     return instructionLabel;
@@ -140,6 +146,9 @@ void make_operand(expr *e, vmarg *arg){
     }
 }
 
+void make_retval_operand(vmarg* arg){
+    arg->setType(ret_vm);
+}
 enum vmopcode_t{ 
 
     assign_vm,
@@ -220,7 +229,8 @@ void generate_Simple(vmopcode_t op,quad quad){
     make_operand(quad.getArg1(), t->getArg1());
     make_operand(quad.getArg2(), t->getArg2());
     quad->setTaddress(instructionLabelLookahead());
-    instructionVector.push_back(t);   
+    instructionVector.push_back(t);  
+    //todo add emit
 }
 
 void generate_relational(vmopcode_t op,quad quad){
@@ -228,9 +238,37 @@ void generate_relational(vmopcode_t op,quad quad){
     t->setOpCode(op);
     make_operand(quad.getArg1(),t->getArg1());
     make_operand(quad.getArg2(),t->getArg2());
+    if(quad.getResult()<currentProssesedQuad){
+        if((quad.getTaddress() == NULL)||(quad.getTaddress() < 0)){
+            assert(0);
+        }
+        t->setResult(quad.getTaddress());
+    }else{
+        //todo add incomplete jump
+    }
     quad->setTaddress(instructionLabelLookahead());
     instructionVector.push_back(t);
+    //todo add emit
 }
+
+void generate_call(quad quad){
+    quad.setTaddress(instructionLabelLookahead());
+    instruction *t = new instruction();
+    t->setOpCode(call_vm);
+    make_operand(quad.getArg1(),t->getArg1());
+    //todo add emit
+
+}
+
+void generate_retval(quad quad){
+    quad.setTaddress(instructionLabelLookahead());
+    instruction *t = new instruction();
+    t->setOpCode(assign_vm);
+    make_operand(quad.getResultt(),t->getResult());
+    make_retval_operand(t->getArg1());
+    //todo emit(t)
+}
+
 typedef void (*generator_func_t)(quad);
 
 void generate_ASSIGN(quad quad){generate_Simple(assign_vm,quad);}
@@ -238,13 +276,19 @@ void generate_ADD(quad quad){generate_Simple(add_vm, quad);}
 void generate_SUB(quad quad){generate_Simple(sub_vm,quad);}
 void generate_MUL(quad quad){generate_Simple(mul_vm,quad);}
 void generate_DIV(quad quad){generate_Simple(div_vm,quad);}
-void generate_MOD(quad quad){}
-void generate_UMINUS(quad quad){}
+void generate_MOD(quad quad){generate_Simple(mod_vm, quad);}
+void generate_UMINUS(quad quad){
+    quad.setArg2(quad.getArg1());
+    quad.setArg1(new expr(-1));
+    quad.setOP(mul_op);
+    generate_Simple(mul_vm, quad);
+}
+
 void generate_AND(quad quad){}
 void generate_OR(quad quad){}
 void generate_NOT(quad quad){}
-void generate_IF_EQ(quad quad){}
-void generate_IF_NOTEQ(quad quad){}
+void generate_IF_EQ(quad quad){generate_relational(if_eq_vm, quad);}
+void generate_IF_NOTEQ(quad quad){generate_relational(if_noteq_vm, quad);}
 void generate_IF_LESSEQ(quad quad){}
 void generate_IF_GREATEREQ(quad quad){}
 void generate_IF_LESS(quad quad){}
