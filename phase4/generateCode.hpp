@@ -41,8 +41,8 @@ class incompleteJump{
         unsigned instrNo;
         unsigned iaddress;
 };
-vector<incompleteJump> incompleteJumps;
-vector<incompleteJump> incompleteIfJumps;
+vector<incompleteJump*> incompleteJumps;
+vector<incompleteJump*> incompleteIfJumps;
 map<string, int> stringMap;
 map<int, int> intMap;
 map<double, int> doubleMap;
@@ -240,6 +240,7 @@ void generate_Simple(vmopcode_t op,quad quad){
     make_operand(quad.getResult(), t->getResult());
     make_operand(quad.getArg1(), t->getArg1());
     make_operand(quad.getArg2(), t->getArg2());
+    quads[quad.getLabel()].setTaddress(instructionLabelLookahead());
     quad.setTaddress(getInstructionLabel());
     instructionVector.push_back(t);  
 }
@@ -249,6 +250,7 @@ void generate_relational(vmopcode_t op,quad quad){
     t->setOpCode(op);
     t->getResult()->setType(label_a);
     if(op != jump_vm){
+        cout<<"iftype \n";
         make_operand(quad.getArg1(),t->getArg1());
         make_operand(quad.getArg2(),t->getArg2());
             
@@ -258,42 +260,54 @@ void generate_relational(vmopcode_t op,quad quad){
             }
             t->getResult()->setVal(quads[quad.getResult()->getJumpLab()].getTaddress());
         }else{
-            incompleteJump ij = incompleteJump();
-            ij.instrNo = instructionLabelLookahead();
-            ij.iaddress  = quad.getResult()->getJumpLab();
+            cout<<"pushing in incompleteIF list\n";
+            incompleteJump *ij = new incompleteJump();
+            cout<<"setting instNo as "<<instructionLabelLookahead()<<"\n";
+            ij->instrNo = instructionLabelLookahead();
+            cout<<"setting iadd as "<<quad.getResult()->getJumpLab()<<"\n";
+            ij->iaddress  = quad.getResult()->getJumpLab();
             incompleteIfJumps.push_back(ij);
         }
     }else{
+        cout<<"jumptype \n";
         if(quad.getArg1()->getJumpLab()<currentProssesedQuad){
             if((quad.getTaddress() <= 0)){
                 assert(0);
             }
             t->getResult()->setVal(quads[quad.getArg1()->getJumpLab()].getTaddress());
         }else{
-            incompleteJump ij = incompleteJump();
-            ij.instrNo = instructionLabelLookahead();
-            ij.iaddress = quad.getArg1()->getJumpLab();
-            incompleteIfJumps.push_back(ij);
+            cout<<"pushing in incomplete list\n";
+            incompleteJump *ij = new incompleteJump();
+            cout<<"setting instNo as "<<instructionLabelLookahead()<<"\n";
+            ij->instrNo = instructionLabelLookahead();
+            cout<<"setting iadd as "<<quad.getArg1()->getJumpLab()<<"\n";
+            ij->iaddress = quad.getArg1()->getJumpLab();
+            incompleteJumps.push_back(ij);
         }
     }
+    quads[quad.getLabel()].setTaddress(instructionLabelLookahead());
     quad.setTaddress(getInstructionLabel());
     instructionVector.push_back(t);
 }
      
 
 void patch_incomplete_jumps(){
-    for(vector<incompleteJump>::iterator it = incompleteJumps.begin();it != incompleteJumps.end();++it){
-        if(it->iaddress == currentProssesedQuad){
-            instructionVector[it->instrNo]->getResult()->setVal(currentProssesedQuad);
+    cout<<"patcher called\n";
+    for(vector<incompleteJump*>::iterator it = incompleteJumps.begin();it != incompleteJumps.end();++it){
+        if((*it)->iaddress == currentProssesedQuad){
+            instructionVector[(*it)->instrNo]->getResult()->setVal(currentProssesedQuad);
         }else{
-            instructionVector[it->instrNo]->getResult()->setVal(quads[it->iaddress].getTaddress());
+            instructionVector[(*it)->instrNo]->getResult()->setVal(quads[(*it)->iaddress].getTaddress());
         }
     }
-    for(vector<incompleteJump>::iterator it = incompleteIfJumps.begin();it != incompleteIfJumps.end();++it){
-        if(it->iaddress == currentProssesedQuad){
-            instructionVector[it->instrNo]->getResult()->setVal(currentProssesedQuad);
+    for(vector<incompleteJump*>::iterator it = incompleteIfJumps.begin();it != incompleteIfJumps.end();++it){
+        if((*it)->iaddress == currentProssesedQuad){
+            instructionVector[(*it)->instrNo]->getResult()->setVal(currentProssesedQuad);
         }else{
-            instructionVector[it->instrNo]->getResult()->setVal(quads[it->iaddress].getTaddress());
+            cout<<"suspicious else\n";
+            cout<<"instrNo - iaddr = "<<(*it)->instrNo<<"-"<<(*it)->iaddress<<"\n";
+            cout<<"3rd quad taddt "<<quads[3].getTaddress()<<"\n";
+            instructionVector[(*it)->instrNo]->getResult()->setVal(quads[(*it)->iaddress].getTaddress());
         }
     }
 }
@@ -325,15 +339,19 @@ void generate_IF_LESS(quad quad){generate_relational(if_less_vm, quad);}
 void generate_IF_GREATER(quad quad){generate_relational(if_greater_vm, quad);}
 
 void generate_CALL(quad quad){
-    quad.setTaddress(instructionLabelLookahead());
+    quads[quad.getLabel()].setTaddress(instructionLabelLookahead());
+    quad.setTaddress(getInstructionLabel());
     instruction *t = new instruction();
     t->setOpCode(call_vm);
+    quads[quad.getLabel()].setTaddress(instructionLabelLookahead());
+    quad.setTaddress(getInstructionLabel());
     make_operand(quad.getResult(),t->getResult());
     instructionVector.push_back(t);    
 }
 
 void generate_PARAM(quad quad){
-    quad.setTaddress(instructionLabelLookahead());
+    quads[quad.getLabel()].setTaddress(instructionLabelLookahead());
+    quad.setTaddress(getInstructionLabel());
     instruction *t=new instruction();
     t->setOpCode(param_vm);
     make_operand(quad.getResult(), t->getArg1());
@@ -353,7 +371,7 @@ class function{
 };
 stack<function*> functionStack;
 void generate_RET(quad quad){  
-    quad.setTaddress(instructionLabelLookahead());
+    quad.setTaddress(getInstructionLabel());
     instruction *t=new instruction();
     t->setOpCode(assign_vm);
     make_retval_operand(t->getResult());
@@ -364,7 +382,7 @@ void generate_RET(quad quad){
 
 }
 void generate_GETRETVAL(quad quad){
-    quad.setTaddress(instructionLabelLookahead());
+    quad.setTaddress(getInstructionLabel());
     instruction *t = new instruction();
     t->setOpCode(assign_vm);
     make_operand(quad.getResult(),t->getResult());
@@ -403,6 +421,7 @@ void generate_JUMP(quad quad){
     generate_relational(jump_vm,quad);
 }
 void generate_NOP(quad quad){
+    quad.setTaddress(getInstructionLabel());
     instruction *t = new instruction();
     t->setOpCode(nop_vm);
     instructionVector.push_back(t);
@@ -444,6 +463,7 @@ void generate(){
         (*generators[quads[i].getOP()])(quads[i]);
         currentProssesedQuad++;
     }
+    patch_incomplete_jumps();
 }
 string opcodeToString(vmopcode_t _opcode){
 
@@ -498,7 +518,7 @@ void printInstructions(){
         cout<<opcodeToString(instructionVector[i]->getOP());
         switch(instructionVector[i]->getOP()){
             case assign_vm:{
-                cout<<" ("<<vmarg_tToString(instructionVector[i]->getResult()->getType())<<")"<<instructionVector[i]->getResult()->getVal();
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getArg2()->getType())<<")"<<instructionVector[i]->getArg2()->getVal();
                 cout<<" ("<<vmarg_tToString(instructionVector[i]->getArg1()->getType())<<")"<<instructionVector[i]->getArg1()->getVal();
                 cout<<endl;
                 break;
