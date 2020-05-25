@@ -101,7 +101,7 @@ void make_operand(expr *e, vmarg *arg){
         case tableitem_e:
         case arithexpr_e:
         case boolexpr_e:
-        case arithexpr_e:
+        case assignexpr_e:
         case newtable_e: {
             arg->setVal(e->sym->getOffset());
             switch(e->sym->getScopespace()){
@@ -328,7 +328,7 @@ void generate_CALL(quad quad){
     quad.setTaddress(instructionLabelLookahead());
     instruction *t = new instruction();
     t->setOpCode(call_vm);
-    make_operand(quad.getArg1(),t->getArg1());
+    make_operand(quad.getResult(),t->getResult());
     instructionVector.push_back(t);    
 }
 
@@ -336,8 +336,7 @@ void generate_PARAM(quad quad){
     quad.setTaddress(instructionLabelLookahead());
     instruction *t=new instruction();
     t->setOpCode(param_vm);
-    make_operand(quad.getArg1(), t->getArg1());
-    make_operand(quad.getArg2(), t->getArg2());
+    make_operand(quad.getResult(), t->getArg1());
     instructionVector.push_back(t);
 }
 class function{
@@ -390,7 +389,7 @@ void generate_FUNCEND(quad quad){
     function *f=functionStack.top();
     functionStack.pop();
     //to do BACKpatch returnList
-    f->getReturnList()
+    //f->getReturnList();
     quad.setTaddress(getInstructionLabel());
     instruction *t=new instruction();
     t->setOpCode(funcexit_vm);
@@ -489,15 +488,97 @@ string vmarg_tToString(vmarg_t type){
         case nil_a: return "NIL";
         case userfunc_a: return "USERFUNC";
         case libfunc_a: return "LIBFUNC";
+        case retval_a: return "RETVAL";
+        case label_a: return "LABEL";
     }
 }
 void printInstructions(){
-    
+    cout<<"------------Instructions-------------\n";
     for(int i=1; i<instructionVector.size(); i++){
         cout<<opcodeToString(instructionVector[i]->getOP());
-        if(instructionVector[i]->getResult()){cout<<" ("<<vmarg_tToString(instructionVector[i]->getResult()->getType())<<")"<<instructionVector[i]->getResult()->getVal();}
-        if(instructionVector[i]->getArg1()){cout<<" ("<<vmarg_tToString(instructionVector[i]->getArg1()->getType())<<")"<<instructionVector[i]->getArg1()->getVal();}
-        if(instructionVector[i]->getArg2()){cout<<" ("<<vmarg_tToString(instructionVector[i]->getArg2()->getType())<<")"<<instructionVector[i]->getArg2()->getVal();}
-        cout<<endl;
+        switch(instructionVector[i]->getOP()){
+            case assign_vm:{
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getResult()->getType())<<")"<<instructionVector[i]->getResult()->getVal();
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getArg1()->getType())<<")"<<instructionVector[i]->getArg1()->getVal();
+                cout<<endl;
+                break;
+            }
+            case add_vm:{
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getResult()->getType())<<")"<<instructionVector[i]->getResult()->getVal();
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getArg1()->getType())<<")"<<instructionVector[i]->getArg1()->getVal();
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getArg2()->getType())<<")"<<instructionVector[i]->getArg2()->getVal();
+                cout<<endl;
+                break;
+            }
+            case sub_vm:{
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getResult()->getType())<<")"<<instructionVector[i]->getResult()->getVal();
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getArg1()->getType())<<")"<<instructionVector[i]->getArg1()->getVal();
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getArg2()->getType())<<")"<<instructionVector[i]->getArg2()->getVal();
+                cout<<endl;
+                break;
+            }
+            case mul_vm:{
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getResult()->getType())<<")"<<instructionVector[i]->getResult()->getVal();
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getArg1()->getType())<<")"<<instructionVector[i]->getArg1()->getVal();
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getArg2()->getType())<<")"<<instructionVector[i]->getArg2()->getVal();
+                cout<<endl;
+                break;
+            }
+            case div_vm:{
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getResult()->getType())<<")"<<instructionVector[i]->getResult()->getVal();
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getArg1()->getType())<<")"<<instructionVector[i]->getArg1()->getVal();
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getArg2()->getType())<<")"<<instructionVector[i]->getArg2()->getVal();
+                cout<<endl;
+                break;
+            }
+            case mod_vm:{
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getResult()->getType())<<")"<<instructionVector[i]->getResult()->getVal();
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getArg1()->getType())<<")"<<instructionVector[i]->getArg1()->getVal();
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getArg2()->getType())<<")"<<instructionVector[i]->getArg2()->getVal();
+                cout<<endl;
+                break;
+            }
+            case tablesetelem_vm:{
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getResult()->getType())<<")"<<instructionVector[i]->getResult()->getVal();
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getArg1()->getType())<<")"<<instructionVector[i]->getArg1()->getVal();
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getArg2()->getType())<<")"<<instructionVector[i]->getArg2()->getVal();
+                cout<<endl;
+                break;
+            }
+            case tablegetelem_vm:{
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getResult()->getType())<<")"<<instructionVector[i]->getResult()->getVal();
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getArg1()->getType())<<")"<<instructionVector[i]->getArg1()->getVal();
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getArg2()->getType())<<")"<<instructionVector[i]->getArg2()->getVal();
+                cout<<endl;
+                break;
+            }
+            case call_vm:{
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getResult()->getType())<<")"<<instructionVector[i]->getResult()->getVal();
+                cout<<endl;
+                break;
+            }
+            case param_vm:{
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getResult()->getType())<<")"<<instructionVector[i]->getArg1()->getVal();
+                cout<<endl;
+                break;
+            }
+            case if_eq_vm:{
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getResult()->getType())<<")"<<instructionVector[i]->getResult()->getVal();
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getArg1()->getType())<<")"<<instructionVector[i]->getArg1()->getVal();
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getArg2()->getType())<<")"<<instructionVector[i]->getArg2()->getVal();
+                cout<<endl;
+                break;
+            }
+            case jump_vm:{
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getResult()->getType())<<")"<<instructionVector[i]->getResult()->getVal();
+                cout<<endl;
+                break;
+            }
+            case tablecreate_vm:{
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getResult()->getType())<<")"<<instructionVector[i]->getResult()->getVal();
+                cout<<endl;
+                break;
+            }
+        }
     }
 }

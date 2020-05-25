@@ -846,6 +846,9 @@ primary:          lvalue {
 lvalue:           IDENT {   
                             expr *expression=new expr(var_e);
                             expression->sym=LookUpVariable($1,0);
+                            if(libFunctions[$1]){
+                                expression->setType(libraryfunc_e);
+                            }
                             if(expression->sym==NULL){
                                 if(currentScope == 0){
                                     expression->sym=addToSymbolTable($1, currentScope, yylineno,GLOB,var_s);
@@ -1495,7 +1498,7 @@ LookUpFunction(string name){
 SymbolTableEntry*
 LookUpVariable(string name, int flag){
     if(libFunctions[name]){
-        return NULL;
+        return SymbolTable[name][0];
     }
     for(int i=SymbolTable[name].size()-1; i>=0; i--){
         if(SymbolTable[name][i]->isActive()){
@@ -1656,6 +1659,6 @@ expr* make_call(expr* lv, expr* reversed_elist){
     result->sym->setScopespace(getCurrentScopespace());
     result->sym->setOffset(currentOffset());
     incCurScopeOffset();
-    emit(getretval_op, NULL, NULL, result, getNextLabel(), yylineno);
+    emit(getretval_op, result, NULL, NULL, getNextLabel(), yylineno);
     return result;
 }
