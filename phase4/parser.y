@@ -726,6 +726,8 @@ term:             '(' expr ')' {$$=$2;}
                                         else{
                                             expr *temp=new expr(arithexpr_e);
                                             temp->sym=addToSymbolTable(nextVariableName(),currentScope,yylineno,getGlobLocl(),var_s);
+                                            temp->sym->setScopespace(getCurrentScopespace());
+                                            temp->sym->setOffset(currentOffset());
                                             $$=emit_if_table($1);
                                             emit(assign_op, temp, $$, NULL, getNextLabel(), yylineno);
                                             emit(add_op, $$, $$, new expr(1), getNextLabel(), yylineno);
