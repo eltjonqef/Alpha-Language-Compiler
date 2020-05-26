@@ -275,7 +275,7 @@ class stmtLists{
 };
 
 int newList(int i){
-        quads[i].getArg1()->setJumpLab(0);
+        quads[i].getResult()->setJumpLab(0);
         return i;
 }
 
@@ -287,10 +287,10 @@ int mergelist(int l1,int l2){
     }else{
         int i=l1;
         
-        while(quads[i].getArg1()->getJumpLab()){
-            i = quads[i].getArg1()->getJumpLab();
+        while(quads[i].getResult()->getJumpLab()){
+            i = quads[i].getResult()->getJumpLab();
         }
-        quads[i].getArg1()->setJumpLab(l2);
+        quads[i].getResult()->setJumpLab(l2);
         return l1;
     }
 }  
@@ -302,12 +302,12 @@ void patchlist(int list,int label){
             if(quads.size()<list){
                  next=0;
             }else{
-             next = quads[list].getArg1()->getJumpLab();
+             next = quads[list].getResult()->getJumpLab();
             }
-            quads[list].getArg1()->setJumpLab(label);
+            quads[list].getResult()->setJumpLab(label);
             list = next;
         }else{
-            int next = quads[list].getArg1()->getJumpLab();
+            int next = quads[list].getResult()->getJumpLab();
             quads[list].getResult()->setJumpLab(label);
             list = next;
         }
@@ -360,7 +360,7 @@ bool reverseResultPrintOrder(iopcode opcd){
 }
 
 void backpatchArg1(int index,expr* _arg){
-     quads[index].setArg1(_arg);
+     quads[index].setResult(_arg);
      /*
      *quad _quads = quads[index];
      * _quads.setArg1(_arg);

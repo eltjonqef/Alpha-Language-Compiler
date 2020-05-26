@@ -148,7 +148,7 @@ stmt:             expr ';' {$$ = new stmtLists();
 
                                         expr* jumpEx = new expr(label_e);
                                         jumpEx->setJumpLab(labelLookahead()+2);
-                                        emit(jump_op,NULL,jumpEx,NULL,getNextLabel(),yylineno);
+                                        emit(jump_op,jumpEx,NULL, NULL,getNextLabel(),yylineno);
 
                                         emit(assign_op,exr,newexpr_constbool(0),NULL,getNextLabel(),yylineno);
 
@@ -175,7 +175,7 @@ stmt:             expr ';' {$$ = new stmtLists();
                             statement->breaklist = labelLookahead();
                             expr* expression = new expr(label_e);
                             expression->setJumpLab(0);
-                            emit(jump_op,NULL,expression,NULL,getNextLabel(),yylineno);
+                            emit(jump_op,expression,NULL,NULL,getNextLabel(),yylineno);
                             $$ = statement;
                         }
                 | CONTINUE ';' {
@@ -186,7 +186,7 @@ stmt:             expr ';' {$$ = new stmtLists();
                                     statement->continuelist = labelLookahead();
                                     expr* expression = new expr(label_e);
                                     expression->setJumpLab(0);
-                                    emit(jump_op,NULL,expression,NULL,getNextLabel(),yylineno);
+                                    emit(jump_op,expression,NULL,NULL,getNextLabel(),yylineno);
                                     $$ = statement;
                                 }
                 | block {$$=$1;}
@@ -253,9 +253,9 @@ expr:             assignexpr {$$=$1; }
                         expr* jumpExp = new expr(label_e);
                         jumpExp->setJumpLab(labelLookahead()+3);
 
-                        emit(assign_op,NULL,expression,newexpr_constbool(1),getNextLabel(),yylineno);
-                        emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);
-                        emit(assign_op,NULL,expression,newexpr_constbool(0),getNextLabel(),yylineno);
+                        emit(assign_op,expression,newexpr_constbool(1),NULL,getNextLabel(),yylineno);
+                        emit(jump_op,jumpExp,NULL,NULL,getNextLabel(),yylineno);
+                        emit(assign_op,expression,newexpr_constbool(0),NULL,getNextLabel(),yylineno);
                         $1=expression;
                     }
                     if($3->getType()==boolexpr_e){
@@ -270,9 +270,9 @@ expr:             assignexpr {$$=$1; }
                         expr* jumpExp = new expr(label_e);
                         jumpExp->setJumpLab(labelLookahead()+3);
 
-                        emit(assign_op,NULL,expression,newexpr_constbool(1),getNextLabel(),yylineno);
-                        emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);
-                        emit(assign_op,NULL,expression,newexpr_constbool(0),getNextLabel(),yylineno);
+                        emit(assign_op,expression,newexpr_constbool(1),NULL,getNextLabel(),yylineno);
+                        emit(jump_op,jumpExp,NULL,NULL,getNextLabel(),yylineno);
+                        emit(assign_op,expression,newexpr_constbool(0),NULL,getNextLabel(),yylineno);
                         $3=expression;
                     }
                     expr* expression=new expr(boolexpr_e);
@@ -288,7 +288,7 @@ expr:             assignexpr {$$=$1; }
 
                     emit(if_greater_op,ifJumpExp,$1,$3,getNextLabel(),yylineno);
                     jumpExp->setJumpLab(0);
-                    emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);
+                    emit(jump_op,jumpExp,NULL,NULL,getNextLabel(),yylineno);
                     $$ = expression;
                 }
                 | expr GREATER_EQUAL expr {
@@ -304,9 +304,9 @@ expr:             assignexpr {$$=$1; }
                         expr* jumpExp = new expr(label_e);
                         jumpExp->setJumpLab(labelLookahead()+3);
 
-                        emit(assign_op,NULL,expression,newexpr_constbool(1),getNextLabel(),yylineno);
-                        emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);
-                        emit(assign_op,NULL,expression,newexpr_constbool(0),getNextLabel(),yylineno);
+                        emit(assign_op,expression,newexpr_constbool(1),NULL, getNextLabel(),yylineno);
+                        emit(jump_op,jumpExp,NULL,NULL,getNextLabel(),yylineno);
+                        emit(assign_op,expression,newexpr_constbool(0),NULL,getNextLabel(),yylineno);
                         $1=expression;
                     }
                     if($3->getType()==boolexpr_e){
@@ -321,9 +321,9 @@ expr:             assignexpr {$$=$1; }
                         expr* jumpExp = new expr(label_e);
                         jumpExp->setJumpLab(labelLookahead()+3);
 
-                        emit(assign_op,NULL,expression,newexpr_constbool(1),getNextLabel(),yylineno);
-                        emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);
-                        emit(assign_op,NULL,expression,newexpr_constbool(0),getNextLabel(),yylineno);
+                        emit(assign_op,expression,newexpr_constbool(1),NULL,getNextLabel(),yylineno);
+                        emit(jump_op,jumpExp,NULL,NULL,getNextLabel(),yylineno);
+                        emit(assign_op,expression,newexpr_constbool(0),NULL,getNextLabel(),yylineno);
                         $3=expression;
                     }
                     expr* expression=new expr(boolexpr_e);
@@ -339,7 +339,7 @@ expr:             assignexpr {$$=$1; }
 
                     emit(if_greatereq_op,ifJumpExp,$1,$3,getNextLabel(),yylineno);
                     jumpExp->setJumpLab(0);
-                    emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);
+                    emit(jump_op,jumpExp,NULL,NULL,getNextLabel(),yylineno);
                     $$ = expression;
                 }
                 | expr '<' expr {
@@ -355,9 +355,9 @@ expr:             assignexpr {$$=$1; }
                         expr* jumpExp = new expr(label_e);
                         jumpExp->setJumpLab(labelLookahead()+3);
 
-                        emit(assign_op,NULL,expression,newexpr_constbool(1),getNextLabel(),yylineno);
-                        emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);
-                        emit(assign_op,NULL,expression,newexpr_constbool(0),getNextLabel(),yylineno);
+                        emit(assign_op,expression,newexpr_constbool(1),NULL,getNextLabel(),yylineno);
+                        emit(jump_op,jumpExp,NULL,NULL,getNextLabel(),yylineno);
+                        emit(assign_op,expression,newexpr_constbool(0),NULL,getNextLabel(),yylineno);
                         $1=expression;
                     }
                     if($3->getType()==boolexpr_e){
@@ -372,9 +372,9 @@ expr:             assignexpr {$$=$1; }
                         expr* jumpExp = new expr(label_e);
                         jumpExp->setJumpLab(labelLookahead()+3);
 
-                        emit(assign_op,NULL,expression,newexpr_constbool(1),getNextLabel(),yylineno);
-                        emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);
-                        emit(assign_op,NULL,expression,newexpr_constbool(0),getNextLabel(),yylineno);
+                        emit(assign_op,expression,newexpr_constbool(1),NULL,getNextLabel(),yylineno);
+                        emit(jump_op,jumpExp,NULL,NULL,getNextLabel(),yylineno);
+                        emit(assign_op,expression,newexpr_constbool(0),NULL,getNextLabel(),yylineno);
                         $3=expression;
                     }
                     expr* expression=new expr(boolexpr_e);
@@ -390,7 +390,7 @@ expr:             assignexpr {$$=$1; }
 
                     emit(if_less_op,ifJumpExp,$1,$3,getNextLabel(),yylineno);
                     jumpExp->setJumpLab(0);
-                    emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);
+                    emit(jump_op,jumpExp,NULL,NULL,getNextLabel(),yylineno);
                     $$ = expression;
                 }
                 | expr LESS_EQUAL expr {
@@ -406,9 +406,9 @@ expr:             assignexpr {$$=$1; }
                         expr* jumpExp = new expr(label_e);
                         jumpExp->setJumpLab(labelLookahead()+3);
 
-                        emit(assign_op,NULL,expression,newexpr_constbool(1),getNextLabel(),yylineno);
-                        emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);
-                        emit(assign_op,NULL,expression,newexpr_constbool(0),getNextLabel(),yylineno);
+                        emit(assign_op,expression,newexpr_constbool(1),NULL,getNextLabel(),yylineno);
+                        emit(jump_op,jumpExp,NULL,NULL,getNextLabel(),yylineno);
+                        emit(assign_op,expression,newexpr_constbool(0),NULL,getNextLabel(),yylineno);
                         $1=expression;
                     }
                     if($3->getType()==boolexpr_e){
@@ -423,9 +423,9 @@ expr:             assignexpr {$$=$1; }
                         expr* jumpExp = new expr(label_e);
                         jumpExp->setJumpLab(labelLookahead()+3);
 
-                        emit(assign_op,NULL,expression,newexpr_constbool(1),getNextLabel(),yylineno);
-                        emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);
-                        emit(assign_op,NULL,expression,newexpr_constbool(0),getNextLabel(),yylineno);
+                        emit(assign_op,expression,newexpr_constbool(1),NULL,getNextLabel(),yylineno);
+                        emit(jump_op,jumpExp,NULL,NULL,getNextLabel(),yylineno);
+                        emit(assign_op,expression,newexpr_constbool(0),NULL,getNextLabel(),yylineno);
                         $3=expression;
                     }
                     expr* expression=new expr(boolexpr_e);
@@ -441,7 +441,7 @@ expr:             assignexpr {$$=$1; }
 
                     emit(if_lesseq_op,ifJumpExp,$1,$3,getNextLabel(),yylineno);
                     jumpExp->setJumpLab(0);
-                    emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);
+                    emit(jump_op,jumpExp,NULL,NULL,getNextLabel(),yylineno);
                     $$ = expression;
                 }
                 | expr EQUAL expr {
@@ -457,9 +457,9 @@ expr:             assignexpr {$$=$1; }
                         expr* jumpExp = new expr(label_e);
                         jumpExp->setJumpLab(labelLookahead()+3);
 
-                        emit(assign_op,NULL,expression,newexpr_constbool(1),getNextLabel(),yylineno);
-                        emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);
-                        emit(assign_op,NULL,expression,newexpr_constbool(0),getNextLabel(),yylineno);
+                        emit(assign_op,expression,newexpr_constbool(1),NULL,getNextLabel(),yylineno);
+                        emit(jump_op,jumpExp,NULL,NULL,getNextLabel(),yylineno);
+                        emit(assign_op,expression,newexpr_constbool(0),NULL,getNextLabel(),yylineno);
                         $1=expression;
                     }
                     if($3->getType()==boolexpr_e){
@@ -474,9 +474,9 @@ expr:             assignexpr {$$=$1; }
                         expr* jumpExp = new expr(label_e);
                         jumpExp->setJumpLab(labelLookahead()+3);
 
-                        emit(assign_op,NULL,expression,newexpr_constbool(1),getNextLabel(),yylineno);
-                        emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);
-                        emit(assign_op,NULL,expression,newexpr_constbool(0),getNextLabel(),yylineno);
+                        emit(assign_op,expression,newexpr_constbool(1),NULL,getNextLabel(),yylineno);
+                        emit(jump_op,jumpExp,NULL,NULL,getNextLabel(),yylineno);
+                        emit(assign_op,expression,newexpr_constbool(0),NULL,getNextLabel(),yylineno);
                         $3=expression;
                     }
                     expr* expression=new expr(boolexpr_e);
@@ -492,7 +492,7 @@ expr:             assignexpr {$$=$1; }
 
                     emit(if_eq_op,ifJumpExp,$1,$3,getNextLabel(),yylineno);
                     jumpExp->setJumpLab(0);
-                    emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);
+                    emit(jump_op,jumpExp,NULL,NULL,getNextLabel(),yylineno);
 
                     $$ = expression;
                 }
@@ -509,9 +509,9 @@ expr:             assignexpr {$$=$1; }
                         expr* jumpExp = new expr(label_e);
                         jumpExp->setJumpLab(labelLookahead()+3);
 
-                        emit(assign_op,NULL,expression,newexpr_constbool(1),getNextLabel(),yylineno);
-                        emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);
-                        emit(assign_op,NULL,expression,newexpr_constbool(0),getNextLabel(),yylineno);
+                        emit(assign_op,expression,newexpr_constbool(1),NULL,getNextLabel(),yylineno);
+                        emit(jump_op,jumpExp,NULL,NULL,getNextLabel(),yylineno);
+                        emit(assign_op,expression,newexpr_constbool(0),NULL,getNextLabel(),yylineno);
                         $1=expression;
                     }
                     if($3->getType()==boolexpr_e){
@@ -526,9 +526,9 @@ expr:             assignexpr {$$=$1; }
                         expr* jumpExp = new expr(label_e);
                         jumpExp->setJumpLab(labelLookahead()+3);
 
-                        emit(assign_op,NULL,expression,newexpr_constbool(1),getNextLabel(),yylineno);
-                        emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);
-                        emit(assign_op,NULL,expression,newexpr_constbool(0),getNextLabel(),yylineno);
+                        emit(assign_op,expression,newexpr_constbool(1),NULL,getNextLabel(),yylineno);
+                        emit(jump_op,jumpExp,NULL,NULL,getNextLabel(),yylineno);
+                        emit(assign_op,expression,newexpr_constbool(0),NULL,getNextLabel(),yylineno);
                         $3=expression;
                     }
                     expr* expression=new expr(boolexpr_e);
@@ -544,7 +544,7 @@ expr:             assignexpr {$$=$1; }
 
                     emit(if_noteq_op,ifJumpExp,$1,$3,getNextLabel(),yylineno);
                     jumpExp->setJumpLab(0);
-                    emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);
+                    emit(jump_op,jumpExp,NULL,NULL,getNextLabel(),yylineno);
                     expression->truelist=mergelist(expression->truelist,$1->truelist);
                     expression->truelist=mergelist(expression->truelist,$3->truelist);
                     expression->falselist=mergelist(expression->falselist,$1->falselist);
@@ -561,7 +561,7 @@ expr:             assignexpr {$$=$1; }
                                 expr* ifjump = new expr(label_e);
                                 ifjump->setJumpLab(0);
                                 emit(if_eq_op,ifjump,$1,newexpr_constbool(1),getNextLabel(),yylineno);//add to truelist
-                                emit(jump_op,NULL,ex1,NULL,getNextLabel(),yylineno);//add to falselist
+                                emit(jump_op,ex1,NULL,NULL,getNextLabel(),yylineno);//add to falselist
 
                                 $1->truelist = mergelist($1->truelist,exp1true);
                                 $1->falselist=mergelist($1->falselist,exp1false);
@@ -580,7 +580,7 @@ expr:             assignexpr {$$=$1; }
                         ifjump->setJumpLab(0);
 
                         emit(if_eq_op,ifjump,$5,newexpr_constbool(1),getNextLabel(),yylineno);//add to truelist
-                        emit(jump_op,NULL,ex2,NULL,getNextLabel(),yylineno);//add to falselist
+                        emit(jump_op,ex2,NULL,NULL,getNextLabel(),yylineno);//add to falselist
 
                         $5->truelist = mergelist($5->truelist,exp2true);
                         $5->falselist = mergelist($5->falselist,exp2false);
@@ -609,7 +609,7 @@ expr:             assignexpr {$$=$1; }
                         expr* ifjump = new expr(label_e);
                         ifjump->setJumpLab(0);
                         emit(if_eq_op,ifjump,$1,newexpr_constbool(1),getNextLabel(),yylineno);//add to truelist
-                        emit(jump_op,NULL,ex1,NULL,getNextLabel(),yylineno);//add to falselist
+                        emit(jump_op,ex1,NULL,NULL,getNextLabel(),yylineno);//add to falselist
 
                         $1->truelist = mergelist($1->truelist,exp1true);
                         $1->falselist=mergelist($1->falselist,exp1false);
@@ -628,7 +628,7 @@ expr:             assignexpr {$$=$1; }
                         ifjump->setJumpLab(0);
 
                         emit(if_eq_op,ifjump,$5,newexpr_constbool(1),getNextLabel(),yylineno);//add to truelist
-                        emit(jump_op,NULL,ex2,NULL,getNextLabel(),yylineno);//add to falselist
+                        emit(jump_op,ex2,NULL,NULL,getNextLabel(),yylineno);//add to falselist
                         $5->truelist = mergelist($5->truelist,exp2true);
                         $5->falselist = mergelist($5->falselist,exp2false);
                     }
@@ -679,7 +679,7 @@ term:             '(' expr ')' {$$=$2;}
 
                                 emit(if_eq_op,ifJumpExp,$2,newexpr_constbool(1),getNextLabel(),yylineno);
                                 jumpExp->setJumpLab(0);
-                                emit(jump_op,NULL,jumpExp,NULL,getNextLabel(),yylineno);                                
+                                emit(jump_op,jumpExp,NULL,NULL,getNextLabel(),yylineno);                                
                                
                                 $$ = expression;
                         if($expr->getType()==boolexpr_e){
@@ -804,7 +804,7 @@ assignexpr:       lvalue '=' expr {
 
                                         expr* jumpEx = new expr(label_e);
                                         jumpEx->setJumpLab(labelLookahead()+2);
-                                        emit(jump_op,NULL,jumpEx,NULL,getNextLabel(),yylineno);
+                                        emit(jump_op,jumpEx,NULL,NULL,getNextLabel(),yylineno);
 
                                         emit(assign_op,exr,newexpr_constbool(0),NULL,getNextLabel(),yylineno);
 
@@ -958,7 +958,7 @@ elist:            expr {
 
                                 expr* jumpEx = new expr(label_e);
                                 jumpEx->setJumpLab(labelLookahead()+2);
-                                emit(jump_op,NULL,jumpEx,NULL,getNextLabel(),yylineno);
+                                emit(jump_op,jumpEx,NULL,NULL,getNextLabel(),yylineno);
 
                                 emit(assign_op,exr,newexpr_constbool(0),NULL,getNextLabel(),yylineno);
                                 $$=exr;
@@ -982,7 +982,7 @@ elist:            expr {
 
                                         expr* jumpEx = new expr(label_e);
                                         jumpEx->setJumpLab(labelLookahead()+2);
-                                        emit(jump_op,NULL,jumpEx,NULL,getNextLabel(),yylineno);
+                                        emit(jump_op,jumpEx,NULL,NULL,getNextLabel(),yylineno);
 
                                         emit(assign_op,exr,newexpr_constbool(0),NULL,getNextLabel(),yylineno);
                                         exr->setNext($3);
@@ -1027,35 +1027,35 @@ indexedelem:      '{' expr ':' expr '}' {$4->setIndex($2); $$=$4;
                                             if(($2->getType()==boolexpr_e) &&($4->getType()==boolexpr_e)){
                                                                 patchlist($2->truelist,labelLookahead());
                                                                 patchlist($2->falselist,labelLookahead()+2);
-                                                                emit(assign_op,NULL,$2,newexpr_constbool(1),getNextLabel(),yylineno);
+                                                                emit(assign_op,$2,newexpr_constbool(1),NULL,getNextLabel(),yylineno);
                                                                 expr* lab = new expr(label_e);
                                                                 lab->setJumpLab(labelLookahead()+2);
-                                                                emit(jump_op,NULL,lab,NULL,getNextLabel(),yylineno);
-                                                                emit(assign_op,NULL,$2,newexpr_constbool(0),getNextLabel(),yylineno);
+                                                                emit(jump_op,lab,NULL,NULL,getNextLabel(),yylineno);
+                                                                emit(assign_op,$2,newexpr_constbool(0),NULL,getNextLabel(),yylineno);
                                                                 
                                                                 patchlist($4->truelist,labelLookahead());
                                                                 patchlist($4->falselist,labelLookahead()+2);
-                                                                emit(assign_op,NULL,$4,newexpr_constbool(1),getNextLabel(),yylineno);
+                                                                emit(assign_op,$4,newexpr_constbool(1),NULL,getNextLabel(),yylineno);
                                                                 expr* lab2 = new expr(label_e);
                                                                 lab2->setJumpLab(labelLookahead()+2);
-                                                                emit(jump_op,NULL,lab2,NULL,getNextLabel(),yylineno);
-                                                                emit(assign_op,NULL,$4,newexpr_constbool(0),getNextLabel(),yylineno);
+                                                                emit(jump_op,lab2,NULL,NULL,getNextLabel(),yylineno);
+                                                                emit(assign_op,$4,newexpr_constbool(0),NULL,getNextLabel(),yylineno);
                                                             }else if($2->getType()==boolexpr_e){
                                                                 patchlist($2->truelist,labelLookahead());
                                                                 patchlist($2->falselist,labelLookahead()+2);
-                                                                emit(assign_op,NULL,$2,newexpr_constbool(1),getNextLabel(),yylineno);
+                                                                emit(assign_op,$2,newexpr_constbool(1),NULL,getNextLabel(),yylineno);
                                                                 expr* lab = new expr(label_e);
                                                                 lab->setJumpLab(labelLookahead()+2);
-                                                                emit(jump_op,NULL,lab,NULL,getNextLabel(),yylineno);
-                                                                emit(assign_op,NULL,$2,newexpr_constbool(0),getNextLabel(),yylineno);
+                                                                emit(jump_op,lab,NULL,NULL,getNextLabel(),yylineno);
+                                                                emit(assign_op,$2,newexpr_constbool(0),NULL,getNextLabel(),yylineno);
                                                             }else if($4->getType()==boolexpr_e){
                                                                 patchlist($4->truelist,labelLookahead());
                                                                 patchlist($4->falselist,labelLookahead()+2);
-                                                                emit(assign_op,NULL,$4,newexpr_constbool(1),getNextLabel(),yylineno);
+                                                                emit(assign_op,$4,newexpr_constbool(1),NULL,getNextLabel(),yylineno);
                                                                 expr* lab = new expr(label_e);
                                                                 lab->setJumpLab(labelLookahead()+2);
-                                                                emit(jump_op,NULL,lab,NULL,getNextLabel(),yylineno);
-                                                                emit(assign_op,NULL,$4,newexpr_constbool(0),getNextLabel(),yylineno);
+                                                                emit(jump_op,lab,NULL,NULL,getNextLabel(),yylineno);
+                                                                emit(assign_op,$4,newexpr_constbool(0),NULL,getNextLabel(),yylineno);
                                                             }
                                         }
                 ;
@@ -1186,11 +1186,11 @@ ifprefix:       IF '(' expr ')' {
                                     patchlist($expr->truelist,labelLookahead());
                                     patchlist($expr->falselist,labelLookahead()+2);
                                     if(($expr->getType()==boolexpr_e)){
-                                        emit(assign_op,NULL,$expr,newexpr_constbool(1),getNextLabel(),yylineno);
+                                        emit(assign_op,$expr,newexpr_constbool(1),NULL,getNextLabel(),yylineno);
                                         expr* lab = new expr(label_e);
                                         lab->setJumpLab(labelLookahead()+2);
-                                        emit(jump_op,NULL,lab,NULL,getNextLabel(),yylineno);
-                                        emit(assign_op,NULL,$expr,newexpr_constbool(0),getNextLabel(),yylineno);
+                                        emit(jump_op,lab,NULL,NULL,getNextLabel(),yylineno);
+                                        emit(assign_op,$expr,newexpr_constbool(0),NULL,getNextLabel(),yylineno);
                                     }    
 
                                     expr* expression = new expr(label_e);
@@ -1237,11 +1237,11 @@ whilestmt:        WHILE {nestedLoopCounter++;
                             patchlist($expr->truelist,labelLookahead());
                             patchlist($expr->falselist,labelLookahead()+2);
                             if(($expr->getType()==boolexpr_e)){
-                                emit(assign_op,NULL,$expr,newexpr_constbool(1),getNextLabel(),yylineno);
+                                emit(assign_op,$expr,newexpr_constbool(1),NULL,getNextLabel(),yylineno);
                                 expr* lab = new expr(label_e);
                                 lab->setJumpLab(labelLookahead()+2);
-                                emit(jump_op,NULL,lab,NULL,getNextLabel(),yylineno);
-                                emit(assign_op,NULL,$expr,newexpr_constbool(0),getNextLabel(),yylineno);
+                                emit(jump_op,lab,NULL,NULL,getNextLabel(),yylineno);
+                                emit(assign_op,$expr,newexpr_constbool(0),NULL,getNextLabel(),yylineno);
                             }
                             expr* expression = new expr(label_e);
                             expression->setJumpLab(labelLookahead()+2);
@@ -1256,7 +1256,7 @@ whilestmt:        WHILE {nestedLoopCounter++;
                             expr* expression = new expr(label_e);
                             expression->setJumpLab(whileStartStack.top());
                             
-                            emit(jump_op,NULL,expression,NULL,getNextLabel(),yylineno);
+                            emit(jump_op,expression,NULL,NULL,getNextLabel(),yylineno);
 
                             expr* expression2 = new expr(label_e);
                             expression2->setJumpLab(labelLookahead());
@@ -1279,11 +1279,11 @@ forprefix:              FOR '(' elist ';' M expr ';' {
                                                         if($expr->getType()==boolexpr_e){
                                                             patchlist($expr->truelist,labelLookahead());
                                                             patchlist($expr->falselist,labelLookahead()+2);
-                                                            emit(assign_op,NULL,$expr,newexpr_constbool(1),getNextLabel(),yylineno);
+                                                            emit(assign_op,$expr,newexpr_constbool(1),NULL,getNextLabel(),yylineno);
                                                             expr* lab = new expr(label_e);
                                                             lab->setJumpLab(labelLookahead()+2);
-                                                            emit(jump_op,NULL,lab,NULL,getNextLabel(),yylineno);
-                                                            emit(assign_op,NULL,$expr,newexpr_constbool(0),getNextLabel(),yylineno);
+                                                            emit(jump_op,lab,NULL,NULL,getNextLabel(),yylineno);
+                                                            emit(assign_op,$expr,newexpr_constbool(0),NULL,getNextLabel(),yylineno);
                                                         }
 
                                                         forprx->setEnter(labelLookahead());
@@ -1321,7 +1321,7 @@ returnstmt:       RETURN ';' {
                                 expr* jumpEx = new expr(label_e);
                                 jumpEx->setJumpLab(0);
                                 int labelHold = labelLookahead();
-                                emit(jump_op,NULL,jumpEx,NULL,getNextLabel(),yylineno);
+                                emit(jump_op,jumpEx,NULL,NULL,getNextLabel(),yylineno);
                                 if(returnStack.empty()){
                                         assert("return out of context" && 0);
                                 }else if(returnStack.top()==0){
@@ -1337,18 +1337,18 @@ returnstmt:       RETURN ';' {
                                     if($expr->getType()==boolexpr_e){
                                         patchlist($expr->truelist,labelLookahead());
                                         patchlist($expr->falselist,labelLookahead()+2);
-                                        emit(assign_op,NULL,$expr,newexpr_constbool(1),getNextLabel(),yylineno);
+                                        emit(assign_op,$expr,newexpr_constbool(1),NULL,getNextLabel(),yylineno);
                                         expr* lab = new expr(label_e);
                                         lab->setJumpLab(labelLookahead()+2);
-                                        emit(jump_op,NULL,lab,NULL,getNextLabel(),yylineno);
-                                        emit(assign_op,NULL,$expr,newexpr_constbool(0),getNextLabel(),yylineno);
+                                        emit(jump_op,lab,NULL,NULL,getNextLabel(),yylineno);
+                                        emit(assign_op,$expr,newexpr_constbool(0),NULL,getNextLabel(),yylineno);
                                     }
                                     emit(ret_op,NULL,$expr,NULL,getNextLabel(),yylineno);
 
                                     expr* jumpEx = new expr(label_e);
                                     jumpEx->setJumpLab(0);
                                     int labelHold = labelLookahead();
-                                    emit(jump_op,NULL,jumpEx,NULL,getNextLabel(),yylineno);
+                                    emit(jump_op,jumpEx,NULL,NULL,getNextLabel(),yylineno);
                                     if(returnStack.empty()){
                                         assert("return out of context" && 0);
                                     }
