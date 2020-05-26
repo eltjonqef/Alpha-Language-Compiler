@@ -148,7 +148,7 @@ stmt:             expr ';' {$$ = new stmtLists();
 
                                         expr* jumpEx = new expr(label_e);
                                         jumpEx->setJumpLab(labelLookahead()+2);
-                                        emit(jump_op,jumpEx,NULL, NULL,getNextLabel(),yylineno);
+                                        emit(jump_op,jumpEx,NULL,NULL,getNextLabel(),yylineno);
 
                                         emit(assign_op,exr,newexpr_constbool(0),NULL,getNextLabel(),yylineno);
 
@@ -304,7 +304,7 @@ expr:             assignexpr {$$=$1; }
                         expr* jumpExp = new expr(label_e);
                         jumpExp->setJumpLab(labelLookahead()+3);
 
-                        emit(assign_op,expression,newexpr_constbool(1),NULL, getNextLabel(),yylineno);
+                        emit(assign_op,expression,newexpr_constbool(1),NULL,getNextLabel(),yylineno);
                         emit(jump_op,jumpExp,NULL,NULL,getNextLabel(),yylineno);
                         emit(assign_op,expression,newexpr_constbool(0),NULL,getNextLabel(),yylineno);
                         $1=expression;
@@ -1222,7 +1222,7 @@ ifstmt:         ifprefix stmt {
                                 expr* expression = new expr(label_e);
                                 expression->setJumpLab(labelLookahead());
                                 backpatchArg1(ifQuadStack.top(),expression);
-                                //emit(jump_op,NULL,expression,NULL,getNextLabel(),yylineno);
+                                //emit(jump_op,expression,NULL,NULL,getNextLabel(),yylineno);
                                 ifQuadStack.pop();
                                 $stmt->breaklist = mergelist($stmt->breaklist,$stmt1->breaklist);
                                 $stmt->continuelist = mergelist($stmt->continuelist,$stmt1->continuelist);
@@ -1343,7 +1343,7 @@ returnstmt:       RETURN ';' {
                                         emit(jump_op,lab,NULL,NULL,getNextLabel(),yylineno);
                                         emit(assign_op,$expr,newexpr_constbool(0),NULL,getNextLabel(),yylineno);
                                     }
-                                    emit(ret_op,NULL,$expr,NULL,getNextLabel(),yylineno);
+                                    emit(ret_op,$expr,NULL,NULL,getNextLabel(),yylineno);
 
                                     expr* jumpEx = new expr(label_e);
                                     jumpEx->setJumpLab(0);
