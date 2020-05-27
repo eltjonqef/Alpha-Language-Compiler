@@ -1660,6 +1660,7 @@ expr* make_call(expr* lv, expr* reversed_elist){
     result->sym=addToSymbolTable(nextVariableName(), currentScope, yylineno,getGlobLocl(),var_s);
     result->sym->setScopespace(getCurrentScopespace());
     result->sym->setOffset(currentOffset());
+    result->setNumConst(0);
     incCurScopeOffset();
     emit(getretval_op, result, NULL, NULL, getNextLabel(), yylineno);
     return result;

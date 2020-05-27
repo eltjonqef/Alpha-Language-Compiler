@@ -235,128 +235,116 @@ class instruction{
 
 vector<instruction*> instructionVector;
 
-void generate_Simple(vmopcode_t op,quad quad){
+void generate_Simple(vmopcode_t op,quad *quad){
 
     instruction *t=new instruction();
     t->setOpCode(op);
-    make_operand(quad.getResult(), t->getResult());
-    make_operand(quad.getArg1(), t->getArg1());
-    make_operand(quad.getArg2(), t->getArg2());
-    quads[quad.getLabel()].setTaddress(instructionLabelLookahead());
-    quad.setTaddress(getInstructionLabel());
+    make_operand(quad->getResult(), t->getResult());
+    make_operand(quad->getArg1(), t->getArg1());
+    make_operand(quad->getArg2(), t->getArg2());
+    quads[quad->getLabel()].setTaddress(instructionLabelLookahead());
+    quad->setTaddress(getInstructionLabel());
     instructionVector.push_back(t);  
 }
 
-void generate_relational(vmopcode_t op,quad quad){
+void generate_relational(vmopcode_t op,quad *quad){
     instruction *t = new instruction();
     t->setOpCode(op);
     t->getResult()->setType(label_a);
     if(op != jump_vm){
-        cout<<"iftype \n";
-        make_operand(quad.getArg1(),t->getArg1());
-        make_operand(quad.getArg2(),t->getArg2());
+        make_operand(quad->getArg1(),t->getArg1());
+        make_operand(quad->getArg2(),t->getArg2());
             
-        if(quad.getResult()->getJumpLab()<currentProssesedQuad){
-            if((quad.getTaddress() <= 0)){
+        if(quad->getResult()->getJumpLab()<currentProssesedQuad){
+            if((quad->getTaddress() <= 0)){
                 assert(0);
             }
-            t->getResult()->setVal(quads[quad.getResult()->getJumpLab()].getTaddress());
+            t->getResult()->setVal(quads[quad->getResult()->getJumpLab()].getTaddress());
         }else{
-            cout<<"pushing in incompleteIF list\n";
             incompleteJump *ij = new incompleteJump();
-            cout<<"setting instNo as "<<instructionLabelLookahead()<<"\n";
-            ij->instrNo = instructionLabelLookahead();
-            cout<<"setting iadd as "<<quad.getResult()->getJumpLab()<<"\n";
-            ij->iaddress  = quad.getResult()->getJumpLab();
+            ij->instrNo = instructionVector.size();
+            ij->iaddress  = quad->getResult()->getJumpLab();
             incompleteIfJumps.push_back(ij);
         }
     }else{
-        cout<<"jumptype \n";
-        if(quad.getResult()->getJumpLab()<currentProssesedQuad){
-            if((quad.getTaddress() <= 0)){
+        if(quad->getResult()->getJumpLab()<currentProssesedQuad){
+            if((quad->getTaddress() <= 0)){
                 assert(0);
             }
-            t->getResult()->setVal(quads[quad.getResult()->getJumpLab()].getTaddress());
+            t->getResult()->setVal(quads[quad->getResult()->getJumpLab()].getTaddress());
         }else{
-            cout<<"pushing in incomplete list\n";
             incompleteJump *ij = new incompleteJump();
-            cout<<"setting instNo as "<<instructionLabelLookahead()<<"\n";
-            ij->instrNo = instructionLabelLookahead();
-            cout<<"setting iadd as "<<quad.getResult()->getJumpLab()<<"\n";
-            ij->iaddress = quad.getResult()->getJumpLab();
+            ij->instrNo = instructionVector.size();
+            ij->iaddress = quad->getResult()->getJumpLab();
             incompleteJumps.push_back(ij);
         }
     }
-    quads[quad.getLabel()].setTaddress(instructionLabelLookahead());
-    quad.setTaddress(getInstructionLabel());
+    quads[quad->getLabel()].setTaddress(instructionLabelLookahead());
+    quad->setTaddress(getInstructionLabel());
     instructionVector.push_back(t);
 }
      
 
 void patch_incomplete_jumps(){
-    cout<<"patcher called\n";
     for(vector<incompleteJump*>::iterator it = incompleteJumps.begin();it != incompleteJumps.end();++it){
-        if((*it)->iaddress == currentProssesedQuad){
+        if((*it)->iaddress == quads.size()){
             instructionVector[(*it)->instrNo]->getResult()->setVal(currentProssesedQuad);
         }else{
             instructionVector[(*it)->instrNo]->getResult()->setVal(quads[(*it)->iaddress].getTaddress());
         }
     }
     for(vector<incompleteJump*>::iterator it = incompleteIfJumps.begin();it != incompleteIfJumps.end();++it){
-        if((*it)->iaddress == currentProssesedQuad){
+        if((*it)->iaddress == quads.size()){
             instructionVector[(*it)->instrNo]->getResult()->setVal(currentProssesedQuad);
         }else{
-            cout<<"suspicious else\n";
-            cout<<"instrNo - iaddr = "<<(*it)->instrNo<<"-"<<(*it)->iaddress<<"\n";
-            cout<<"3rd quad taddt "<<quads[3].getTaddress()<<"\n";
             instructionVector[(*it)->instrNo]->getResult()->setVal(quads[(*it)->iaddress].getTaddress());
         }
     }
 }
 
 
-typedef void (*generator_func_t)(quad);
+typedef void (*generator_func_t)(quad*);
 
-void generate_ASSIGN(quad quad){generate_Simple(assign_vm,quad);}
-void generate_ADD(quad quad){generate_Simple(add_vm, quad);}
-void generate_SUB(quad quad){generate_Simple(sub_vm,quad);}
-void generate_MUL(quad quad){generate_Simple(mul_vm,quad);}
-void generate_DIV(quad quad){generate_Simple(div_vm,quad);}
-void generate_MOD(quad quad){generate_Simple(mod_vm, quad);}
-void generate_UMINUS(quad quad){
-    quad.setArg2(quad.getArg1());
-    quad.setArg1(new expr(-1));
-    quad.setOP(mul_op);
+void generate_ASSIGN(quad *quad){generate_Simple(assign_vm,quad);}
+void generate_ADD(quad *quad){generate_Simple(add_vm, quad);}
+void generate_SUB(quad *quad){generate_Simple(sub_vm,quad);}
+void generate_MUL(quad *quad){generate_Simple(mul_vm,quad);}
+void generate_DIV(quad *quad){generate_Simple(div_vm,quad);}
+void generate_MOD(quad *quad){generate_Simple(mod_vm, quad);}
+void generate_UMINUS(quad *quad){
+    quad->setArg2(quad->getArg1());
+    quad->setArg1(new expr(-1));
+    quad->setOP(mul_op);
     generate_Simple(mul_vm, quad);
 }
 
-void generate_AND(quad quad){}
-void generate_OR(quad quad){}
-void generate_NOT(quad quad){}
-void generate_IF_EQ(quad quad){generate_relational(if_eq_vm, quad);}
-void generate_IF_NOTEQ(quad quad){generate_relational(if_noteq_vm, quad);}
-void generate_IF_LESSEQ(quad quad){generate_relational(if_lesseq_vm, quad);}
-void generate_IF_GREATEREQ(quad quad){generate_relational(if_greatereq_vm, quad);}
-void generate_IF_LESS(quad quad){generate_relational(if_less_vm, quad);}
-void generate_IF_GREATER(quad quad){generate_relational(if_greater_vm, quad);}
+void generate_AND(quad *quad){}
+void generate_OR(quad *quad){}
+void generate_NOT(quad *quad){}
+void generate_IF_EQ(quad *quad){generate_relational(if_eq_vm, quad);}
+void generate_IF_NOTEQ(quad *quad){generate_relational(if_noteq_vm, quad);}
+void generate_IF_LESSEQ(quad *quad){generate_relational(if_lesseq_vm, quad);}
+void generate_IF_GREATEREQ(quad *quad){generate_relational(if_greatereq_vm, quad);}
+void generate_IF_LESS(quad *quad){generate_relational(if_less_vm, quad);}
+void generate_IF_GREATER(quad *quad){generate_relational(if_greater_vm, quad);}
 
-void generate_CALL(quad quad){
-    quads[quad.getLabel()].setTaddress(instructionLabelLookahead());
-    quad.setTaddress(getInstructionLabel());
+void generate_CALL(quad *quad){
+    quads[quad->getLabel()].setTaddress(instructionLabelLookahead());
+    quad->setTaddress(getInstructionLabel());
     instruction *t = new instruction();
     t->setOpCode(call_vm);
-    quads[quad.getLabel()].setTaddress(instructionLabelLookahead());
-    quad.setTaddress(getInstructionLabel());
-    make_operand(quad.getResult(),t->getResult());
+    quads[quad->getLabel()].setTaddress(instructionLabelLookahead());
+    quad->setTaddress(getInstructionLabel());
+    make_operand(quad->getResult(),t->getResult());
     instructionVector.push_back(t);    
 }
 
-void generate_PARAM(quad quad){
-    quads[quad.getLabel()].setTaddress(instructionLabelLookahead());
-    quad.setTaddress(getInstructionLabel());
+void generate_PARAM(quad *quad){
+    quads[quad->getLabel()].setTaddress(instructionLabelLookahead());
+    quad->setTaddress(getInstructionLabel());
     instruction *t=new instruction();
     t->setOpCode(param_vm);
-    make_operand(quad.getResult(), t->getArg1());
+    make_operand(quad->getResult(), t->getResult());
     instructionVector.push_back(t);
 }
 class function{
@@ -365,76 +353,73 @@ class function{
         vector<unsigned> returnList;
 };
 stack<function*> functionStack;
-void generate_RET(quad quad){  
-    quad.setTaddress(getInstructionLabel());
+void generate_RET(quad *quad){  
+    quad->setTaddress(getInstructionLabel());
     instruction *t=new instruction();
     t->setOpCode(assign_vm);
-    make_operand(quad.getResult(), t->getArg1());
+    make_operand(quad->getResult(), t->getArg1());
     make_retval_operand(t->getResult());
     instructionVector.push_back(t);
     function *f=functionStack.top();
     f->returnList.push_back(currentProssesedQuad+1);
-    instruction *jumpIns=new instruction();
+    /*instruction *jumpIns=new instruction();
     jumpIns->setOpCode(jump_vm);
     jumpIns->getResult()->setType(label_a);
     instructionVector.push_back(jumpIns);
     quadIndex++;
-    currentProssesedQuad++;
+    currentProssesedQuad++;*/
 }
-void generate_GETRETVAL(quad quad){
-    quad.setTaddress(getInstructionLabel());
+void generate_GETRETVAL(quad *quad){
+    quad->setTaddress(getInstructionLabel());
     instruction *t = new instruction();
     t->setOpCode(assign_vm);
-    make_operand(quad.getResult(),t->getResult());
+    make_operand(quad->getResult(),t->getResult());
     make_retval_operand(t->getArg1());
     instructionVector.push_back(t);
 }
 
 vector<SymbolTableEntry*> functionVector;
-void generate_FUNCSTART(quad quad){
-    SymbolTableEntry* f=quad.getResult()->sym;
+void generate_FUNCSTART(quad *quad){
+    SymbolTableEntry* f=quad->getResult()->sym;
     f->setTaddress(functionVector.size());
     functionVector.push_back(f);
-    quad.setTaddress(getInstructionLabel());
+    quad->setTaddress(getInstructionLabel());
     function *aa=new function();
     aa->sym=f;
     functionStack.push(aa);
     instruction *t=new instruction();
     t->setOpCode(funcenter_vm);
-    make_operand(quad.getResult(), t->getResult());
+    make_operand(quad->getResult(), t->getResult());
     instructionVector.push_back(t);
-
 }
 
 void backpatch_lastfunc(function *f, unsigned target){
-    cout<<"BACKPATCH "<<target<<endl;
     for(int index=0; index<(f->returnList.size());index++){
         instructionVector[f->returnList[index]]->getResult()->setVal(target);
-        cout<<"INDEX "<<f->returnList[0]<<endl;
-        cout<<"FINAL"<<instructionVector[f->returnList[0]]->getResult()->getVal()<<endl;
     }
 }
 
-void generate_FUNCEND(quad quad){
+void generate_FUNCEND(quad *quad){
     function *f=functionStack.top();
     backpatch_lastfunc(f, currentProssesedQuad);
+    //funcendVec.push_back(currentProssesedQuad);
     functionStack.pop();
     //to do BACKpatch returnList
     //f->getReturnList();
-    quad.setTaddress(getInstructionLabel());
+    quad->setTaddress(getInstructionLabel());
     instruction *t=new instruction();
     t->setOpCode(funcexit_vm);
-    make_operand(quad.getResult(), t->getResult());
+    make_operand(quad->getResult(), t->getResult());
     instructionVector.push_back(t);
 }
-void generate_NEWTABLE(quad quad){generate_Simple(tablecreate_vm,quad);}
-void generate_TABLEGETELEM(quad quad){generate_Simple(tablegetelem_vm,quad);}
-void generate_TABLESETELEM(quad quad){generate_Simple(tablesetelem_vm,quad);}
-void generate_JUMP(quad quad){
+void generate_NEWTABLE(quad *quad){generate_Simple(tablecreate_vm,quad);}
+void generate_TABLEGETELEM(quad *quad){generate_Simple(tablegetelem_vm,quad);}
+void generate_TABLESETELEM(quad *quad){generate_Simple(tablesetelem_vm,quad);}
+void generate_JUMP(quad *quad){
     generate_relational(jump_vm,quad);
 }
-void generate_NOP(quad quad){
-    quad.setTaddress(getInstructionLabel());
+void generate_NOP(quad *quad){
+    quad->setTaddress(getInstructionLabel());
     instruction *t = new instruction();
     t->setOpCode(nop_vm);
     instructionVector.push_back(t);
@@ -472,7 +457,7 @@ generator_func_t generators[]={
 };
 void generate(){
     for(quadIndex=0; quadIndex<quads.size(); quadIndex++){
-        (*generators[quads[quadIndex].getOP()])(quads[quadIndex]);
+        (*generators[quads[quadIndex].getOP()])(&quads[quadIndex]);
         currentProssesedQuad++;
     }
     patch_incomplete_jumps();
@@ -527,7 +512,7 @@ string vmarg_tToString(vmarg_t type){
 void printInstructions(){
     cout<<"------------Instructions-------------\n";
     for(int i=1; i<instructionVector.size(); i++){
-        cout<<opcodeToString(instructionVector[i]->getOP());
+        cout<<i<<": "<<opcodeToString(instructionVector[i]->getOP());
         switch(instructionVector[i]->getOP()){
             case assign_vm:{
                 cout<<" ("<<vmarg_tToString(instructionVector[i]->getResult()->getType())<<")"<<instructionVector[i]->getResult()->getVal();
@@ -590,7 +575,7 @@ void printInstructions(){
                 break;
             }
             case param_vm:{
-                cout<<" ("<<vmarg_tToString(instructionVector[i]->getResult()->getType())<<")"<<instructionVector[i]->getArg1()->getVal();
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getResult()->getType())<<")"<<instructionVector[i]->getResult()->getVal();
                 cout<<endl;
                 break;
             }
