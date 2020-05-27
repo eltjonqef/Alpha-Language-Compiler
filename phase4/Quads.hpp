@@ -2,6 +2,7 @@
 
 #include "SymbolTable.hpp"
 #include <string>
+#include <string.h>
 #include <assert.h>
 #include <stdlib.h>
 #include <vector>

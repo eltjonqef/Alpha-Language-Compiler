@@ -73,7 +73,7 @@ void incCurScopeOffset(){
     switch(getCurrentScopespace()){
         case programvar : ++programVarOffsetCounter;return;
         case formalarg : ++formalArgOffsetCounter;return;
-        case functionlocal : ++functionLocalOffsetCounter;cout<<"offset now "<<functionLocalOffsetCounter<<"\n";return;
+        case functionlocal : ++functionLocalOffsetCounter;return;
         default : assert(0);
     }
 } 
@@ -118,7 +118,9 @@ class Function {
             scope = _scope;
             line = _line;
         }
-        
+        Function(std::string _name){
+            name=_name;
+        }
         std::string getName() { return name; }
         unsigned int getScope() { return scope; }
         unsigned int getLine() { return line; }
@@ -158,6 +160,12 @@ class SymbolTableEntry {
             type = _type;
             type_t = _symtype;
         }
+        SymbolTableEntry(std::string _name) {
+            Function *temp=new Function(_name);
+            value.funcValue=temp;
+            type=USERFUNC;
+        }
+
         unsigned getTotalLocalVariablesOffset(){
             return totalLocalVariablesOffset;
         }
