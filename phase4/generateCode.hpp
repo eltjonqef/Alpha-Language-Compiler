@@ -254,32 +254,19 @@ void generate_relational(vmopcode_t op,quad *quad){
     if(op != jump_vm){
         make_operand(quad->getArg1(),t->getArg1());
         make_operand(quad->getArg2(),t->getArg2());
-            
-        if(quad->getResult()->getJumpLab()<currentProssesedQuad){
-            if((quad->getTaddress() <= 0)){
-                assert(0);
-            }
-            t->getResult()->setVal(quads[quad->getResult()->getJumpLab()].getTaddress());
-        }else{
-            incompleteJump *ij = new incompleteJump();
-            ij->instrNo = instructionVector.size();
-            ij->iaddress  = quad->getResult()->getJumpLab();
-            incompleteIfJumps.push_back(ij);
+    }       
+    if(quad->getResult()->getJumpLab()<currentProssesedQuad){
+        if((quad->getTaddress() <= 0)){
+            assert(0);
         }
+        t->getResult()->setVal(quads[quad->getResult()->getJumpLab()].getTaddress());
     }else{
-        if(quad->getResult()->getJumpLab()<currentProssesedQuad){
-            if((quad->getTaddress() <= 0)){
-                assert(0);
-            }
-            t->getResult()->setVal(quads[quad->getResult()->getJumpLab()].getTaddress());
-        }else{
-            incompleteJump *ij = new incompleteJump();
-            ij->instrNo = instructionVector.size();
-            ij->iaddress = quad->getResult()->getJumpLab();
-            incompleteJumps.push_back(ij);
-        }
+        incompleteJump *ij = new incompleteJump();
+        ij->instrNo = instructionVector.size();
+        ij->iaddress  = quad->getResult()->getJumpLab();
+        incompleteJumps.push_back(ij);
     }
-    quads[quad->getLabel()].setTaddress(instructionLabelLookahead());
+    //quads[quad->getLabel()].setTaddress(instructionLabelLookahead());
     quad->setTaddress(getInstructionLabel());
     instructionVector.push_back(t);
 }
@@ -287,13 +274,6 @@ void generate_relational(vmopcode_t op,quad *quad){
 
 void patch_incomplete_jumps(){
     for(vector<incompleteJump*>::iterator it = incompleteJumps.begin();it != incompleteJumps.end();++it){
-        if((*it)->iaddress == quads.size()){
-            instructionVector[(*it)->instrNo]->getResult()->setVal(currentProssesedQuad);
-        }else{
-            instructionVector[(*it)->instrNo]->getResult()->setVal(quads[(*it)->iaddress].getTaddress());
-        }
-    }
-    for(vector<incompleteJump*>::iterator it = incompleteIfJumps.begin();it != incompleteIfJumps.end();++it){
         if((*it)->iaddress == quads.size()){
             instructionVector[(*it)->instrNo]->getResult()->setVal(currentProssesedQuad);
         }else{
