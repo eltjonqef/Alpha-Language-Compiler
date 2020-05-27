@@ -141,6 +141,8 @@ class SymbolTableEntry {
         unsigned offset;
         int UnionFlag; //0 for variable , 1 for function
         unsigned taddress;
+        unsigned totalFormalArgumentsOffset;
+        unsigned totalLocalVariablesOffset;
 
     public:
         SymbolTableEntry(std::string _name, int _scope, int _line, SymbolType _type,symbol_t _symtype) {
@@ -162,6 +164,19 @@ class SymbolTableEntry {
             Function *temp=new Function(_name);
             value.funcValue=temp;
             type=USERFUNC;
+        }
+
+        unsigned getTotalLocalVariablesOffset(){
+            return totalLocalVariablesOffset;
+        }
+        void setTotalLocalVariablesOffset(unsigned num){
+            totalLocalVariablesOffset = num;
+        }
+        void setTotalFormalArgumentsOffset(unsigned num){
+            totalFormalArgumentsOffset = num;
+        }
+        unsigned getTotalFormalArgumentsOffset(){
+            return totalFormalArgumentsOffset;
         }
         void setTaddress(unsigned _taddress){
             taddress=_taddress;

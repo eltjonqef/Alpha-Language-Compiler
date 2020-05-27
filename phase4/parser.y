@@ -33,6 +33,7 @@
     extern char* yytext;
     extern FILE* yyin;
     unsigned int currentScope = 0;
+    unsigned argOff = 0;
 
     
     int anonymousFuntionCounter=0;
@@ -1080,11 +1081,15 @@ funcdef:          FUNCTION N {
                     idlist {
                                 currentScope--;enterScopespace();
                                 saveAndResetFunctionOffset();
+                                funcExprStack.top()->sym->setTotalFormalArgumentsOffset(argOff);
+                                argOff = 0;
                             }
                 ')' block  {
+
+                				funcExprStack.top()->sym->setTotalLocalVariablesOffset(currentOffset());
+                                getPrevFunctionOffset();
                                 nestedFunctionCounter--;
                                 exitScopespace();exitScopespace();
-                                getPrevFunctionOffset();
                                 emit(funcend_op,funcExprStack.top(),NULL,NULL,getNextLabel(),yylineno);
                                 expr *temp1= new expr(label_e);
                                 temp1->setJumpLab(labelLookahead());
@@ -1121,15 +1126,18 @@ funcdef:          FUNCTION N {
                                 } 
                         idlist {
                                     currentScope--;
+                                    funcExprStack.top()->sym->setTotalFormalArgumentsOffset(argOff);
+                                    argOff = 0;
                                 } 
                         ')'    {
                                     enterScopespace();
                                     saveAndResetFunctionOffset();
                                 }
                         block   {
+                        			funcExprStack.top()->sym->setTotalLocalVariablesOffset(currentOffset());
+                                    getPrevFunctionOffset();
                                     nestedFunctionCounter--;
                                     exitScopespace();exitScopespace();
-                                    getPrevFunctionOffset();
                                     emit(funcend_op,funcExprStack.top(),NULL,NULL,getNextLabel(),yylineno);
                                     expr *temp1= new expr(label_e);
                                     temp1->setJumpLab(labelLookahead());
@@ -1158,9 +1166,10 @@ idlist:           IDENT {
                             }else{
                                 if(existsInScope($1, currentScope)){
                                     expr *expression=new expr(var_e);expression->sym=addToSymbolTable($1, currentScope, yylineno, FORMAL,var_s);
-                                    expression->sym->setOffset(currentOffset());
+                                    expression->sym->setOffset(0);
                                     expression->sym->setScopespace(getCurrentScopespace());
-                                    incCurScopeOffset();
+                                    argOff++;
+                                    //incCurScopeOffset();
                                 }
                             }
                                 
@@ -1171,9 +1180,10 @@ idlist:           IDENT {
                             }else{ 
                                 if(existsInScope($3, currentScope)){
                                     expr *expression=new expr(var_e); expression->sym=addToSymbolTable($3, currentScope, yylineno, FORMAL,var_s);
-                                    expression->sym->setOffset(currentOffset());
+                                    expression->sym->setOffset(argOff);
+                                    argOff++;
                                     expression->sym->setScopespace(getCurrentScopespace());
-                                    incCurScopeOffset();
+                                    //incCurScopeOffset();
                                 }
                             }
                                
@@ -1606,6 +1616,10 @@ void printSymbolTable() {
                 ScopeTable[it->first][i]->getLine()<<") (scope "<<ScopeTable[it->first][i]->getScope()<<" symtype:"<<
                 ScopeTable[it->first][i]->Type_t_toString()<<" space:"<<ScopeTable[it->first][i]->Scopespace_toString()
                 <<" offset:"<<ScopeTable[it->first][i]->getOffset()<<")\n";
+                if(ScopeTable[it->first][i]->getType()==USERFUNC){
+                    cout<<"ARGUMENTS OFFSET-> "<<ScopeTable[it->first][i]->getTotalFormalArgumentsOffset()<<" | VARIABLES-> "<<ScopeTable[it->first][i]->getTotalLocalVariablesOffset()<<"\n";
+                }
+
         }
         it++;
     }
