@@ -1457,6 +1457,17 @@ InitilizeLibraryFunctions(){
     libFunctions["sqrt"]=1;
     libFunctions["cos"]=1;
     libFunctions["sin"]=1;
+    libMap["print"]=libMap.size();
+    libMap["input"]=libMap.size();
+    libMap["objectmemberkeys"]=libMap.size();
+    libMap["objecttotalmembers"]=libMap.size();
+    libMap["objectcopy"]=libMap.size();
+    libMap["totalarguments"]=libMap.size();
+    libMap["argument"]=libMap.size();
+    libMap["typeof"]=libMap.size();
+    libMap["sqrt"]=libMap.size();
+    libMap["cos"]=libMap.size();
+    libMap["sin"]=libMap.size();
 }
 
 void

@@ -4,6 +4,8 @@ using namespace std;
 #include "Quads.hpp"
 #include <stack>
 int quadIndex=0;
+vector<SymbolTableEntry*> functionVector;
+map<string, int> libMap;
 
 enum vmarg_t{
 
@@ -152,7 +154,7 @@ void make_operand(expr *e, vmarg *arg){
         }
         case libraryfunc_e:{
             arg->setType(libfunc_a);
-            arg->setVal(libfuncs_newUsed(e->sym->getName()));
+            arg->setVal(libMap[e->sym->getName()]);
             break;
         }
         default:
@@ -358,7 +360,7 @@ void generate_GETRETVAL(quad *quad){
     instructionVector.push_back(t);
 }
 
-vector<SymbolTableEntry*> functionVector;
+
 void generate_FUNCSTART(quad *quad){
     SymbolTableEntry* f=quad->getResult()->sym;
     f->setTaddress(functionVector.size());
