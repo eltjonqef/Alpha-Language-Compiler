@@ -1392,6 +1392,7 @@ main(int argc, char** argv){
     printQuads();
     generate();
     printInstructions();
+    writeBinary();
     return 0;
 }
 

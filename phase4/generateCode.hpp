@@ -3,6 +3,7 @@
 using namespace std;
 #include "Quads.hpp"
 #include <stack>
+#include <fstream>
 int quadIndex=0;
 vector<SymbolTableEntry*> functionVector;
 map<string, int> libMap;
@@ -492,6 +493,28 @@ string vmarg_tToString(vmarg_t type){
     }
 }
 void printInstructions(){
+    cout<<"-------------Functions---------------\n";
+    for(int i=0; i<functionVector.size(); i++){
+        cout<<i<<" "<<functionVector[i]->getName()<<endl;
+    }
+    cout<<"--------------Int Map----------------\n";
+    std::map<int, int>::iterator intIt;
+    int i=0;
+    for(intIt=intMap.begin(); intIt!=intMap.end(); intIt++){
+        cout<<++i<<" "<<intIt->first<<endl;
+    }
+    cout<<"-------------Double Map--------------\n";
+    std::map<double, int>::iterator doubleIt;
+    i=0;
+    for(doubleIt=doubleMap.begin(); doubleIt!=doubleMap.end(); doubleIt++){
+        cout<<++i<<" "<<doubleIt->first<<endl;
+    }
+    cout<<"-------------String Map--------------\n";
+    std::map<string, int>::iterator stringIt;
+    i=0;
+    for(stringIt=stringMap.begin(); stringIt!=stringMap.end(); stringIt++){
+        cout<<++i<<" "<<stringIt->first<<endl;
+    }
     cout<<"------------Instructions-------------\n";
     for(int i=1; i<instructionVector.size(); i++){
         cout<<i<<": "<<opcodeToString(instructionVector[i]->getOP());
@@ -590,4 +613,131 @@ void printInstructions(){
             }
         }
     }
+}
+
+void writeBinary(){
+    
+    int magicNumber=457895;
+    ofstream fs;
+    fs.open("binary.abc");
+    //fs.write((char*)&len, sizeof(len));
+    fs<<magicNumber<<endl;
+    fs<<functionVector.size()<<endl;
+    for(int i=0; i<functionVector.size(); i++){
+        fs<<functionVector[i]->getName()<<endl;
+    }
+    fs<<intMap.size()<<endl;
+    std::map<int, int>::iterator intIt;
+    for(intIt=intMap.begin(); intIt!=intMap.end(); intIt++){
+        fs<<intIt->first<<endl;
+    }
+    fs<<doubleMap.size()<<endl;
+    std::map<double, int>::iterator doubleIt;
+    for(doubleIt=doubleMap.begin(); doubleIt!=doubleMap.end(); doubleIt++){
+        fs<<doubleIt->first<<endl;
+    }
+    fs<<stringMap.size()<<endl;
+    std::map<string, int>::iterator stringIt;
+    for(stringIt=stringMap.begin(); stringIt!=stringMap.end(); stringIt++){
+        fs<<stringIt->first<<endl;
+    }
+    fs<<instructionVector.size()-1<<endl;
+    for(int i=1; i<instructionVector.size(); i++){
+        fs<<instructionVector[i]->getOP()<<" ";
+        switch(instructionVector[i]->getOP()){
+            case assign_vm:{
+                fs<<instructionVector[i]->getResult()->getType()<<" "<<instructionVector[i]->getResult()->getVal();
+                fs<<" "<<instructionVector[i]->getArg1()->getType()<<" "<<instructionVector[i]->getArg1()->getVal();
+                fs<<endl;
+                break;
+            }
+            case add_vm:{
+                fs<<instructionVector[i]->getResult()->getType()<<" "<<instructionVector[i]->getResult()->getVal();
+                fs<<" "<<instructionVector[i]->getArg1()->getType()<<" "<<instructionVector[i]->getArg1()->getVal();
+                fs<<" "<<instructionVector[i]->getArg2()->getType()<<" "<<instructionVector[i]->getArg2()->getVal();
+                fs<<endl;
+                break;
+            }
+            case sub_vm:{
+                fs<<instructionVector[i]->getResult()->getType()<<" "<<instructionVector[i]->getResult()->getVal();
+                fs<<" "<<instructionVector[i]->getArg1()->getType()<<" "<<instructionVector[i]->getArg1()->getVal();
+                fs<<" "<<instructionVector[i]->getArg2()->getType()<<" "<<instructionVector[i]->getArg2()->getVal();
+                fs<<endl;
+                break;
+            }
+            case mul_vm:{
+                fs<<instructionVector[i]->getResult()->getType()<<" "<<instructionVector[i]->getResult()->getVal();
+                fs<<" "<<instructionVector[i]->getArg1()->getType()<<" "<<instructionVector[i]->getArg1()->getVal();
+                fs<<" "<<instructionVector[i]->getArg2()->getType()<<" "<<instructionVector[i]->getArg2()->getVal();
+                fs<<endl;
+                break;
+            }
+            case div_vm:{
+                fs<<instructionVector[i]->getResult()->getType()<<" "<<instructionVector[i]->getResult()->getVal();
+                fs<<" "<<instructionVector[i]->getArg1()->getType()<<" "<<instructionVector[i]->getArg1()->getVal();
+                fs<<" "<<instructionVector[i]->getArg2()->getType()<<" "<<instructionVector[i]->getArg2()->getVal();
+                fs<<endl;
+                break;
+            }
+            case mod_vm:{
+                fs<<instructionVector[i]->getResult()->getType()<<" "<<instructionVector[i]->getResult()->getVal();
+                fs<<" "<<instructionVector[i]->getArg1()->getType()<<" "<<instructionVector[i]->getArg1()->getVal();
+                fs<<" "<<instructionVector[i]->getArg2()->getType()<<" "<<instructionVector[i]->getArg2()->getVal();
+                fs<<endl;
+                break;
+            }
+            case tablesetelem_vm:{
+                fs<<instructionVector[i]->getResult()->getType()<<" "<<instructionVector[i]->getResult()->getVal();
+                fs<<" "<<instructionVector[i]->getArg1()->getType()<<" "<<instructionVector[i]->getArg1()->getVal();
+                fs<<" "<<instructionVector[i]->getArg2()->getType()<<" "<<instructionVector[i]->getArg2()->getVal();
+                fs<<endl;
+                break;
+            }
+            case tablegetelem_vm:{
+                fs<<instructionVector[i]->getResult()->getType()<<" "<<instructionVector[i]->getResult()->getVal();
+                fs<<" "<<instructionVector[i]->getArg1()->getType()<<" "<<instructionVector[i]->getArg1()->getVal();
+                fs<<" "<<instructionVector[i]->getArg2()->getType()<<" "<<instructionVector[i]->getArg2()->getVal();
+                fs<<endl;
+                break;
+            }
+            case call_vm:{
+                fs<<instructionVector[i]->getResult()->getType()<<" "<<instructionVector[i]->getResult()->getVal();
+                fs<<endl;
+                break;
+            }
+            case param_vm:{
+                fs<<instructionVector[i]->getResult()->getType()<<" "<<instructionVector[i]->getResult()->getVal();
+                fs<<endl;
+                break;
+            }
+            case if_eq_vm:{
+                fs<<instructionVector[i]->getResult()->getType()<<" "<<instructionVector[i]->getResult()->getVal();
+                fs<<" "<<instructionVector[i]->getArg1()->getType()<<" "<<instructionVector[i]->getArg1()->getVal();
+                fs<<" "<<instructionVector[i]->getArg2()->getType()<<" "<<instructionVector[i]->getArg2()->getVal();
+                fs<<endl;
+                break;
+            }
+            case jump_vm:{
+                fs<<instructionVector[i]->getResult()->getType()<<" "<<instructionVector[i]->getResult()->getVal();
+                fs<<endl;
+                break;
+            }
+            case tablecreate_vm:{
+                fs<<instructionVector[i]->getResult()->getType()<<" "<<instructionVector[i]->getResult()->getVal();
+                fs<<endl;
+                break;
+            }
+            case funcenter_vm:{
+                fs<<instructionVector[i]->getResult()->getType()<<" "<<instructionVector[i]->getResult()->getVal();
+                fs<<endl;
+                break;
+            }
+            case funcexit_vm:{
+                fs<<instructionVector[i]->getResult()->getType()<<" "<<instructionVector[i]->getResult()->getVal();
+                fs<<endl;
+                break;
+            }
+        }
+    }
+    fs.close();
 }

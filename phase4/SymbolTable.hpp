@@ -118,7 +118,9 @@ class Function {
             scope = _scope;
             line = _line;
         }
-        
+        Function(std::string _name){
+            name=_name;
+        }
         std::string getName() { return name; }
         unsigned int getScope() { return scope; }
         unsigned int getLine() { return line; }
@@ -155,6 +157,11 @@ class SymbolTableEntry {
             enabled=true;
             type = _type;
             type_t = _symtype;
+        }
+        SymbolTableEntry(std::string _name) {
+            Function *temp=new Function(_name);
+            value.funcValue=temp;
+            type=USERFUNC;
         }
         void setTaddress(unsigned _taddress){
             taddress=_taddress;
