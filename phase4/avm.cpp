@@ -61,10 +61,117 @@ void readFile(){
     len=stoi(readLen);
     while(len){
         fs>>data;
-        instruction *t=new instruction();
-        cout<<vmarg_tToString(vmarg_t(stoi(data)))<<endl;
+        
         switch(stoi(data)){
             case 0:{
+                instruction *t=new instruction();
+                t->setOpCode(assign_vm);
+                fs>>data;
+                
+                t->getResult()->setType(vmarg_t(stoi(data)));
+                fs>>data;
+                
+                t->getResult()->setVal(stoi(data));
+                fs>>data;
+                
+                t->getArg1()->setType(vmarg_t(stoi(data)));
+                fs>>data;
+                
+                t->getArg1()->setVal(stoi(data));
+                instructionVector.push_back(t);
+                break;
+            }
+            case 1:{
+                fs>>data;
+                
+                fs>>data;
+                fs>>data;
+                fs>>data;
+                fs>>data;
+                fs>>data;
+                break;
+            }
+            case 2:{
+                fs>>data;
+                
+                fs>>data;
+                fs>>data;
+                fs>>data;
+                fs>>data;
+                fs>>data;
+                break;
+            }
+            case 3:{
+                fs>>data;
+                
+                fs>>data;
+                fs>>data;
+                fs>>data;
+                fs>>data;
+                fs>>data;
+                break;
+            }
+            case 4:{
+                fs>>data;
+                
+                fs>>data;
+                fs>>data;
+                fs>>data;
+                fs>>data;
+                fs>>data;
+                break;
+            }
+            case 5:{
+                fs>>data;
+                
+                fs>>data;
+                fs>>data;
+                fs>>data;
+                fs>>data;
+                fs>>data;
+                break;
+            }
+            case 6:{
+                fs>>data;
+                
+                fs>>data;
+                fs>>data;
+                fs>>data;
+                fs>>data;
+                fs>>data;
+                break;
+            }
+            case 18:{
+                fs>>data;
+                fs>>data;
+                break;
+            }
+            case 16:{
+                fs>>data;
+                fs>>data;
+                break;
+            }
+            case 17:{
+                fs>>data;
+                fs>>data;
+                break;
+            }
+            case 21:{
+                instruction *t=new instruction();
+                t->setOpCode(jump_vm);
+                fs>>data;
+                t->getResult()->setType(vmarg_t(stoi(data)));
+                fs>>data;
+                t->getResult()->setVal(stoi(data));
+                instructionVector.push_back(t);
+                break;
+            }
+            default:
+                break;
+        }
+            /*case 0:{
+                cout<<vmarg_tToString(vmarg_t(stoi(data)))<<endl;
+                return;
                 t->setOpCode(assign_vm);
                 fs>>data;
                 t->getResult()->setType(vmarg_t(stoi(data)));
@@ -77,12 +184,26 @@ void readFile(){
                 instructionVector.push_back(t);
                 break;
             }
-        }
+        }*/
         len--;
     }
-    for(int i=0; i<instructionVector.size(); i++){
-        cout<<" ("<<vmarg_tToString(instructionVector[i]->getResult()->getType())<<")"<<instructionVector[i]->getResult()->getVal();
-        cout<<" ("<<vmarg_tToString(instructionVector[i]->getArg1()->getType())<<")"<<instructionVector[i]->getArg1()->getVal();
-        cout<<endl;
-    }
+    printInstructions();
 }
+
+/*
+21 10 7
+16 8 0
+21 10 6
+16 8 1
+17 8 1
+17 8 0
+1 0 1 5 1 6 1
+1 0 2 0 1 5 1
+1 0 3 0 2 4 1
+1 0 4 0 3 6 2
+1 0 5 0 4 4 2
+1 0 6 0 5 4 1
+1 0 7 0 6 6 1
+0 0 0 0 7
+0 0 8 0 0
+*/
