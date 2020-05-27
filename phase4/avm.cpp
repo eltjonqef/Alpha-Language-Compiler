@@ -82,78 +82,139 @@ void readFile(){
                 break;
             }
             case 1:{
+                instruction *t=new instruction();
+                t->setOpCode(add_vm);
                 fs>>data;
-                
+                t->getResult()->setType(vmarg_t(stoi(data)));
                 fs>>data;
+                t->getResult()->setVal(stoi(data));
                 fs>>data;
+                t->getArg1()->setType(vmarg_t(stoi(data)));
                 fs>>data;
+                t->getArg1()->setVal(stoi(data));
                 fs>>data;
+                t->getArg2()->setType(vmarg_t(stoi(data)));
                 fs>>data;
+                t->getArg2()->setVal(stoi(data));
+                instructionVector.push_back(t);
                 break;
             }
             case 2:{
+                instruction *t=new instruction();
+                t->setOpCode(sub_vm);
                 fs>>data;
-                
+                t->getResult()->setType(vmarg_t(stoi(data)));
                 fs>>data;
+                t->getResult()->setVal(stoi(data));
                 fs>>data;
+                t->getArg1()->setType(vmarg_t(stoi(data)));
                 fs>>data;
+                t->getArg1()->setVal(stoi(data));
                 fs>>data;
+                t->getArg2()->setType(vmarg_t(stoi(data)));
                 fs>>data;
+                t->getArg2()->setVal(stoi(data));
+                instructionVector.push_back(t);
                 break;
             }
             case 3:{
+                instruction *t=new instruction();
+                t->setOpCode(mul_vm);
                 fs>>data;
-                
+                t->getResult()->setType(vmarg_t(stoi(data)));
                 fs>>data;
+                t->getResult()->setVal(stoi(data));
                 fs>>data;
+                t->getArg1()->setType(vmarg_t(stoi(data)));
                 fs>>data;
+                t->getArg1()->setVal(stoi(data));
                 fs>>data;
+                t->getArg2()->setType(vmarg_t(stoi(data)));
                 fs>>data;
+                t->getArg2()->setVal(stoi(data));
+                instructionVector.push_back(t);
                 break;
             }
             case 4:{
+                instruction *t=new instruction();
+                t->setOpCode(div_vm);
                 fs>>data;
-                
+                t->getResult()->setType(vmarg_t(stoi(data)));
                 fs>>data;
+                t->getResult()->setVal(stoi(data));
                 fs>>data;
+                t->getArg1()->setType(vmarg_t(stoi(data)));
                 fs>>data;
+                t->getArg1()->setVal(stoi(data));
                 fs>>data;
+                t->getArg2()->setType(vmarg_t(stoi(data)));
                 fs>>data;
+                t->getArg2()->setVal(stoi(data));
+                instructionVector.push_back(t);
                 break;
             }
             case 5:{
+                instruction *t=new instruction();
+                t->setOpCode(mod_vm);
                 fs>>data;
-                
+                t->getResult()->setType(vmarg_t(stoi(data)));
                 fs>>data;
+                t->getResult()->setVal(stoi(data));
                 fs>>data;
+                t->getArg1()->setType(vmarg_t(stoi(data)));
                 fs>>data;
+                t->getArg1()->setVal(stoi(data));
                 fs>>data;
+                t->getArg2()->setType(vmarg_t(stoi(data)));
                 fs>>data;
+                t->getArg2()->setVal(stoi(data));
+                instructionVector.push_back(t);
                 break;
             }
             case 6:{
+                instruction *t=new instruction();
+                t->setOpCode(add_vm);
                 fs>>data;
-                
+                t->getResult()->setType(vmarg_t(stoi(data)));
                 fs>>data;
+                t->getResult()->setVal(stoi(data));
                 fs>>data;
+                t->getArg1()->setType(vmarg_t(stoi(data)));
                 fs>>data;
+                t->getArg1()->setVal(stoi(data));
                 fs>>data;
+                t->getArg2()->setType(vmarg_t(stoi(data)));
                 fs>>data;
+                t->getArg2()->setVal(stoi(data));
+                instructionVector.push_back(t);
                 break;
             }
             case 18:{
+                instruction *t=new instruction();
+                t->setOpCode(add_vm);
                 fs>>data;
+                t->getResult()->setType(vmarg_t(stoi(data)));
                 fs>>data;
+                t->getResult()->setVal(stoi(data));
+                instructionVector.push_back(t);
                 break;
             }
             case 16:{
+                instruction *t=new instruction();
+                t->setOpCode(add_vm);
                 fs>>data;
+                t->getResult()->setType(vmarg_t(stoi(data)));
                 fs>>data;
+                t->getResult()->setVal(stoi(data));
                 break;
             }
             case 17:{
+                instruction *t=new instruction();
+                t->setOpCode(add_vm);
                 fs>>data;
+                t->getResult()->setType(vmarg_t(stoi(data)));
                 fs>>data;
+                t->getResult()->setVal(stoi(data));
                 break;
             }
             case 21:{
