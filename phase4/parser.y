@@ -49,6 +49,7 @@
     expr* newexpr_constbool(bool a);
     expr* expressionHolder;
     expr* make_call(expr* lv, expr* reversed_elist);
+    unsigned argOff;
 %}
 
 
@@ -1078,13 +1079,15 @@ funcdef:          FUNCTION N {
                                 enterScopespace();
                             } 
                     idlist {
+                                funcExprStack.top()->sym->setTotalFormalArgumentsOffset(argOff);
+                                argOff=0;
                                 currentScope--;enterScopespace();
                                 saveAndResetFunctionOffset();
                             }
                 ')' block  {
                                 nestedFunctionCounter--;
                                 exitScopespace();exitScopespace();
-                                getPrevFunctionOffset();
+                                funcExprStack.top()->sym->setTotalLocalVariablesOffset(getPrevFunctionOffset());
                                 emit(funcend_op,funcExprStack.top(),NULL,NULL,getNextLabel(),yylineno);
                                 expr *temp1= new expr(label_e);
                                 temp1->setJumpLab(labelLookahead());
@@ -1121,15 +1124,21 @@ funcdef:          FUNCTION N {
                                 } 
                         idlist {
                                     currentScope--;
+                                    funcExprStack.top()->sym->setTotalFormalArgumentsOffset(argOff);
+                                    argOff = 0;
                                 } 
                         ')'    {
                                     enterScopespace();
                                     saveAndResetFunctionOffset();
                                 }
                         block   {
+                                    
+                                    
+                                    cout<<"OFOFOFOFOFOFOFO->"<<currentOffset()<<"\n";
+                                    funcExprStack.top()->sym->setTotalLocalVariablesOffset(currentOffset());
+                                    getPrevFunctionOffset();
                                     nestedFunctionCounter--;
                                     exitScopespace();exitScopespace();
-                                    getPrevFunctionOffset();
                                     emit(funcend_op,funcExprStack.top(),NULL,NULL,getNextLabel(),yylineno);
                                     expr *temp1= new expr(label_e);
                                     temp1->setJumpLab(labelLookahead());
@@ -1157,10 +1166,11 @@ idlist:           IDENT {
                                 cout<<"ERROR at line "<<yylineno<<": Collision with library function"<<endl;
                             }else{
                                 if(existsInScope($1, currentScope)){
+                                    argOff = 1;
                                     expr *expression=new expr(var_e);expression->sym=addToSymbolTable($1, currentScope, yylineno, FORMAL,var_s);
-                                    expression->sym->setOffset(currentOffset());
+                                    expression->sym->setOffset(0);
                                     expression->sym->setScopespace(getCurrentScopespace());
-                                    incCurScopeOffset();
+                                    //incCurScopeOffset();
                                 }
                             }
                                 
@@ -1171,9 +1181,11 @@ idlist:           IDENT {
                             }else{ 
                                 if(existsInScope($3, currentScope)){
                                     expr *expression=new expr(var_e); expression->sym=addToSymbolTable($3, currentScope, yylineno, FORMAL,var_s);
-                                    expression->sym->setOffset(currentOffset());
+                                    expression->sym->setOffset(argOff);
                                     expression->sym->setScopespace(getCurrentScopespace());
-                                    incCurScopeOffset();
+                                    argOff++;
+                                    cout<<"argOff->"<<argOff<<"\n";
+                                    //incCurScopeOffset();
                                 }
                             }
                                
@@ -1594,6 +1606,9 @@ void printSymbolTable() {
                 ScopeTable[it->first][i]->getLine()<<") (scope "<<ScopeTable[it->first][i]->getScope()<<" symtype:"<<
                 ScopeTable[it->first][i]->Type_t_toString()<<" space:"<<ScopeTable[it->first][i]->Scopespace_toString()
                 <<" offset:"<<ScopeTable[it->first][i]->getOffset()<<")\n";
+                if(ScopeTable[it->first][i]->getType()==USERFUNC){
+                    cout<<"ARGUMENTS OFFSET-> "<<ScopeTable[it->first][i]->getTotalFormalArgumentsOffset()<<" | VARIABLES-> "<<ScopeTable[it->first][i]->getTotalLocalVariablesOffset()<<"\n";
+                }
         }
         it++;
     }

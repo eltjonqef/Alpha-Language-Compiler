@@ -46,6 +46,8 @@ vector<incompleteJump*> incompleteIfJumps;
 map<string, int> stringMap;
 map<int, int> intMap;
 map<double, int> doubleMap;
+vector<SymbolTableEntry*> userFunctionVec;
+map<string, int> libFunctionMap;
 unsigned instructionLabel=0;
 unsigned currentProssesedQuad = 0;
 int returnFlag = 0;
@@ -84,9 +86,6 @@ unsigned consts_newNumber(double _number){
     return doubleMap[_number];
 }
 
-unsigned userfuncs_newfunc(SymbolTableEntry *sym){
-
-}
 
 unsigned libfuncs_newUsed(string _libfunc){
 
@@ -344,42 +343,23 @@ void generate_PARAM(quad quad){
     instructionVector.push_back(t);
 }
 class function{
-    private:
+    public:
         SymbolTableEntry* sym;
         vector<unsigned> returnList;
-    public:
-        function(SymbolTableEntry* _sym){
-            sym=_sym;
-        }
-        vector<unsigned>  getReturnList(){
-            return returnList;
-        }
-        string getName(){
-            return sym->getName();
-        }
 };
+
 stack<function*> functionStack;
 stack<vector<unsigned>> functionReturnStacks;
 void generate_RET(quad quad){
+    quad.setTaddress(getInstructionLabel());
     instruction *t=new instruction();
     t->setOpCode(assign_vm);
     make_retval_operand(t->getResult());    
     make_operand(quad.getArg1(), t->getArg1());
     instructionVector.push_back(t);
-    quad.setTaddress(getInstructionLabel());
     cout<<"pushing in stack "<<instructionLabelLookahead()<<"\n";
     functionReturnStacks.top().push_back(instructionLabelLookahead());
     returnFlag = 1;
-    /*
-    function *f=functionStack.top();
-    cout<<"\t\tVECTOR SIZE:"<<f->getReturnList().size()<<endl;
-    f->getReturnList().push_back(instructionLabelLookahead());
-    cout<<"\t\tVECTOR SIZE:"<<f->getReturnList().size()<<endl;
-    t->setOpCode(jump_vm);
-    t->getResult()->setType(label_a);
-    instructionVector.push_back(t);
-    quad.setTaddress(getInstructionLabel());
-    */
 
 }
 void generate_GETRETVAL(quad quad){
@@ -396,13 +376,13 @@ void generate_FUNCSTART(quad quad){
     
     vector<unsigned> a;
     functionReturnStacks.push(a);
-    //functionReturnStacks.top().push_back(instructionLabelLookahead()-1);
-    //PREPEI NA FTIAKSOUME TA PEdIA GIA TO PINAKA TOU FUNCTION
-    //THELEI ALAGES APO PROIGOUMENI FASH
     SymbolTableEntry* f=quad.getResult()->sym;
-    f->setTaddress(instructionLabelLookahead());
+    userFunctionVec.push_back(f);
+    f->setTaddress(userFunctionVec.size()-1);
     quad.setTaddress(getInstructionLabel());
-    functionStack.push(new function(f));
+    function *toStack=new function();
+    toStack->sym=f;
+    functionStack.push(toStack);
 
     instruction *t=new instruction();
     t->setOpCode(funcenter_vm);
@@ -414,10 +394,10 @@ void generate_FUNCSTART(quad quad){
 
 void backpatch_lastFunc(function *f,unsigned target){
     cout<<"target is "<<target<<"\n";
-    cout<<"vector size is "<<f->getReturnList().size()<<"\n";
-    for(int index = 0;index<f->getReturnList().size();index++){
-        cout<<"patching instr no "<<f->getReturnList()[index]<<"\n";
-        instructionVector[f->getReturnList()[index]]->getResult()->setVal(target);
+    cout<<"vector size is "<<f->returnList.size()<<"\n";
+    for(int index = 0;index<f->returnList.size();index++){
+        cout<<"patching instr no "<<f->returnList[index]<<"\n";
+        instructionVector[f->returnList[index]]->getResult()->setVal(target);
     }
 }
 
@@ -438,7 +418,7 @@ void generate_FUNCEND(quad quad){
     functionStack.pop();
     cout<<"pop\n";
     
-cout<<"\t\tVFNDJKFDSNJ SIZE:"<<f->getReturnList().size()<<endl;
+cout<<"\t\tVFNDJKFDSNJ SIZE:"<<f->returnList.size()<<endl;
     //backpatch_lastFunc(f,instructionLabelLookahead());
     backpatch_lastFunc_ver2(instructionLabelLookahead());
     //functionReturnStacks.pop();

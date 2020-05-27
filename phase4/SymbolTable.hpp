@@ -73,7 +73,7 @@ void incCurScopeOffset(){
     switch(getCurrentScopespace()){
         case programvar : ++programVarOffsetCounter;return;
         case formalarg : ++formalArgOffsetCounter;return;
-        case functionlocal : ++functionLocalOffsetCounter;return;
+        case functionlocal : ++functionLocalOffsetCounter;cout<<"offset now "<<functionLocalOffsetCounter<<"\n";return;
         default : assert(0);
     }
 } 
@@ -139,6 +139,8 @@ class SymbolTableEntry {
         unsigned offset;
         int UnionFlag; //0 for variable , 1 for function
         unsigned taddress;
+        unsigned totalFormalArgumentsOffset;
+        unsigned totalLocalVariablesOffset;
 
     public:
         SymbolTableEntry(std::string _name, int _scope, int _line, SymbolType _type,symbol_t _symtype) {
@@ -155,6 +157,18 @@ class SymbolTableEntry {
             enabled=true;
             type = _type;
             type_t = _symtype;
+        }
+        unsigned getTotalLocalVariablesOffset(){
+            return totalLocalVariablesOffset;
+        }
+        void setTotalLocalVariablesOffset(unsigned num){
+            totalLocalVariablesOffset = num;
+        }
+        void setTotalFormalArgumentsOffset(unsigned num){
+            totalFormalArgumentsOffset = num;
+        }
+        unsigned getTotalFormalArgumentsOffset(){
+            return totalFormalArgumentsOffset;
         }
         void setTaddress(unsigned _taddress){
             taddress=_taddress;
