@@ -15,9 +15,9 @@ using namespace std;
 class avm_table;
 class avm_memcell;
 
-avm_memcell STACK[AVM_STACKSIZE]; 
-avm_memcell* ax, bx, cx;
-avm_memcell retval;
+avm_memcell STACK[32768]; 
+avm_memcell *ax, *bx, *cx;
+avm_memcell *retval;
 unsigned top,topsp;
 unsigned char executionFinished=0;
 unsigned pc=0;

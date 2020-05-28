@@ -4,7 +4,7 @@
 #include <vector>
 #include "Quads.hpp"
 #include "generateCode.hpp"
-#include "avm_workings.cpp"
+#include "avm_workings.hpp"
 using namespace std;
 
 vector<SymbolTableEntry*> symboltable;
@@ -13,6 +13,7 @@ vector<double> doubleVector;
 vector<string> stringVector;
 */
 void readFile();
+void loadLibFuncs();
 
 int main(){
     instruction *t=new instruction();
