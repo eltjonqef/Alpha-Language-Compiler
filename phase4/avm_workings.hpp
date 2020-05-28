@@ -59,7 +59,7 @@ avm_memcell* avm_translate_operand(vmarg* arg,avm_memcell* reg){
         case global_a: return &STACK[AVM_STACKSIZE-1-arg->getVal()];
         case local_a: return &STACK[topsp-arg->getVal()];
         case formal_a: return &STACK[topsp+AVM_STACKENV_SIZE+1+arg->getVal()];
-        case retval_a: return &retval;
+        case retval_a: return retval;
         case int_a:{
             reg->type = number_m;
             reg->data.numVal = intVector[arg->getVal()-1];
