@@ -7,7 +7,6 @@ using namespace std;
 int quadIndex=0;
 vector<SymbolTableEntry*> functionVector;
 map<string, int> libMap;
-vector<instruction*> instructionVector;
 
 enum vmarg_t{
 
@@ -242,17 +241,8 @@ class instruction{
         void setSrcLine(unsigned _srcLine){
             srcLine=_srcLine;
         }
-        int getNextInstruction(){
-            if(instructionVector.size()<index || instructionVector.size()==0){
-                return -1;
-            }
-            else {
-                index++;
-                return index;
-            }
-        }
 };
-
+vector<instruction*> instructionVector;
 
 void generate_Simple(vmopcode_t op,quad *quad){
 
