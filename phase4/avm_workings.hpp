@@ -13,7 +13,18 @@
 using namespace std;
 
 class avm_table;
-class avm_memcell;
+class avm_memcell{
+    public:
+    avm_memcell_t type;
+    union {
+        double numVal;
+        string strVal;
+        unsigned char boolVal;
+        avm_table* tableVal;
+        unsigned funcVal;
+        string libFuncVal;
+    }data;
+};
 
 avm_memcell STACK[32768]; 
 avm_memcell *ax, *bx, *cx;
