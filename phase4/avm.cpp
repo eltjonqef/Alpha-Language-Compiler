@@ -7,247 +7,228 @@
 using namespace std;
 
 vector<SymbolTableEntry*> symboltable;
-vector<int> intVector;
+/*vector<int> intVector;
 vector<double> doubleVector;
 vector<string> stringVector;
-
+*/
 void readFile();
 
 int main(){
-
+    instruction *t=new instruction();
+    t->setOpCode(nop_vm);
+    instructionVector.push_back(t);
     readFile();
     return 0;
 }
 
 void readFile(){
-
-    ifstream fs;
-    fs.open("binary.abc");
-    string magicNumber;
-    fs>>magicNumber;
-    string readLen;
-    fs>>readLen;
-    int len=stoi(readLen);
-    string data;
-    
-    while(len){
-        fs>>data;
+    int magicNumber, loop;
+    size_t len;
+    FILE *f;
+    f=fopen("binary.abc", "rb");
+    fread(&magicNumber, sizeof(int), 1, f);
+    fread(&loop, sizeof(int), 1, f);
+    for(int i=0; i<loop; i++){
+        char *data;
+        fread(&len, sizeof(size_t), 1, f);
+        data=(char*)malloc(sizeof(char)*(len+1));
+        fread(data, sizeof(char), len, f);
+        data[len]='\0';
         SymbolTableEntry *sym=new SymbolTableEntry(data);
         symboltable.push_back(sym);
-        len--;
     }
-    fs>>readLen;
-    len=stoi(readLen);
-    while(len){
-        fs>>data;
-        intVector.push_back(stoi(data));
-        len--;
+    fread(&loop, sizeof(int), 1, f);
+    for(int i=0; i<loop; i++){
+        int num;
+        fread(&num, sizeof(int), 1, f);
+        intVector.push_back(num);
     }
-    fs>>readLen;
-    len=stoi(readLen);
-    while(len){
-        fs>>data;
-        doubleVector.push_back(atof(data.c_str()));
-        len--;
+    fread(&loop, sizeof(int), 1, f);
+    for(int i=0; i<loop; i++){
+        double num;
+        fread(&num, sizeof(double), 1, f);
+        doubleVector.push_back(num);
     }
-    fs>>readLen;
-    len=stoi(readLen);
-    while(len){
-        fs>>data;
+    fread(&loop, sizeof(int), 1, f);
+    for(int i=0; i<loop; i++){
+        char *data;
+        fread(&len, sizeof(size_t), 1, f);
+        data=(char*)malloc(sizeof(char)*(len+1));
+        fread(data, sizeof(char), len, f);
+        data[len]='\0';
         stringVector.push_back(data);
-        len--;
     }
-    fs>>readLen;
-    len=stoi(readLen);
-    while(len){
-        fs>>data;
-        
-        switch(stoi(data)){
+    fread(&loop, sizeof(int), 1, f);
+    for(int i=0; i<loop; i++){
+
+        int num;        
+        fread(&num, sizeof(int), 1, f);
+        switch(num){
             case 0:{
                 instruction *t=new instruction();
                 t->setOpCode(assign_vm);
-                fs>>data;
-                
-                t->getResult()->setType(vmarg_t(stoi(data)));
-                fs>>data;
-                
-                t->getResult()->setVal(stoi(data));
-                fs>>data;
-                
-                t->getArg1()->setType(vmarg_t(stoi(data)));
-                fs>>data;
-                
-                t->getArg1()->setVal(stoi(data));
+                fread(&num, sizeof(int), 1, f);
+                t->getResult()->setType(vmarg_t(num));
+                fread(&num, sizeof(int), 1, f);
+                t->getResult()->setVal(num);
+                fread(&num, sizeof(int), 1, f);
+                t->getArg1()->setType(vmarg_t(num));
+                fread(&num, sizeof(int), 1, f);
+                t->getArg1()->setVal(num);
                 instructionVector.push_back(t);
                 break;
             }
             case 1:{
                 instruction *t=new instruction();
                 t->setOpCode(add_vm);
-                fs>>data;
-                t->getResult()->setType(vmarg_t(stoi(data)));
-                fs>>data;
-                t->getResult()->setVal(stoi(data));
-                fs>>data;
-                t->getArg1()->setType(vmarg_t(stoi(data)));
-                fs>>data;
-                t->getArg1()->setVal(stoi(data));
-                fs>>data;
-                t->getArg2()->setType(vmarg_t(stoi(data)));
-                fs>>data;
-                t->getArg2()->setVal(stoi(data));
+                fread(&num, sizeof(int), 1, f);
+                t->getResult()->setType(vmarg_t(num));
+                fread(&num, sizeof(int), 1, f);
+                t->getResult()->setVal(num);
+                fread(&num, sizeof(int), 1, f);
+                t->getArg1()->setType(vmarg_t(num));
+                fread(&num, sizeof(int), 1, f);
+                t->getArg1()->setVal(num);
+                fread(&num, sizeof(int), 1, f);
+                t->getArg2()->setType(vmarg_t(num));
+                fread(&num, sizeof(int), 1, f);
+                t->getArg2()->setVal(num);
                 instructionVector.push_back(t);
                 break;
             }
             case 2:{
                 instruction *t=new instruction();
                 t->setOpCode(sub_vm);
-                fs>>data;
-                t->getResult()->setType(vmarg_t(stoi(data)));
-                fs>>data;
-                t->getResult()->setVal(stoi(data));
-                fs>>data;
-                t->getArg1()->setType(vmarg_t(stoi(data)));
-                fs>>data;
-                t->getArg1()->setVal(stoi(data));
-                fs>>data;
-                t->getArg2()->setType(vmarg_t(stoi(data)));
-                fs>>data;
-                t->getArg2()->setVal(stoi(data));
+                fread(&num, sizeof(int), 1, f);
+                t->getResult()->setType(vmarg_t(num));
+                fread(&num, sizeof(int), 1, f);
+                t->getResult()->setVal(num);
+                fread(&num, sizeof(int), 1, f);
+                t->getArg1()->setType(vmarg_t(num));
+                fread(&num, sizeof(int), 1, f);
+                t->getArg1()->setVal(num);
+                fread(&num, sizeof(int), 1, f);
+                t->getArg2()->setType(vmarg_t(num));
+                fread(&num, sizeof(int), 1, f);
+                t->getArg2()->setVal(num);
                 instructionVector.push_back(t);
                 break;
             }
             case 3:{
                 instruction *t=new instruction();
                 t->setOpCode(mul_vm);
-                fs>>data;
-                t->getResult()->setType(vmarg_t(stoi(data)));
-                fs>>data;
-                t->getResult()->setVal(stoi(data));
-                fs>>data;
-                t->getArg1()->setType(vmarg_t(stoi(data)));
-                fs>>data;
-                t->getArg1()->setVal(stoi(data));
-                fs>>data;
-                t->getArg2()->setType(vmarg_t(stoi(data)));
-                fs>>data;
-                t->getArg2()->setVal(stoi(data));
+                fread(&num, sizeof(int), 1, f);
+                t->getResult()->setType(vmarg_t(num));
+                fread(&num, sizeof(int), 1, f);
+                t->getResult()->setVal(num);
+                fread(&num, sizeof(int), 1, f);
+                t->getArg1()->setType(vmarg_t(num));
+                fread(&num, sizeof(int), 1, f);
+                t->getArg1()->setVal(num);
+                fread(&num, sizeof(int), 1, f);
+                t->getArg2()->setType(vmarg_t(num));
+                fread(&num, sizeof(int), 1, f);
+                t->getArg2()->setVal(num);
                 instructionVector.push_back(t);
                 break;
             }
             case 4:{
                 instruction *t=new instruction();
                 t->setOpCode(div_vm);
-                fs>>data;
-                t->getResult()->setType(vmarg_t(stoi(data)));
-                fs>>data;
-                t->getResult()->setVal(stoi(data));
-                fs>>data;
-                t->getArg1()->setType(vmarg_t(stoi(data)));
-                fs>>data;
-                t->getArg1()->setVal(stoi(data));
-                fs>>data;
-                t->getArg2()->setType(vmarg_t(stoi(data)));
-                fs>>data;
-                t->getArg2()->setVal(stoi(data));
+                fread(&num, sizeof(int), 1, f);
+                t->getResult()->setType(vmarg_t(num));
+                fread(&num, sizeof(int), 1, f);
+                t->getResult()->setVal(num);
+                fread(&num, sizeof(int), 1, f);
+                t->getArg1()->setType(vmarg_t(num));
+                fread(&num, sizeof(int), 1, f);
+                t->getArg1()->setVal(num);
+                fread(&num, sizeof(int), 1, f);
+                t->getArg2()->setType(vmarg_t(num));
+                fread(&num, sizeof(int), 1, f);
+                t->getArg2()->setVal(num);
                 instructionVector.push_back(t);
                 break;
             }
             case 5:{
                 instruction *t=new instruction();
                 t->setOpCode(mod_vm);
-                fs>>data;
-                t->getResult()->setType(vmarg_t(stoi(data)));
-                fs>>data;
-                t->getResult()->setVal(stoi(data));
-                fs>>data;
-                t->getArg1()->setType(vmarg_t(stoi(data)));
-                fs>>data;
-                t->getArg1()->setVal(stoi(data));
-                fs>>data;
-                t->getArg2()->setType(vmarg_t(stoi(data)));
-                fs>>data;
-                t->getArg2()->setVal(stoi(data));
+                fread(&num, sizeof(int), 1, f);
+                t->getResult()->setType(vmarg_t(num));
+                fread(&num, sizeof(int), 1, f);
+                t->getResult()->setVal(num);
+                fread(&num, sizeof(int), 1, f);
+                t->getArg1()->setType(vmarg_t(num));
+                fread(&num, sizeof(int), 1, f);
+                t->getArg1()->setVal(num);
+                fread(&num, sizeof(int), 1, f);
+                t->getArg2()->setType(vmarg_t(num));
+                fread(&num, sizeof(int), 1, f);
+                t->getArg2()->setVal(num);
                 instructionVector.push_back(t);
                 break;
             }
             case 6:{
                 instruction *t=new instruction();
-                t->setOpCode(add_vm);
-                fs>>data;
-                t->getResult()->setType(vmarg_t(stoi(data)));
-                fs>>data;
-                t->getResult()->setVal(stoi(data));
-                fs>>data;
-                t->getArg1()->setType(vmarg_t(stoi(data)));
-                fs>>data;
-                t->getArg1()->setVal(stoi(data));
-                fs>>data;
-                t->getArg2()->setType(vmarg_t(stoi(data)));
-                fs>>data;
-                t->getArg2()->setVal(stoi(data));
+                t->setOpCode(if_eq_vm);
+                fread(&num, sizeof(int), 1, f);
+                t->getResult()->setType(vmarg_t(num));
+                fread(&num, sizeof(int), 1, f);
+                t->getResult()->setVal(num);
+                fread(&num, sizeof(int), 1, f);
+                t->getArg1()->setType(vmarg_t(num));
+                fread(&num, sizeof(int), 1, f);
+                t->getArg1()->setVal(num);
+                fread(&num, sizeof(int), 1, f);
+                t->getArg2()->setType(vmarg_t(num));
+                fread(&num, sizeof(int), 1, f);
+                t->getArg2()->setVal(num);
                 instructionVector.push_back(t);
                 break;
             }
             case 18:{
                 instruction *t=new instruction();
-                t->setOpCode(add_vm);
-                fs>>data;
-                t->getResult()->setType(vmarg_t(stoi(data)));
-                fs>>data;
-                t->getResult()->setVal(stoi(data));
+                t->setOpCode(tablecreate_vm);
+                fread(&num, sizeof(int), 1, f);
+                t->getResult()->setType(vmarg_t(num));
+                fread(&num, sizeof(int), 1, f);
+                t->getResult()->setVal(num);
                 instructionVector.push_back(t);
                 break;
             }
             case 16:{
                 instruction *t=new instruction();
-                t->setOpCode(add_vm);
-                fs>>data;
-                t->getResult()->setType(vmarg_t(stoi(data)));
-                fs>>data;
-                t->getResult()->setVal(stoi(data));
+                t->setOpCode(funcenter_vm);
+                fread(&num, sizeof(int), 1, f);
+                t->getResult()->setType(vmarg_t(num));
+                fread(&num, sizeof(int), 1, f);
+                t->getResult()->setVal(num);
+                instructionVector.push_back(t);
                 break;
             }
             case 17:{
                 instruction *t=new instruction();
-                t->setOpCode(add_vm);
-                fs>>data;
-                t->getResult()->setType(vmarg_t(stoi(data)));
-                fs>>data;
-                t->getResult()->setVal(stoi(data));
+                t->setOpCode(funcexit_vm);
+                fread(&num, sizeof(int), 1, f);
+                t->getResult()->setType(vmarg_t(num));
+                fread(&num, sizeof(int), 1, f);
+                t->getResult()->setVal(num);
+                instructionVector.push_back(t);
                 break;
             }
             case 21:{
                 instruction *t=new instruction();
                 t->setOpCode(jump_vm);
-                fs>>data;
-                t->getResult()->setType(vmarg_t(stoi(data)));
-                fs>>data;
-                t->getResult()->setVal(stoi(data));
+                fread(&num, sizeof(int), 1, f);
+                t->getResult()->setType(vmarg_t(num));
+                fread(&num, sizeof(int), 1, f);
+                t->getResult()->setVal(num);
                 instructionVector.push_back(t);
                 break;
             }
-            default:
-                break;
         }
-            /*case 0:{
-                cout<<vmarg_tToString(vmarg_t(stoi(data)))<<endl;
-                return;
-                t->setOpCode(assign_vm);
-                fs>>data;
-                t->getResult()->setType(vmarg_t(stoi(data)));
-                fs>>data;
-                t->getResult()->setVal(stoi(data));
-                fs>>data;
-                t->getArg1()->setType(vmarg_t(stoi(data)));
-                fs>>data;
-                t->getArg1()->setVal(stoi(data));
-                instructionVector.push_back(t);
-                break;
-            }
-        }*/
-        len--;
     }
+    fclose(f);
     printInstructions();
 }
 

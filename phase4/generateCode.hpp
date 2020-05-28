@@ -37,8 +37,8 @@ class vmarg{
         void setVal(unsigned _val){
             val=_val;
         }
-        vmarg_t getType(){return type;}
-        unsigned getVal(){return val;}        
+        vmarg_t &getType(){return type;}
+        unsigned &getVal(){return val;}        
 };
 
 class incompleteJump{
@@ -63,28 +63,33 @@ unsigned getInstructionLabel(){
     instructionLabel++;
     return holder;
 }
-
+vector<string> stringVector;
+vector<int> intVector;
+vector<double> doubleVector;
 unsigned consts_newString(string _string){
 
-    if(!stringMap[_string])
+    if(!stringMap[_string]){
         stringMap[_string]=stringMap.size();
-
+        stringVector.push_back(_string);
+    }
     return stringMap[_string];
 
 }
 unsigned consts_newNumber(int _number){
 
-    if(!intMap[_number])
+    if(!intMap[_number]){
         intMap[_number]=intMap.size();
-    
+        intVector.push_back(_number);
+    }
     return intMap[_number];
 }
 
 unsigned consts_newNumber(double _number){
 
-    if(!doubleMap[_number])
+    if(!doubleMap[_number]){
         doubleMap[_number]=doubleMap.size();
-    
+        doubleVector.push_back(_number);
+    }
     return doubleMap[_number];
 }
 
@@ -210,7 +215,7 @@ class instruction{
         void setOpCode(vmopcode_t _opcode){
             opcode=_opcode;
         }
-        vmopcode_t getOP(){
+        vmopcode_t& getOP(){
             return opcode;
         }
         void setResult(vmarg *_result){
@@ -498,22 +503,16 @@ void printInstructions(){
         cout<<i<<" "<<functionVector[i]->getName()<<endl;
     }
     cout<<"--------------Int Map----------------\n";
-    std::map<int, int>::iterator intIt;
-    int i=0;
-    for(intIt=intMap.begin(); intIt!=intMap.end(); intIt++){
-        cout<<++i<<" "<<intIt->first<<endl;
+    for(int i=0; i<intVector.size(); i++){
+        cout<<intVector[i]<<endl;
     }
     cout<<"-------------Double Map--------------\n";
-    std::map<double, int>::iterator doubleIt;
-    i=0;
-    for(doubleIt=doubleMap.begin(); doubleIt!=doubleMap.end(); doubleIt++){
-        cout<<++i<<" "<<doubleIt->first<<endl;
+    for(int i=0; i<doubleVector.size(); i++){
+        cout<<doubleVector[i]<<endl;
     }
     cout<<"-------------String Map--------------\n";
-    std::map<string, int>::iterator stringIt;
-    i=0;
-    for(stringIt=stringMap.begin(); stringIt!=stringMap.end(); stringIt++){
-        cout<<++i<<" "<<stringIt->first<<endl;
+    for(int i=0; i<stringVector.size(); i++){
+        cout<<stringVector[i]<<endl;
     }
     cout<<"------------Instructions-------------\n";
     for(int i=1; i<instructionVector.size(); i++){
@@ -616,128 +615,145 @@ void printInstructions(){
 }
 
 void writeBinary(){
-    
-    int magicNumber=457895;
-    ofstream fs;
-    fs.open("binary.abc");
-    //fs.write((char*)&len, sizeof(len));
-    fs<<magicNumber<<endl;
-    fs<<functionVector.size()<<endl;
+    FILE *f;
+    f=fopen("binary.abc", "wb");
+    int magicNumber=45679;
+    fwrite(&magicNumber, sizeof(int), 1, f);
+    int loop;
+    size_t len;
+    loop=functionVector.size();
+    fwrite(&loop, sizeof(int), 1, f);
     for(int i=0; i<functionVector.size(); i++){
-        fs<<functionVector[i]->getName()<<endl;
+        len=functionVector[i]->getName().length();
+        fwrite(&len, sizeof(size_t), 1, f);
+        char *ctext=const_cast<char*>(functionVector[i]->getName().c_str());
+        fwrite(ctext, sizeof(char), len, f);
     }
-    fs<<intMap.size()<<endl;
-    std::map<int, int>::iterator intIt;
-    for(intIt=intMap.begin(); intIt!=intMap.end(); intIt++){
-        fs<<intIt->first<<endl;
+    loop=intVector.size();
+    fwrite(&loop, sizeof(int), 1, f);
+    for(int i=0; i<intVector.size(); i++){
+        fwrite(&intVector[i],sizeof(int), 1, f);
     }
-    fs<<doubleMap.size()<<endl;
-    std::map<double, int>::iterator doubleIt;
-    for(doubleIt=doubleMap.begin(); doubleIt!=doubleMap.end(); doubleIt++){
-        fs<<doubleIt->first<<endl;
+    loop=doubleVector.size();
+    fwrite(&loop, sizeof(int), 1, f);
+    for(int i=0; i<doubleVector.size(); i++){
+        fwrite(&doubleVector[i],sizeof(double), 1, f);
     }
-    fs<<stringMap.size()<<endl;
-    std::map<string, int>::iterator stringIt;
-    for(stringIt=stringMap.begin(); stringIt!=stringMap.end(); stringIt++){
-        fs<<stringIt->first<<endl;
+    loop=stringVector.size();
+    fwrite(&loop, sizeof(int), 1, f);
+    for(int i=0; i<stringVector.size(); i++){
+        len=stringVector[i].length();
+        fwrite(&len, sizeof(size_t), 1, f);
+        char *ctext=const_cast<char*>(stringVector[i].c_str());
+        fwrite(ctext, sizeof(char), len, f);
     }
-    fs<<instructionVector.size()-1<<endl;
+    loop=instructionVector.size()-1;
+    fwrite(&loop, sizeof(int), 1, f);
     for(int i=1; i<instructionVector.size(); i++){
-        fs<<instructionVector[i]->getOP()<<" ";
+        fwrite(&(instructionVector[i]->getOP()), sizeof(int), 1, f);
+        cout<<"\t"<<instructionVector[i]->getOP()<<endl;
         switch(instructionVector[i]->getOP()){
             case assign_vm:{
-                fs<<instructionVector[i]->getResult()->getType()<<" "<<instructionVector[i]->getResult()->getVal();
-                fs<<" "<<instructionVector[i]->getArg1()->getType()<<" "<<instructionVector[i]->getArg1()->getVal();
-                fs<<endl;
+                fwrite(&(instructionVector[i]->getResult()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getResult()->getVal()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg1()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg1()->getVal()), sizeof(int), 1, f);
                 break;
             }
             case add_vm:{
-                fs<<instructionVector[i]->getResult()->getType()<<" "<<instructionVector[i]->getResult()->getVal();
-                fs<<" "<<instructionVector[i]->getArg1()->getType()<<" "<<instructionVector[i]->getArg1()->getVal();
-                fs<<" "<<instructionVector[i]->getArg2()->getType()<<" "<<instructionVector[i]->getArg2()->getVal();
-                fs<<endl;
+                fwrite(&(instructionVector[i]->getResult()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getResult()->getVal()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg1()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg1()->getVal()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg2()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg2()->getVal()), sizeof(int), 1, f);
                 break;
             }
             case sub_vm:{
-                fs<<instructionVector[i]->getResult()->getType()<<" "<<instructionVector[i]->getResult()->getVal();
-                fs<<" "<<instructionVector[i]->getArg1()->getType()<<" "<<instructionVector[i]->getArg1()->getVal();
-                fs<<" "<<instructionVector[i]->getArg2()->getType()<<" "<<instructionVector[i]->getArg2()->getVal();
-                fs<<endl;
+                fwrite(&(instructionVector[i]->getResult()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getResult()->getVal()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg1()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg1()->getVal()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg2()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg2()->getVal()), sizeof(int), 1, f);
                 break;
             }
             case mul_vm:{
-                fs<<instructionVector[i]->getResult()->getType()<<" "<<instructionVector[i]->getResult()->getVal();
-                fs<<" "<<instructionVector[i]->getArg1()->getType()<<" "<<instructionVector[i]->getArg1()->getVal();
-                fs<<" "<<instructionVector[i]->getArg2()->getType()<<" "<<instructionVector[i]->getArg2()->getVal();
-                fs<<endl;
-                break;
-            }
-            case div_vm:{
-                fs<<instructionVector[i]->getResult()->getType()<<" "<<instructionVector[i]->getResult()->getVal();
-                fs<<" "<<instructionVector[i]->getArg1()->getType()<<" "<<instructionVector[i]->getArg1()->getVal();
-                fs<<" "<<instructionVector[i]->getArg2()->getType()<<" "<<instructionVector[i]->getArg2()->getVal();
-                fs<<endl;
+                fwrite(&(instructionVector[i]->getResult()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getResult()->getVal()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg1()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg1()->getVal()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg2()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg2()->getVal()), sizeof(int), 1, f);
                 break;
             }
             case mod_vm:{
-                fs<<instructionVector[i]->getResult()->getType()<<" "<<instructionVector[i]->getResult()->getVal();
-                fs<<" "<<instructionVector[i]->getArg1()->getType()<<" "<<instructionVector[i]->getArg1()->getVal();
-                fs<<" "<<instructionVector[i]->getArg2()->getType()<<" "<<instructionVector[i]->getArg2()->getVal();
-                fs<<endl;
+                fwrite(&(instructionVector[i]->getResult()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getResult()->getVal()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg1()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg1()->getVal()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg2()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg2()->getVal()), sizeof(int), 1, f);
                 break;
             }
             case tablesetelem_vm:{
-                fs<<instructionVector[i]->getResult()->getType()<<" "<<instructionVector[i]->getResult()->getVal();
-                fs<<" "<<instructionVector[i]->getArg1()->getType()<<" "<<instructionVector[i]->getArg1()->getVal();
-                fs<<" "<<instructionVector[i]->getArg2()->getType()<<" "<<instructionVector[i]->getArg2()->getVal();
-                fs<<endl;
+                fwrite(&(instructionVector[i]->getResult()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getResult()->getVal()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg1()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg1()->getVal()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg2()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg2()->getVal()), sizeof(int), 1, f);
                 break;
             }
             case tablegetelem_vm:{
-                fs<<instructionVector[i]->getResult()->getType()<<" "<<instructionVector[i]->getResult()->getVal();
-                fs<<" "<<instructionVector[i]->getArg1()->getType()<<" "<<instructionVector[i]->getArg1()->getVal();
-                fs<<" "<<instructionVector[i]->getArg2()->getType()<<" "<<instructionVector[i]->getArg2()->getVal();
-                fs<<endl;
+                fwrite(&(instructionVector[i]->getResult()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getResult()->getVal()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg1()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg1()->getVal()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg2()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg2()->getVal()), sizeof(int), 1, f);
                 break;
             }
             case call_vm:{
-                fs<<instructionVector[i]->getResult()->getType()<<" "<<instructionVector[i]->getResult()->getVal();
-                fs<<endl;
+                fwrite(&(instructionVector[i]->getResult()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getResult()->getVal()), sizeof(int), 1, f);
                 break;
             }
             case param_vm:{
-                fs<<instructionVector[i]->getResult()->getType()<<" "<<instructionVector[i]->getResult()->getVal();
-                fs<<endl;
+                fwrite(&(instructionVector[i]->getResult()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getResult()->getVal()), sizeof(int), 1, f);
                 break;
             }
             case if_eq_vm:{
-                fs<<instructionVector[i]->getResult()->getType()<<" "<<instructionVector[i]->getResult()->getVal();
-                fs<<" "<<instructionVector[i]->getArg1()->getType()<<" "<<instructionVector[i]->getArg1()->getVal();
-                fs<<" "<<instructionVector[i]->getArg2()->getType()<<" "<<instructionVector[i]->getArg2()->getVal();
-                fs<<endl;
+                fwrite(&(instructionVector[i]->getResult()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getResult()->getVal()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg1()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg1()->getVal()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg2()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg2()->getVal()), sizeof(int), 1, f);
                 break;
             }
             case jump_vm:{
-                fs<<instructionVector[i]->getResult()->getType()<<" "<<instructionVector[i]->getResult()->getVal();
-                fs<<endl;
+                fwrite(&(instructionVector[i]->getResult()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getResult()->getVal()), sizeof(int), 1, f);
                 break;
             }
             case tablecreate_vm:{
-                fs<<instructionVector[i]->getResult()->getType()<<" "<<instructionVector[i]->getResult()->getVal();
-                fs<<endl;
+                fwrite(&(instructionVector[i]->getResult()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getResult()->getVal()), sizeof(int), 1, f);
                 break;
             }
             case funcenter_vm:{
-                fs<<instructionVector[i]->getResult()->getType()<<" "<<instructionVector[i]->getResult()->getVal();
-                fs<<endl;
+                fwrite(&(instructionVector[i]->getResult()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getResult()->getVal()), sizeof(int), 1, f);
                 break;
             }
             case funcexit_vm:{
-                fs<<instructionVector[i]->getResult()->getType()<<" "<<instructionVector[i]->getResult()->getVal();
-                fs<<endl;
+                fwrite(&(instructionVector[i]->getResult()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getResult()->getVal()), sizeof(int), 1, f);
                 break;
             }
         }
     }
-    fs.close();
+    fclose(f);
 }
