@@ -1,5 +1,5 @@
 #pragma once
-
+   
 #include <iostream>
 #include <fstream>
 #include <stdlib.h>
@@ -11,31 +11,6 @@
 #define AVM_STACKENV_SIZE 4
 #define AVM_MAXINSTRUCTIONS (unsigned) nop_v
 using namespace std;
-
-class avm_table;
-class avm_memcell{
-    public:
-    avm_memcell_t type;
-    union {
-        double numVal;
-        string strVal;
-        unsigned char boolVal;
-        avm_table* tableVal;
-        unsigned funcVal;
-        string libFuncVal;
-    }data;
-};
-
-avm_memcell STACK[32768]; 
-avm_memcell *ax, *bx, *cx;
-avm_memcell *retval;
-unsigned top,topsp;
-unsigned char executionFinished=0;
-unsigned pc=0;
-unsigned currLine=0;
-unsigned codeSize=0;
-vector<string> libFuncVector;
-
 
 #define AVM_ENDING_PC codeSize
 
@@ -50,19 +25,38 @@ enum avm_memcell_t{
     nil_m=6,
     undef_m=7
 };
+  
 
+
+
+class avm_table;
 class avm_memcell{
     public:
     avm_memcell_t type;
-    union {
+    union data{
         double numVal;
         string strVal;
         unsigned char boolVal;
         avm_table* tableVal;
         unsigned funcVal;
         string libFuncVal;
-    }data;
+        data(){}
+        ~data(){}
+    };
+    data d;
+    avm_memcell() = default;
 };
+
+
+avm_memcell STACK[32768]; 
+avm_memcell *ax, *bx, *cx;
+avm_memcell *retval;
+unsigned top,topsp;
+unsigned char executionFinished=0;
+unsigned pc=0;
+unsigned currLine=0;
+unsigned codeSize=0;
+vector<string> libFuncVector;
 
 
 avm_memcell* avm_translate_operand(vmarg* arg,avm_memcell* reg){
@@ -73,22 +67,23 @@ avm_memcell* avm_translate_operand(vmarg* arg,avm_memcell* reg){
         case retval_a: return retval;
         case int_a:{
             reg->type = number_m;
-            reg->data.numVal = intVector[arg->getVal()-1];
+            reg->d.numVal = intVector[arg->getVal()-1];
+    
             return reg;
         }
         case double_a:{
             reg->type = number_m;
-            reg->data.numVal = doubleVector[arg->getVal()-1];
+            reg->d.numVal = doubleVector[arg->getVal()-1];
             return reg;
         }
         case string_a:{
             reg->type = string_m;
-            reg->data.strVal = stringVector[arg->getVal()-1]; //cpp dups "=" is overloaded
+            reg->d.strVal = stringVector[arg->getVal()-1]; //cpp dups "=" is overloaded
             return reg;
         }
         case bool_a:{
             reg->type=bool_m;
-            reg->data.boolVal = arg->getVal();
+            reg->d.boolVal = arg->getVal();
             return reg;
         }
         case nil_a:{
@@ -97,12 +92,12 @@ avm_memcell* avm_translate_operand(vmarg* arg,avm_memcell* reg){
         }
         case userfunc_a:{
             reg->type = userfunc_m;
-            reg->data.funcVal = arg->getVal();
+            reg->d.funcVal = arg->getVal();
             return reg;
         }
         case libfunc_a:{
             reg->type = libfunc_m;
-            reg->data.libFuncVal = libFuncVector[arg->getVal()-1];
+            reg->d.libFuncVal = libFuncVector[arg->getVal()-1];
             return reg;
         }
         default: assert(0);
