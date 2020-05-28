@@ -3,7 +3,8 @@
 #include <stdlib.h>
 #include <vector>
 #include "Quads.hpp"
-    #include "generateCode.hpp"
+#include "generateCode.hpp"
+#include "avm_workings.cpp"
 using namespace std;
 
 vector<SymbolTableEntry*> symboltable;
@@ -18,7 +19,22 @@ int main(){
     t->setOpCode(nop_vm);
     instructionVector.push_back(t);
     readFile();
+    loadLibFuncs();
     return 0;
+}
+
+void loadLibFuncs(){
+    libFuncVector.push_back("print");
+    libFuncVector.push_back("input");
+    libFuncVector.push_back("objectmemberkeys");
+    libFuncVector.push_back("objecttotalmembers");
+    libFuncVector.push_back("objectcopy");
+    libFuncVector.push_back("totalarguments");
+    libFuncVector.push_back("argument");
+    libFuncVector.push_back("typeof");
+    libFuncVector.push_back("sqrt");
+    libFuncVector.push_back("cos");
+    libFuncVector.push_back("sin");
 }
 
 void readFile(){
