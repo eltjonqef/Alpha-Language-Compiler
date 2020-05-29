@@ -1,42 +1,116 @@
-#include <iostream>
-#include <fstream>
-#include <stdlib.h>
-#include <vector>
 #include "Quads.hpp"
 #include "generateCode.hpp"
-#include "avm_workings.hpp"
+#include "SymbolTable.hpp"
+
+#define AVM_STACKSIZE 32768
+#define AVM_STACKENV_SIZE 4
+#define AVM_MAXINSTRUCTIONS (unsigned) nop_v
 using namespace std;
 
+#define AVM_ENDING_PC codeSize
 vector<SymbolTableEntry*> symboltable;
-/*vector<int> intVector;
-vector<double> doubleVector;
-vector<string> stringVector;
-*/
-void readFile();
-void loadLibFuncs();
 
-int main(){
-    instruction *t=new instruction();
-    t->setOpCode(nop_vm);
-    instructionVector.push_back(t);
-    readFile();
-    loadLibFuncs();
-    return 0;
-}
 
-void loadLibFuncs(){
-    libFuncVector.push_back("print");
-    libFuncVector.push_back("input");
-    libFuncVector.push_back("objectmemberkeys");
-    libFuncVector.push_back("objecttotalmembers");
-    libFuncVector.push_back("objectcopy");
-    libFuncVector.push_back("totalarguments");
-    libFuncVector.push_back("argument");
-    libFuncVector.push_back("typeof");
-    libFuncVector.push_back("sqrt");
-    libFuncVector.push_back("cos");
-    libFuncVector.push_back("sin");
-}
+enum avm_memcell_t{
+    number_m=0,
+    string_m=1,
+    bool_m=2,
+    table_m=3,
+    userfunc_m=4,
+    libfunc_m=5,
+    nil_m=6,
+    undef_m=7
+};
+  
+
+
+
+class avm_table;
+class avm_memcell{
+    public:
+    avm_memcell_t type;
+    union data{
+        double numVal;
+        string strVal;
+        unsigned char boolVal;
+        avm_table* tableVal;
+        unsigned funcVal;
+        string libFuncVal;
+        data(){}
+        ~data(){}
+    };
+    data d;
+    avm_memcell() = default;
+};
+
+
+avm_memcell STACK[32768]; 
+avm_memcell *ax, *bx, *cx;
+avm_memcell *retval;
+unsigned top,topsp;
+unsigned char executionFinished=0;
+unsigned pc=0;
+unsigned currLine=0;
+unsigned codeSize=0;
+vector<string> libFuncVector;
+
+
+avm_memcell* avm_translate_operand(vmarg* arg,avm_memcell* reg);
+
+void execute_assign(instruction *t);
+void execute_add(instruction *t);
+void execute_sub(instruction *t);
+void execute_mul(instruction *t);
+void execute_div(instruction *t);
+void execute_mod(instruction *t);
+void execute_ifeq(instruction *t);
+void execute_ifnoteq(instruction *t);
+void execute_iflesseq(instruction *t);
+void execute_ifgreatereq(instruction *t);
+void execute_ifless(instruction *t);
+void execute_ifgreater(instruction *t);
+void execute_call(instruction *t);
+void execute_param(instruction *t);
+void execute_ret(instruction *t);
+void execute_getretval(instruction *t);
+void execute_funcenter(instruction *t);
+void execute_funcexit(instruction *t);
+void execute_tableCreate(instruction *t);
+void execute_tableGet(instruction *t);
+void execute_tableSet(instruction *t);
+void execute_jump(instruction *t);
+void execute_nop(instruction *t);
+
+void avm_assign(avm_memcell *lv, avm_memcell *rv);
+typedef void(*execute_func_t)(instruction*);
+
+execute_func_t executionFunctions[]={
+    execute_assign,
+    execute_add,
+    execute_sub,
+    execute_mul,
+    execute_div,
+    execute_mod,
+    execute_ifeq,
+    execute_ifnoteq,
+    execute_iflesseq,
+    execute_ifgreatereq,
+    execute_ifless,
+    execute_ifgreater,
+    execute_call,
+    execute_param,
+    execute_ret,
+    execute_getretval,
+    execute_funcenter,
+    execute_funcexit,
+    execute_tableCreate,
+    execute_tableGet,
+    execute_tableSet,
+    execute_jump,
+    execute_nop
+};
+
+void execute_cycle();
 
 void readFile(){
     int magicNumber, loop;
@@ -246,23 +320,6 @@ void readFile(){
         }
     }
     fclose(f);
+    codeSize=instructionVector.size();
     printInstructions();
 }
-
-/*
-21 10 7
-16 8 0
-21 10 6
-16 8 1
-17 8 1
-17 8 0
-1 0 1 5 1 6 1
-1 0 2 0 1 5 1
-1 0 3 0 2 4 1
-1 0 4 0 3 6 2
-1 0 5 0 4 4 2
-1 0 6 0 5 4 1
-1 0 7 0 6 6 1
-0 0 0 0 7
-0 0 8 0 0
-*/
