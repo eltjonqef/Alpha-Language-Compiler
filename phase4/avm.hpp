@@ -1,10 +1,12 @@
 #include "Quads.hpp"
 #include "generateCode.hpp"
 #include "SymbolTable.hpp"
-
+#include <math.h>
+  
 #define AVM_STACKSIZE 32768
 #define AVM_STACKENV_SIZE 4
 #define AVM_MAXINSTRUCTIONS (unsigned) nop_v
+
 using namespace std;
 
 #define AVM_ENDING_PC codeSize
@@ -23,8 +25,6 @@ enum avm_memcell_t{
 };
   
 
-
-
 class avm_table;
 class avm_memcell{
     public:
@@ -40,7 +40,67 @@ class avm_memcell{
         ~data(){}
     };
     data d;
-    avm_memcell() = default;
+    avm_memcell() {}
+};
+class avm_table_bucket{
+    private:
+        avm_memcell* key;
+        avm_memcell* value;
+    public:
+        avm_table_bucket(){
+            key=new avm_memcell();
+            value=new avm_memcell();
+        }
+        avm_memcell *getKey(){
+            return key;
+        }
+        avm_memcell *getValue(){
+            return value;
+        }
+};
+
+class avm_table{
+    private:
+        unsigned refCounter;
+        map<int, avm_table_bucket*> numIndexed;
+        map<string, avm_table_bucket*> strIndexed;
+        unsigned total;
+    public:
+        avm_table(){
+            refCounter=0;
+            total=0;
+        }
+        void incrRefCounter(){
+            refCounter++;
+        }
+        void decrRefCounter(){
+            assert(refCounter>0);
+            --refCounter;
+        }
+        avm_table_bucket *getTable_Bucket(int key){
+            return numIndexed[key];
+        }
+        avm_table_bucket *getTable_Bucket(string key){
+            return strIndexed[key];
+        }
+        void setTable_Bucket(int key, avm_table_bucket *bucket){
+            numIndexed[key]=bucket;
+        }
+        void setTable_Bucket(string key, avm_table_bucket *bucket){
+            strIndexed[key]=bucket;
+        }
+        void deleteBucket(int key){
+            numIndexed.erase(key);
+        }
+        void deleteBucket(string key){
+            strIndexed.erase(key);
+        }
+        void incrTotal(){
+            total++;
+        }
+        void decrTotal(){
+            total--;
+        }
 };
 
 
@@ -55,8 +115,87 @@ unsigned codeSize=0;
 vector<string> libFuncVector;
 
 
-avm_memcell* avm_translate_operand(vmarg* arg,avm_memcell* reg);
+typedef void (*memclear_func_t)(avm_memcell*);
 
+void avm_warning(string format);
+
+void memclear_string(avm_memcell* m){
+    //assert(m->d.strVal);
+    //free(m->d.strVal);
+    m->d.strVal = "";
+}
+void memclear_table(avm_memcell* m){
+    assert(m->d.tableVal);
+    //avm_tabledecrefcounter(m->d.tableVal);
+}
+
+memclear_func_t memclearFuncs[]{
+    0, /*number*/
+    memclear_string,
+    0, /*bool*/
+    memclear_table,
+    0,/*userfunc*/
+    0,/*livfunc*/
+    0,/*nil*/
+    0,/*undef*/
+
+};
+
+void avm_memcellclear(avm_memcell* m){
+    if(m->type != undef_m){
+        memclear_func_t f = memclearFuncs[m->type];
+        if(f){
+            (*f)(m);
+            m->type = undef_m;
+        }
+    }
+}
+
+
+avm_memcell* avm_translate_operand(vmarg* arg,avm_memcell* reg){
+    switch(arg->getType()){
+        case global_a: return &STACK[AVM_STACKSIZE-1-arg->getVal()];
+        case local_a: return &STACK[topsp-arg->getVal()];
+        case formal_a: return &STACK[topsp+AVM_STACKENV_SIZE+1+arg->getVal()];
+        case retval_a: return retval;
+        case int_a:{
+            reg->type = number_m;
+            reg->d.numVal = intVector[arg->getVal()-1];
+            return reg;
+        }
+        case double_a:{
+            reg->type = number_m;
+            reg->d.numVal = doubleVector[arg->getVal()-1];
+            return reg;
+        }
+        case string_a:{
+            reg->type = string_m;
+            reg->d.strVal = (stringVector[arg->getVal()-1]); //cpp dups "=" is overloaded
+            return reg;
+        }
+        case bool_a:{
+            reg->type=bool_m;
+            reg->d.boolVal = arg->getVal();
+            return reg;
+        }
+        case nil_a:{
+            reg->type = nil_m;
+            return reg;
+        }
+        case userfunc_a:{
+            reg->type = userfunc_m;
+            reg->d.funcVal = arg->getVal();
+            return reg;
+        }
+        case libfunc_a:{
+            reg->type = libfunc_m;
+            reg->d.libFuncVal = libFuncVector[arg->getVal()-1];
+            return reg;
+        }
+        default: assert(0);
+    }
+
+}
 void execute_assign(instruction *t);
 void execute_add(instruction *t);
 void execute_sub(instruction *t);
@@ -82,6 +221,9 @@ void execute_jump(instruction *t);
 void execute_nop(instruction *t);
 
 void avm_assign(avm_memcell *lv, avm_memcell *rv);
+void avm_getElem(avm_table *table, avm_memcell* index);
+void avm_setElem(avm_table *table, avm_memcell* index, avm_memcell *content);
+
 typedef void(*execute_func_t)(instruction*);
 
 execute_func_t executionFunctions[]={
@@ -317,9 +459,95 @@ void readFile(){
                 instructionVector.push_back(t);
                 break;
             }
+            case 19:{
+                instruction *t=new instruction();
+                t->setOpCode(tablegetelem_vm);
+                fread(&num, sizeof(int), 1, f);
+                t->getResult()->setType(vmarg_t(num));
+                fread(&num, sizeof(int), 1, f);
+                t->getResult()->setVal(num);
+                fread(&num, sizeof(int), 1, f);
+                t->getArg1()->setType(vmarg_t(num));
+                fread(&num, sizeof(int), 1, f);
+                t->getArg1()->setVal(num);
+                fread(&num, sizeof(int), 1, f);
+                t->getArg2()->setType(vmarg_t(num));
+                fread(&num, sizeof(int), 1, f);
+                t->getArg2()->setVal(num);
+                instructionVector.push_back(t);
+                break;
+            }
+            case 20:{
+                instruction *t=new instruction();
+                t->setOpCode(tablesetelem_vm);
+                fread(&num, sizeof(int), 1, f);
+                t->getResult()->setType(vmarg_t(num));
+                fread(&num, sizeof(int), 1, f);
+                t->getResult()->setVal(num);
+                fread(&num, sizeof(int), 1, f);
+                t->getArg1()->setType(vmarg_t(num));
+                fread(&num, sizeof(int), 1, f);
+                t->getArg1()->setVal(num);
+                fread(&num, sizeof(int), 1, f);
+                t->getArg2()->setType(vmarg_t(num));
+                fread(&num, sizeof(int), 1, f);
+                t->getArg2()->setVal(num);
+                instructionVector.push_back(t);
+                break;
+            }
         }
     }
     fclose(f);
     codeSize=instructionVector.size();
-    printInstructions();
+    //printInstructions();
+}
+
+
+
+/*arithmetics*/
+
+
+
+
+typedef double (*arithmetic_func_t)(double x,double y);
+
+double add_impl (double x,double y){return x+y;}
+double sub_impl (double x,double y){return x-y;}
+double mul_impl (double x,double y){return x*y;}
+double div_impl (double x,double y){
+    assert(y != 0);//todo error instead of assert
+    return x/y;
+}
+double mod_impl (double x,double y){
+    assert(y != 0);
+    return fmod(x,y);
+}
+
+arithmetic_func_t arithmeticFuncs[] = {
+    add_impl,
+    sub_impl,
+    mul_impl,
+    div_impl,
+    mod_impl
+};
+
+void execute_arithmetic (instruction* instr){
+    avm_memcell* lv = avm_translate_operand(instr->getResult(),(avm_memcell*) 0);
+    avm_memcell* rv1 = avm_translate_operand(instr->getArg1(),ax);
+    avm_memcell* rv2 = avm_translate_operand(instr->getArg2(),bx);
+
+    //assert(lv && (&STACK[top] <= lv && &STACK[AVM_STACKSIZE] > lv || lv == &retval));
+    assert(rv1 && rv2);
+    if((rv1->type != number_m) ||(rv2->type != number_m)){
+        cout<<"arithmetic error\n";
+        executionFinished = 1;
+    }else{
+        arithmetic_func_t op = arithmeticFuncs[instr->getOP()-add_vm];
+        avm_memcellclear(lv);
+        lv->type = number_m;
+        cout<<"rv1->d.numVal + rv2->d.numVal = "<<rv1->d.numVal+rv2->d.numVal<<"\n";
+        lv->d.numVal = (*op)(rv1->d.numVal,rv2->d.numVal);
+        cout<<"val->"<<lv->d.numVal<<"\n";
+        //arithmetic_func_t op = arithmeticFuncs[instr->getOP()-add_vm];
+    }
 }

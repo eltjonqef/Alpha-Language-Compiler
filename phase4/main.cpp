@@ -1,9 +1,16 @@
 #include <iostream>
 #include "avm.hpp"
 #include "SymbolTable.hpp"
+/*
+#define execute_add execute_arithmetic
+#define execute_sub execute_arithmetic
+#define execute_mul execute_arithmetic
+#define execute_div execute_arithmetic
+#define execute_mod execute_arithmetic
+*/
 using namespace std;
 void loadLibFuncs();
-
+  
 int main(){
     instruction *t=new instruction();
     t->setOpCode(nop_vm);
@@ -27,11 +34,11 @@ void execute_assign(instruction *t){
     assert(rv);
     avm_assign(lv, rv);
 }
-void execute_add(instruction *t){}
-void execute_sub(instruction *t){}
-void execute_mul(instruction *t){}
-void execute_div(instruction *t){}
-void execute_mod(instruction *t){}
+void execute_add(instruction *t){execute_arithmetic(t);}
+void execute_sub(instruction *t){execute_arithmetic(t);}
+void execute_mul(instruction *t){execute_arithmetic(t);}
+void execute_div(instruction *t){execute_arithmetic(t);}
+void execute_mod(instruction *t){execute_arithmetic(t);}
 void execute_ifeq(instruction *t){}
 void execute_ifnoteq(instruction *t){}
 void execute_iflesseq(instruction *t){}
@@ -44,9 +51,47 @@ void execute_ret(instruction *t){}
 void execute_getretval(instruction *t){}
 void execute_funcenter(instruction *t){}
 void execute_funcexit(instruction *t){}
-void execute_tableCreate(instruction *t){}
-void execute_tableGet(instruction *t){}
-void execute_tableSet(instruction *t){}
+void execute_tableCreate(instruction *t){
+    avm_memcell *lv=avm_translate_operand(t->getResult(), NULL);
+    //ALLH MIA MEGALI ASSERT
+    //MEM CLEAR
+    lv->type=table_m;
+    lv->d.tableVal=new avm_table();
+    lv->d.tableVal->incrRefCounter();
+}
+void execute_tableGet(instruction *t){
+    avm_memcell *lv=avm_translate_operand(t->getResult(), NULL);
+    avm_memcell *u=avm_translate_operand(t->getArg1(), NULL);
+    avm_memcell *i=avm_translate_operand(t->getArg2(), ax);
+    
+    //
+    //POUTSOASSERT
+    //
+    lv->type=nil_m;
+    if(u->type!=table_m){
+        cout<<"ERROR\n";
+    }
+    else{
+        avm_memcell *content=avm_getElem(u->d.tableVal, i);
+        if(content)
+            avm_assign(lv, content);
+        else{
+            cout<<"not found\n";
+        }
+    }
+}
+void execute_tableSet(instruction *t){
+
+    avm_memcell *r=avm_translate_operand(t->getResult(), NULL);
+    avm_memcell *i=avm_translate_operand(t->getArg1(), ax);
+    avm_memcell *c=avm_translate_operand(t->getArg2(), bx);
+    //ASSERT
+    //ASSERT
+    if(r->type!=table_m)
+        cout<<"ILLEGAL use of type\n";
+    else
+        avm_setElem(r->d.tableVal, i , c);
+}
 void execute_jump(instruction *t){}
 void execute_nop(instruction *t){}
 
@@ -62,11 +107,48 @@ void avm_assign(avm_memcell *lv, avm_memcell *rv){
     //avm_memcellclear(lv);  NOT IMPLEMENTED YET
 
     memcpy(lv, rv, sizeof(avm_memcell));
-    /*if(lv->type==string_m)
+    if(lv->type==string_m)
         lv->d.strVal=string(rv->d.strVal);
     else if(lv->type==table_m)
-        cout<<"NOT IMPLEMENTED YET\n"; //avm_tableIncrefCounter(lv->d.tableVal);*/
+        lv->d.tableVal->incrRefCounter();
+}
+void avm_getElem(avm_table *table, avm_memcell* index);
+void avm_setElem(avm_table *table, avm_memcell* index, avm_memcell *content){
 
+    avm_table_bucket *bucket;
+    if(index->type==number_m){
+        bucket=table->getTable_Bucket(index->d.numVal);
+    }
+    else if(index->type==string_m){
+        bucket=table->getTable_Bucket(index->d.strVal);
+    }
+    if(bucket){
+        if(content->type==nil_m){
+            if(index->type==number_m){
+                table->deleteBucket(index->d.numVal);
+            }
+            else if(index->type==string_m){
+                table->deleteBucket(index->d.strVal);
+            }
+            table->decrTotal();
+        }
+        else{
+            avm_assign(bucket->getValue(), content);
+            table->incrTotal();
+        }
+    }
+    else{
+        bucket=new avm_table_bucket();
+        avm_assign(bucket->getKey(), index);
+        avm_assign(bucket->getValue(), content);
+        if(index->type==number_m){
+            table->setTable_Bucket(index->d.numVal, bucket);
+        }
+        else if(index->type==string_m){
+            table->setTable_Bucket(index->d.strVal, bucket);
+        }
+        table->incrTotal();
+    }
 }
 
 void execute_cycle(){
@@ -99,7 +181,7 @@ void loadLibFuncs(){
     libFuncVector.push_back("sin");
 }
 
-
+/*
 avm_memcell* avm_translate_operand(vmarg* arg,avm_memcell* reg){
     switch(arg->getType()){
         case global_a: return &STACK[AVM_STACKSIZE-1-arg->getVal()];
@@ -143,3 +225,4 @@ avm_memcell* avm_translate_operand(vmarg* arg,avm_memcell* reg){
         default: assert(0);
     }
 }
+*/
