@@ -196,33 +196,48 @@ avm_memcell* avm_translate_operand(vmarg* arg,avm_memcell* reg){
     }
 
 }
+//arithmetic
 void execute_assign(instruction *t); //done
 void execute_add(instruction *t);   //done
 void execute_sub(instruction *t);   //done
 void execute_mul(instruction *t);   //done
 void execute_div(instruction *t);   //done
 void execute_mod(instruction *t);   //done
-void execute_ifeq(instruction *t);
-void execute_ifnoteq(instruction *t);
-void execute_iflesseq(instruction *t);
-void execute_ifgreatereq(instruction *t);
-void execute_ifless(instruction *t);
-void execute_ifgreater(instruction *t);
+//relational
+void execute_jeq(instruction *t); //almost done
+void execute_jne(instruction *t); //almost done
+void execute_jle(instruction *t);
+void execute_jge(instruction *t);
+void execute_jlt(instruction *t);
+void execute_jgt(instruction *t);
+//function
 void execute_call(instruction *t);
 void execute_param(instruction *t);
 void execute_ret(instruction *t);
 void execute_getretval(instruction *t);
 void execute_funcenter(instruction *t);
 void execute_funcexit(instruction *t);
+//table
 void execute_tableCreate(instruction *t);
 void execute_tableGet(instruction *t);
 void execute_tableSet(instruction *t);
+//simple
 void execute_jump(instruction *t);
 void execute_nop(instruction *t);
 
 void avm_assign(avm_memcell *lv, avm_memcell *rv);
 void avm_getElem(avm_table *table, avm_memcell* index);
 void avm_setElem(avm_table *table, avm_memcell* index, avm_memcell *content);
+
+
+void avm_jeq(instruction *t); //almost done
+void avm_jne(instruction *t); //almost done
+void avm_jle(instruction *t);
+void avm_jge(instruction *t);
+void avm_jlt(instruction *t);
+void avm_jgt(instruction *t);
+
+
 
 /*useful functions*/
 typedef unsigned char (*tobool_func_t)(avm_memcell *);
@@ -535,10 +550,6 @@ void readFile(){
 
 
 /*arithmetics*/
-
-
-
-
 typedef double (*arithmetic_func_t)(double x,double y);
 
 double add_impl (double x,double y){return x+y;}
@@ -583,4 +594,124 @@ void execute_arithmetic (instruction* instr){
 }
 
 //relational
+typedef double (*relational_func_t)(avm_memcell *);
 
+string typeStrings[] ={
+    "number",
+    "string",
+    "bool",
+    "table",
+    "userfunc",
+    "libfunc",
+    "nil",
+    "undef"
+
+};
+
+void avm_jeq(instruction *t){
+    assert(t->getResult()->getType() == label_a);
+    avm_memcell *rv1 = avm_translate_operand(t->getArg1(),ax);
+    avm_memcell *rv2 = avm_translate_operand(t->getArg2(),bx);
+
+    unsigned char result = 0;
+    if((rv1->type == undef_m) || (rv2->type == undef_m)){
+        //todo throw runtime error
+        executionFinished = 1;
+        cout<<"RUNTIME ERROR undefined type involved in equality\n";
+    }else if((rv1->type == nil_m) || (rv2->type = nil_m)){
+        result = ((rv1->type==nil_m) &&(rv2->type==nil_m));
+    }else if((rv1->type = bool_m)&&(rv2->type == bool_m)){
+        result = (avm_tobool(rv1) == avm_tobool(rv2));
+    }else if(rv1->type != rv2->type){
+        //todo throw runtime error
+        executionFinished = 1;
+        cout<<"RUNTIME ERROR can't compare "<<typeStrings[rv1->type]<<" with "<<typeStrings[rv2->type]<<"\n";
+    }else{
+        if(rv1->type == string_m){
+            result = rv1->d.strVal.compare(rv2->d.strVal);
+        }else if(rv1->type == number_m){
+            result = (rv1->d.numVal == rv2->d.numVal);
+        }else if(rv1->type == libfunc_m){
+            result = rv1->d.libFuncVal.compare(rv2->d.libFuncVal);
+        }else if(rv1->type == table_m){//todo tables
+            result = 0; //must change
+        }else if(rv1->type == userfunc_m){//todo userfuncs
+            result = 0;
+        }
+    }
+    if(!executionFinished && result){
+        pc = t->getResult()->getVal();
+    }
+}
+void execute_jne(instruction *t){
+    assert(t->getResult()->getType() == label_a);
+    avm_memcell *rv1 = avm_translate_operand(t->getArg1(),ax);
+    avm_memcell *rv2 = avm_translate_operand(t->getArg2(),bx);
+
+    unsigned char result = 0;
+    if((rv1->type == undef_m) || (rv2->type == undef_m)){
+        executionFinished = 1;
+        //todo runtime error
+        cout<<"RUNTIME ERROR undefined type involved in jne\n";
+    }else if((rv1->type==nil_m)&&(rv2->type==nil_m)){
+        result = 0;
+    }else if(rv1->type == bool_m){
+        result = avm_tobool(rv1) != avm_tobool(rv2);
+    }else if(rv1->type != rv2->type){
+        executionFinished 1;
+        cout<<"RUNTIME ERROR can't compare "<<typeStrings[rv1->type]<<" with "<<typeStrings[rv2->type]<<"\n";
+    }else{
+        if(rv1->type == string_m){
+            result = !(rv1->d.strVal.compare(rv2->d.strVal));
+        }else if(rv1->type == number_m){
+            result = (rv1->d.numVal != rv2->d.numVal);
+        }else if(rv1->type == libfunc_m){
+            result = !(rv1->d.libFuncVal.compare(rv2->d.libFuncVal));
+        }else if(rv1->type == table_m){
+            result = 0; //todo
+        }else if(rv1->type == userfunc_m){
+            result = 0; //todo
+        }
+    }
+    if(!executionFinished && result){
+        pc = t->getResult()->getVal();
+    }
+}
+void execute_jle(instruction *t){
+    assert(t->getResult()->getType() == label_a);
+    avm_memcell *rv1 = avm_translate_operand(t->getArg1(),ax);
+    avm_memcell *rv2 = avm_translate_operand(t->getArg2(),bx);
+
+    unsigned char result = 0;
+    if(rv1->type == undef_m || rv2->type == undef_m){
+        //todo throw runtime error
+        executionFinished = 1;
+        cout<<"RUNTIME ERROR undefined type involved in jle\n";
+    }else if(rv1->type == nil_m && rv1->type == nil_m){
+        result =0;
+    }else if(rv1->type = bool_m && rv2->type == bool_m){
+        result = avm_tobool(rv1) <= avm_tobool(rv2);
+    }else if(rv1->type != rv2->type){
+        //todo throw runtime error
+        executionFinished = 1;
+        cout<<"RUNTIME ERROR can't compare "<<typeStrings[rv1->type]<<" with "<<typeStrings[rv2->type]<<"\n";
+    }else{
+        if(rv1->type == string_m){
+            
+        }else if(rv1->type == number_m){
+            result = rv1->d.numVal <= rv2->d.numVal;
+        }else if(rv1->type == libfunc_m){
+            
+        }else if(rv1->type == table_m){//todo tables
+            result = 0; //must change
+        }else if(rv1->type == userfunc_m){//todo userfuncs
+            result = 0;
+        }
+    }
+    if(!executionFinished && result){
+        pc = t->getResult()->getVal();
+    }
+}
+void execute_jge(instruction *t);
+void execute_jlt(instruction *t);
+void execute_jgt(instruction *t);

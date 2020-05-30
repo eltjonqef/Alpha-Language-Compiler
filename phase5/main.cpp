@@ -25,7 +25,7 @@ int main(){
     return 0;
 }
 
-void execute_assign(instruction *t){
+void execute_assign(instruction *t){ //done
 
     avm_memcell *lv=avm_translate_operand(t->getResult(), NULL);
 
@@ -34,23 +34,27 @@ void execute_assign(instruction *t){
     assert(rv);
     avm_assign(lv, rv);
 }
-void execute_add(instruction *t){execute_arithmetic(t);}
-void execute_sub(instruction *t){execute_arithmetic(t);}
-void execute_mul(instruction *t){execute_arithmetic(t);}
-void execute_div(instruction *t){execute_arithmetic(t);}
-void execute_mod(instruction *t){execute_arithmetic(t);}
-void execute_ifeq(instruction *t){}
-void execute_ifnoteq(instruction *t){}
+//arithmeric
+void execute_add(instruction *t){execute_arithmetic(t);} //done
+void execute_sub(instruction *t){execute_arithmetic(t);} //done
+void execute_mul(instruction *t){execute_arithmetic(t);} //done
+void execute_div(instruction *t){execute_arithmetic(t);} //done
+void execute_mod(instruction *t){execute_arithmetic(t);} //done
+//relational
+void execute_ifeq(instruction *t){avm_jeq(t);} //almost done
+void execute_ifnoteq(instruction *t){avm_jne(t);}//almost done
 void execute_iflesseq(instruction *t){}
 void execute_ifgreatereq(instruction *t){}
 void execute_ifless(instruction *t){}
 void execute_ifgreater(instruction *t){}
+//function
 void execute_call(instruction *t){}
 void execute_param(instruction *t){}
 void execute_ret(instruction *t){}
 void execute_getretval(instruction *t){}
 void execute_funcenter(instruction *t){}
 void execute_funcexit(instruction *t){}
+//table
 void execute_tableCreate(instruction *t){
     avm_memcell *lv=avm_translate_operand(t->getResult(), NULL);
     //ALLH MIA MEGALI ASSERT
@@ -81,7 +85,6 @@ void execute_tableGet(instruction *t){
     }
 }
 void execute_tableSet(instruction *t){
-
     avm_memcell *r=avm_translate_operand(t->getResult(), NULL);
     avm_memcell *i=avm_translate_operand(t->getArg1(), ax);
     avm_memcell *c=avm_translate_operand(t->getArg2(), bx);
@@ -92,6 +95,7 @@ void execute_tableSet(instruction *t){
     else
         avm_setElem(r->d.tableVal, i , c);
 }
+//simple
 void execute_jump(instruction *t){}
 void execute_nop(instruction *t){}
 
@@ -181,48 +185,3 @@ void loadLibFuncs(){
     libFuncVector.push_back("sin");
 }
 
-/*
-avm_memcell* avm_translate_operand(vmarg* arg,avm_memcell* reg){
-    switch(arg->getType()){
-        case global_a: return &STACK[AVM_STACKSIZE-1-arg->getVal()];
-        case local_a: return &STACK[topsp-arg->getVal()];
-        case formal_a: return &STACK[topsp+AVM_STACKENV_SIZE+1+arg->getVal()];
-        case retval_a: return retval;
-        case int_a:{
-            reg->type = number_m;
-            reg->d.numVal = intVector[arg->getVal()-1];
-            return reg;
-        }
-        case double_a:{
-            reg->type = number_m;
-            reg->d.numVal = doubleVector[arg->getVal()-1];
-            return reg;
-        }
-        case string_a:{
-            reg->type = string_m;
-            reg->d.strVal = stringVector[arg->getVal()-1]; //cpp dups "=" is overloaded
-            return reg;
-        }
-        case bool_a:{
-            reg->type=bool_m;
-            reg->d.boolVal = arg->getVal();
-            return reg;
-        }
-        case nil_a:{
-            reg->type = nil_m;
-            return reg;
-        }
-        case userfunc_a:{
-            reg->type = userfunc_m;
-            reg->d.funcVal = arg->getVal();
-            return reg;
-        }
-        case libfunc_a:{
-            reg->type = libfunc_m;
-            reg->d.libFuncVal = libFuncVector[arg->getVal()-1];
-            return reg;
-        }
-        default: assert(0);
-    }
-}
-*/
