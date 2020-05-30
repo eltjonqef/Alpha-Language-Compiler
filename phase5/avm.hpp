@@ -170,7 +170,7 @@ avm_memcell* avm_translate_operand(vmarg* arg,avm_memcell* reg){
         }
         case string_a:{
             reg->type = string_m;
-            reg->d.strVal = (stringVector[arg->getVal()-1]); //cpp dups "=" is overloaded
+            new(&reg->d.strVal) string(stringVector[arg->getVal()-1]); //cpp dups "=" is overloaded
             return reg;
         }
         case bool_a:{
@@ -226,7 +226,7 @@ void execute_jump(instruction *t);
 void execute_nop(instruction *t);
 
 void avm_assign(avm_memcell *lv, avm_memcell *rv);
-void avm_getElem(avm_table *table, avm_memcell* index);
+avm_memcell* avm_getElem(avm_table *table, avm_memcell* index);
 void avm_setElem(avm_table *table, avm_memcell* index, avm_memcell *content);
 
 

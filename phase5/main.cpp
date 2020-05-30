@@ -111,12 +111,27 @@ void avm_assign(avm_memcell *lv, avm_memcell *rv){
     //avm_memcellclear(lv);  NOT IMPLEMENTED YET
 
     memcpy(lv, rv, sizeof(avm_memcell));
+    if(lv->type==number_m)
+        cout<<"contente << "<<lv->d.numVal<<endl;
+    else if(lv->type==string_m)
+        cout<<"contente << "<<lv->d.strVal<<endl;
+    else
+        cout<<"CYKA\n";
     if(lv->type==string_m)
         lv->d.strVal=string(rv->d.strVal);
     else if(lv->type==table_m)
         lv->d.tableVal->incrRefCounter();
 }
-void avm_getElem(avm_table *table, avm_memcell* index);
+avm_memcell* avm_getElem(avm_table *table, avm_memcell* index){
+    avm_table_bucket *bucket;
+    if(index->type==number_m){
+        bucket=table->getTable_Bucket(index->d.numVal);
+    }
+    else{
+        bucket=table->getTable_Bucket(index->d.strVal);
+    }
+    return bucket->getValue();
+}
 void avm_setElem(avm_table *table, avm_memcell* index, avm_memcell *content){
 
     avm_table_bucket *bucket;
