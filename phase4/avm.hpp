@@ -196,12 +196,12 @@ avm_memcell* avm_translate_operand(vmarg* arg,avm_memcell* reg){
     }
 
 }
-void execute_assign(instruction *t);
-void execute_add(instruction *t);
-void execute_sub(instruction *t);
-void execute_mul(instruction *t);
-void execute_div(instruction *t);
-void execute_mod(instruction *t);
+void execute_assign(instruction *t); //done
+void execute_add(instruction *t);   //done
+void execute_sub(instruction *t);   //done
+void execute_mul(instruction *t);   //done
+void execute_div(instruction *t);   //done
+void execute_mod(instruction *t);   //done
 void execute_ifeq(instruction *t);
 void execute_ifnoteq(instruction *t);
 void execute_iflesseq(instruction *t);
@@ -223,6 +223,36 @@ void execute_nop(instruction *t);
 void avm_assign(avm_memcell *lv, avm_memcell *rv);
 void avm_getElem(avm_table *table, avm_memcell* index);
 void avm_setElem(avm_table *table, avm_memcell* index, avm_memcell *content);
+
+/*useful functions*/
+typedef unsigned char (*tobool_func_t)(avm_memcell *);
+
+unsigned char number_tobool(avm_memcell * m){return m->d.numVal != 0;}
+unsigned char string_tobool(avm_memcell * m){return m->d.strVal[0] != 0;}
+unsigned char bool_tobool(avm_memcell * m){return m->d.boolVal;}
+unsigned char table_tobool(avm_memcell * m){return 1;}
+unsigned char userfunc_tobool(avm_memcell * m){return 1;}
+unsigned char libfunc_tobool(avm_memcell * m){return 1;}
+unsigned char nil_tobool(avm_memcell * m){return 0;}
+unsigned char undef_tobool(avm_memcell * m){assert(0);return(0);}
+
+tobool_func_t toboolFuncs[]{
+    number_tobool,
+    string_tobool,
+    bool_tobool,
+    table_tobool,
+    userfunc_tobool,
+    libfunc_tobool,
+    nil_tobool,
+    undef_tobool
+};
+
+unsigned char avm_tobool(avm_memcell *m){
+    assert((m->type >= 0) &&(m->type < undef_m));
+    return (*toboolFuncs[m->type])(m);
+}
+
+
 
 typedef void(*execute_func_t)(instruction*);
 
@@ -551,3 +581,6 @@ void execute_arithmetic (instruction* instr){
         //arithmetic_func_t op = arithmeticFuncs[instr->getOP()-add_vm];
     }
 }
+
+//relational
+
