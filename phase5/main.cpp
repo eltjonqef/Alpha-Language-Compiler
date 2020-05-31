@@ -264,7 +264,29 @@ void libfunc_print(){
     }cout<<endl;
 }
 void libfunc_input(){}
-void libfunc_objectmemberkeys(){}
+void libfunc_objectmemberkeys(){
+    unsigned n=avm_totalactuals();
+    if(n!=1)
+        cout<<"ERROR typeof\n";
+    else{
+        retval->type=string_m;
+        string toReturn="[";
+        map<string, avm_table_bucket*> strMap=avm_getactual(0)->d.tableVal->getStrIndexed();
+        map<int, avm_table_bucket*> numMap=avm_getactual(0)->d.tableVal->getNumIndexed();
+        for(auto const &entry: strMap){
+            toReturn+="\"";
+            toReturn+=entry.second->getKey()->d.strVal;
+            toReturn+="\",";
+        }
+        for(auto const &entry: numMap){
+            toReturn+="\"";
+            toReturn+=entry.second->getKey()->d.numVal;
+            toReturn+="\",";
+        }
+        toReturn+="]";
+        new(&retval->d.strVal) string(toReturn);
+    }
+}
 void libfunc_objecttotalmembers(){
     unsigned n=avm_totalactuals();
     if(n!=1)
