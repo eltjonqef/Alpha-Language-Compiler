@@ -24,7 +24,6 @@ int main(){
     top=AVM_STACKSIZE-1-globals-2;
     topsp=AVM_STACKSIZE-1;
     while(!executionFinished){
-        cout<<"new cycle pc->"<<pc<<"\n";
         execute_cycle();
     }    
     return 0;
@@ -235,8 +234,7 @@ void avm_calllibfunc(string func){
         }
     }
 }
-string avm_tostring(avm_memcell* m){cout<<"HHEOOOO\n";
-    cout<<"TYPE "<<m->type<<endl;
+string avm_tostring(avm_memcell* m){
     assert(m->type>=0 && m->type<undef_m);
     return (*toStringFuncs[m->type])(m);
 }
@@ -258,22 +256,36 @@ avm_memcell* avm_getactual(unsigned i){
     return &STACK[topsp+AVM_STACKENV_SIZE+1+i];
 }
 
-void libfunc_print(){cout<<"EDW EFTASA\n";
+void libfunc_print(){
     unsigned n=avm_totalactuals();
-    cout<<"total "<<n<<endl;
     for(unsigned i=0; i<n; i++){
         //cout<<"ARITHMOS\n"<<avm_getactual(i)->d.numVal<<endl;
         cout<<avm_tostring(avm_getactual(i));
-    }
-    cout<<"kai perasa edw\n";
+    }cout<<endl;
 }
-
+void libfunc_input(){}
+void libfunc_objectmemberkeys(){}
+void libfunc_objecttotalmembers(){}
+void libfunc_objectcopy(){}
+void libfunc_totalarguments(){}
+void libfunc_argument(){}
+void libfunc_typeof(){
+    unsigned n=avm_totalactuals();
+    if(n!=1)
+        cout<<"ERROR typeof\n";
+    else{
+        retval->type=string_m;
+        new(&retval->d.strVal) string(typeStrings[avm_getactual(0)->type]);
+    }
+}
+void libfunc_sqrt(){}
+void libfunc_cos(){}
+void libfunc_sin(){}
 string number_toString(avm_memcell *m){
     
     if(fmod(m->d.numVal,1)==0){
-        cout<<"ena\n";
         return to_string((int)m->d.numVal);
-    }cout<<fmod(m->d.numVal,1)<<" duo\n";
+    }
     return to_string(m->d.numVal);
 }
 string string_toString(avm_memcell *m){
@@ -294,7 +306,6 @@ string table_toString(avm_memcell *m){
         toReturn+="{";
         toReturn+=entry.first;
         toReturn+=":";
-        cout<<"TYPE OF CELL "<<entry.second->getValue()->type<<endl;
         toReturn+=avm_tostring(entry.second->getValue());
         toReturn+="}\n";
     }
@@ -302,7 +313,6 @@ string table_toString(avm_memcell *m){
         toReturn+="{";
         toReturn+=to_string(entry.first);
         toReturn+=":";
-        cout<<"TYPE OF CELL "<<entry.second->getValue()->type<<endl;
         toReturn+=avm_tostring(entry.second->getValue());
         toReturn+="}\n";
     }
@@ -333,24 +343,24 @@ void loadLibFuncs(){
     libFuncVector.push_back("print");
     libFuncMap["print"]=libfunc_print;
     libFuncVector.push_back("input");
-    //libFuncMap["input"]=//libFuncMap.size();
+    libFuncMap["input"]=libfunc_input;
     libFuncVector.push_back("objectmemberkeys");
-    //libFuncMap["objectmemberkeys"]=//libFuncMap.size();
+    libFuncMap["objectmemberkeys"]=libfunc_objectmemberkeys;
     libFuncVector.push_back("objecttotalmembers");
-     //libFuncMap["objecttotalmembers"]=//libFuncMap.size();
+    libFuncMap["objecttotalmembers"]=libfunc_objecttotalmembers;
     libFuncVector.push_back("objectcopy");
-    //libFuncMap["objectcopy"]=//libFuncMap.size();
+    libFuncMap["objectcopy"]=libfunc_objectcopy;
     libFuncVector.push_back("totalarguments");
-    //libFuncMap["totalarguments"]=//libFuncMap.size();
+    libFuncMap["totalarguments"]=libfunc_totalarguments;
     libFuncVector.push_back("argument");
-    //libFuncMap["argument"]=//libFuncMap.size();
+    libFuncMap["argument"]=libfunc_argument;
     libFuncVector.push_back("typeof");
-    //libFuncMap["typeof"]=//libFuncMap.size();
+    libFuncMap["typeof"]=libfunc_typeof;
     libFuncVector.push_back("sqrt");
-    //libFuncMap["sqrt"]=//libFuncMap.size();
-    libFuncVector.push_back("sqrt");
-    //libFuncMap["sqrt"]=//libFuncMap.size();
+    libFuncMap["sqrt"]=libfunc_sqrt;
+    libFuncVector.push_back("cos");
+    libFuncMap["cos"]=libfunc_cos;
     libFuncVector.push_back("sin");
-    //libFuncMap["sin"]=libFuncMap.size();
+    libFuncMap["sin"]=libfunc_sin;
 }
 

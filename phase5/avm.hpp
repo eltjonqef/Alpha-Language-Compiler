@@ -167,7 +167,6 @@ void avm_memcellclear(avm_memcell* m){
 
 
 avm_memcell* avm_translate_operand(vmarg* arg,avm_memcell* reg){
-    cout<<"ARG "<<arg->getType()<<endl;
     switch(arg->getType()){
         case global_a: return &STACK[AVM_STACKSIZE-1-arg->getVal()];
         case local_a: return &STACK[topsp-arg->getVal()];
@@ -176,7 +175,6 @@ avm_memcell* avm_translate_operand(vmarg* arg,avm_memcell* reg){
         case int_a:{
             reg->type = number_m;
             reg->d.numVal = intVector[arg->getVal()-1];
-            cout<<"ARITHMOS :"<<reg->d.numVal<<endl;
             return reg;
         }
         case double_a:{
@@ -186,18 +184,15 @@ avm_memcell* avm_translate_operand(vmarg* arg,avm_memcell* reg){
         }
         case string_a:{
             reg->type = string_m;
-            cout<<"TI EINAI AUTO"<<stringVector[arg->getVal()-1]<<endl;
             new(&reg->d.strVal) string(stringVector[arg->getVal()-1]); //cpp dups "=" is overloaded
             return reg;
         }
         case bool_a:{
-            cout<<"translation sees bool\n";
             reg->type=bool_m;
             reg->d.boolVal = arg->getVal();
             return reg;
         }
         case nil_a:{
-            cout<<"translation sees nil\n";
             reg->type = nil_m;
             return reg;
         }
@@ -269,6 +264,16 @@ void avm_jgt(instruction *t); //done not tested
 
 string avm_tostring(avm_memcell* m);
 void libfunc_print();
+void libfunc_input();
+void libfunc_objectmemberkeys();
+void libfunc_objecttotalmembers();
+void libfunc_objectcopy();
+void libfunc_totalarguments();
+void libfunc_argument();
+void libfunc_typeof();
+void libfunc_sqrt();
+void libfunc_cos();
+void libfunc_sin();
 /*useful functions*/
 typedef unsigned char (*tobool_func_t)(avm_memcell *);
 
@@ -750,7 +755,17 @@ arithmetic_func_t arithmeticFuncs[] = {
 };
 
 library_func_t libfuncs[]={
-    libfunc_print
+    libfunc_print,
+    libfunc_input,
+    libfunc_objectmemberkeys,
+    libfunc_objecttotalmembers,
+    libfunc_objectcopy,
+    libfunc_totalarguments,
+    libfunc_argument,
+    libfunc_typeof,
+    libfunc_sqrt,
+    libfunc_cos,
+    libfunc_sin
 };
 
 void execute_arithmetic (instruction* instr){
@@ -790,12 +805,9 @@ string typeStrings[] ={
 };
 
 void avm_jeq(instruction *t){
-    cout<<"JEQ CALLED\n";
     assert(t->getResult()->getType() == label_a);
     avm_memcell *rv1 = avm_translate_operand(t->getArg1(),ax);
-    cout<<"rv1type ->"<<rv1->type<<"\n";
     avm_memcell *rv2 = avm_translate_operand(t->getArg2(),bx);
-    cout<<"rv2type ->"<<rv2->type<<"\n";
 
     unsigned char result = 0;
     if((rv1->type == undef_m) || (rv2->type == undef_m)){
@@ -803,17 +815,14 @@ void avm_jeq(instruction *t){
         executionFinished = 1;
         cout<<"RUNTIME ERROR undefined type involved in equality\n";
     }else if((rv1->type == nil_m) || (rv2->type == nil_m)){
-        cout<<"nils\n";
         result = ((rv1->type==nil_m) &&(rv2->type==nil_m));
     }else if((rv1->type == bool_m)&&(rv2->type == bool_m)){
-        cout<<"bools\n";
         result = (avm_tobool(rv1) == avm_tobool(rv2));
     }else if(rv1->type != rv2->type){
         //todo throw runtime error
         executionFinished = 1;
         cout<<"RUNTIME ERROR can't compare "<<typeStrings[rv1->type]<<" with "<<typeStrings[rv2->type]<<"\n";
     }else{
-        cout<<"in else\n";
         if(rv1->type == string_m){
             result = rv1->d.strVal.compare(rv2->d.strVal);
             if(result == 0){
@@ -821,9 +830,7 @@ void avm_jeq(instruction *t){
             }else{
                 result = 0;
             }
-            cout<<"in eq strcompare says "<<result<<"\n";
         }else if(rv1->type == number_m){
-            cout<<"nums\n";
             result = (rv1->d.numVal == rv2->d.numVal);
         }else if(rv1->type == libfunc_m){
             result = rv1->d.libFuncVal.compare(rv2->d.libFuncVal);
@@ -834,10 +841,8 @@ void avm_jeq(instruction *t){
         }
     }
     if(!executionFinished && result){
-        cout<<"equality passed setting pc -> "<<t->getResult()->getVal()<<"\n";
         pc = t->getResult()->getVal();
     }
-    cout<<"JEQ done\n";
 }
 void avm_jne(instruction *t){
     assert(t->getResult()->getType() == label_a);
