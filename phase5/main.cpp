@@ -265,7 +265,16 @@ void libfunc_print(){
 }
 void libfunc_input(){}
 void libfunc_objectmemberkeys(){}
-void libfunc_objecttotalmembers(){}
+void libfunc_objecttotalmembers(){
+    unsigned n=avm_totalactuals();
+    if(n!=1)
+        cout<<"ERROR typeof\n";
+    else{
+        retval->type=number_m;
+        retval->d.numVal=avm_getactual(0)->d.tableVal->getTotal();
+        //new(&retval->d.strVal) string(typeStrings[avm_getactual(0)->type]);
+    }
+}
 void libfunc_objectcopy(){}
 void libfunc_totalarguments(){}
 void libfunc_argument(){}
