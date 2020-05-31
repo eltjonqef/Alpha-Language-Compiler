@@ -13,6 +13,7 @@
 using namespace std;
 
 #define AVM_ENDING_PC codeSize
+#define PI 3.14159265
 typedef void (*library_func_t)(void);
 
 vector<SymbolTableEntry*> symboltable;

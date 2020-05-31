@@ -297,8 +297,26 @@ void libfunc_sqrt(){
         //new(&retval->d.strVal) string(typeStrings[avm_getactual(0)->type]);
     }
 }
-void libfunc_cos(){}
-void libfunc_sin(){}
+void libfunc_cos(){
+    unsigned n=avm_totalactuals();
+    if(n!=1)
+        cout<<"ERROR typeof\n";
+    else{
+        retval->type=number_m;
+        retval->d.numVal=cos(avm_getactual(0)->d.numVal * PI /180);
+        //new(&retval->d.strVal) string(typeStrings[avm_getactual(0)->type]);
+    }
+}
+void libfunc_sin(){
+    unsigned n=avm_totalactuals();
+    if(n!=1)
+        cout<<"ERROR typeof\n";
+    else{
+        retval->type=number_m;
+        retval->d.numVal=sin(avm_getactual(0)->d.numVal * PI /180);
+        //new(&retval->d.strVal) string(typeStrings[avm_getactual(0)->type]);
+    }
+}
 string number_toString(avm_memcell *m){
     
     if(fmod(m->d.numVal,1)==0){
