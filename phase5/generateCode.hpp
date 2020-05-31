@@ -7,6 +7,7 @@ using namespace std;
 int quadIndex=0;
 vector<SymbolTableEntry*> functionVector;
 map<string, int> libMap;
+int globalCounter=0;
 
 enum vmarg_t{
 
@@ -115,7 +116,8 @@ void make_operand(expr *e, vmarg *arg){
         case newtable_e: {
             arg->setVal(e->sym->getOffset());
             switch(e->sym->getScopespace()){
-                case programvar: 
+                case programvar:
+                    globalCounter++;
                     arg->setType(global_a);
                     break;
                 case functionlocal:
@@ -173,27 +175,27 @@ void make_retval_operand(vmarg* arg){
 }
 enum vmopcode_t{ 
 
-    assign_vm,
-    add_vm,
-    sub_vm,
-    mul_vm,
-    div_vm,
-    mod_vm,
-    if_eq_vm,
-    if_noteq_vm,
-    if_lesseq_vm,
-    if_greatereq_vm,
-    if_less_vm,
-    if_greater_vm,
+    assign_vm,//
+    add_vm,//
+    sub_vm,//
+    mul_vm,//
+    div_vm,//
+    mod_vm,//
+    if_eq_vm,//
+    if_noteq_vm,///
+    if_lesseq_vm,///
+    if_greatereq_vm,///
+    if_less_vm,///
+    if_greater_vm,///teq_vm
     call_vm,
     param_vm,
     ret_vm,
     getretval_vm,
-    funcenter_vm,
-    funcexit_vm,
-    tablecreate_vm,
-    tablegetelem_vm,
-    tablesetelem_vm,
+    funcenter_vm,//
+    funcexit_vm,//
+    tablecreate_vm,//
+    tablegetelem_vm,//
+    tablesetelem_vm,//
     jump_vm,
     nop_vm
 };
@@ -648,6 +650,7 @@ void writeBinary(){
         char *ctext=const_cast<char*>(stringVector[i].c_str());
         fwrite(ctext, sizeof(char), len, f);
     }
+    fwrite(&globalCounter, sizeof(int), 1,f);
     loop=instructionVector.size()-1;
     fwrite(&loop, sizeof(int), 1, f);
     for(int i=1; i<instructionVector.size(); i++){
@@ -726,6 +729,51 @@ void writeBinary(){
                 break;
             }
             case if_eq_vm:{
+                fwrite(&(instructionVector[i]->getResult()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getResult()->getVal()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg1()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg1()->getVal()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg2()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg2()->getVal()), sizeof(int), 1, f);
+                break;
+            }
+            case if_noteq_vm:{
+                fwrite(&(instructionVector[i]->getResult()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getResult()->getVal()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg1()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg1()->getVal()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg2()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg2()->getVal()), sizeof(int), 1, f);
+                break;
+            }
+            case if_lesseq_vm:{
+                fwrite(&(instructionVector[i]->getResult()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getResult()->getVal()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg1()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg1()->getVal()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg2()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg2()->getVal()), sizeof(int), 1, f);
+                break;
+            }
+            case if_greatereq_vm:{
+                fwrite(&(instructionVector[i]->getResult()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getResult()->getVal()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg1()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg1()->getVal()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg2()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg2()->getVal()), sizeof(int), 1, f);
+                break;
+            }
+            case if_less_vm:{
+                fwrite(&(instructionVector[i]->getResult()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getResult()->getVal()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg1()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg1()->getVal()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg2()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg2()->getVal()), sizeof(int), 1, f);
+                break;
+            }
+            case if_greater_vm:{
                 fwrite(&(instructionVector[i]->getResult()->getType()), sizeof(int), 1, f);
                 fwrite(&(instructionVector[i]->getResult()->getVal()), sizeof(int), 1, f);
                 fwrite(&(instructionVector[i]->getArg1()->getType()), sizeof(int), 1, f);

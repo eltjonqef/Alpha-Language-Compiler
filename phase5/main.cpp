@@ -20,8 +20,13 @@ int main(){
     ax=new avm_memcell();
     bx=new avm_memcell();
     cx=new avm_memcell();
-    while(!executionFinished)
+    retval=new avm_memcell();
+    top=AVM_STACKSIZE-1-globals-2;
+    topsp=AVM_STACKSIZE-1;
+    while(!executionFinished){
+        cout<<"new cycle pc->"<<pc<<"\n";
         execute_cycle();
+    }    
     return 0;
 }
 
@@ -41,19 +46,50 @@ void execute_mul(instruction *t){execute_arithmetic(t);} //done
 void execute_div(instruction *t){execute_arithmetic(t);} //done
 void execute_mod(instruction *t){execute_arithmetic(t);} //done
 //relational
-void execute_ifeq(instruction *t){avm_jeq(t);} //almost done
-void execute_ifnoteq(instruction *t){avm_jne(t);}//almost done
-void execute_iflesseq(instruction *t){}
-void execute_ifgreatereq(instruction *t){}
-void execute_ifless(instruction *t){}
-void execute_ifgreater(instruction *t){}
+void execute_jeq(instruction *t){avm_jeq(t);} //done not tested
+void execute_jne(instruction *t){avm_jne(t);}//done not tested
+void execute_jle(instruction *t){avm_jle(t);}//done not tested
+void execute_jge(instruction *t){avm_jge(t);}//done not tested
+void execute_jlt(instruction *t){avm_jlt(t);}//done not tested
+void execute_jgt(instruction *t){avm_jgt(t);}//done not tested
 //function
-void execute_call(instruction *t){}
-void execute_param(instruction *t){}
+void execute_call(instruction *t){
+    avm_memcell *func=avm_translate_operand(t->getResult(), ax);
+    avm_callsaveenvironment(); //NOT IMPLEMENTED YET
+    switch(func->type){
+        case userfunc_m:{
+            pc=func->d.funcVal;
+            assert(pc<AVM_ENDING_PC);
+            assert(instructionVector[pc]->getOP()==funcenter_vm);
+           break;
+        }
+        case string_m:{
+            avm_calllibfunc(func->d.strVal); //NOT IMPLEMENTED YET
+            break;
+        }
+        case libfunc_m:{
+            avm_calllibfunc(func->d.libFuncVal); //NOT IMPLEMENTED YET
+            break;
+        }
+        default:{
+            executionFinished=1;
+        }
+    }
+}
+void execute_param(instruction *t){
+    avm_memcell *arg=avm_translate_operand(t->getResult(), ax);
+    avm_assign(&STACK[top], arg);
+    ++totalActuals;
+    avm_dec_top();
+}
 void execute_ret(instruction *t){}
 void execute_getretval(instruction *t){}
 void execute_funcenter(instruction *t){}
-void execute_funcexit(instruction *t){}
+void execute_funcexit(instruction *t){
+    top=avm_get_envvalue(topsp+AVM_SAVEDTOP_OFFSET);
+    pc=avm_get_envvalue(topsp+AVM_SAVEDPC_OFFSET);
+    topsp=avm_get_envvalue(topsp+AVM_SAVEDTOPSP_OFFSET);
+}
 //table
 void execute_tableCreate(instruction *t){
     avm_memcell *lv=avm_translate_operand(t->getResult(), NULL);
@@ -96,7 +132,7 @@ void execute_tableSet(instruction *t){
         avm_setElem(r->d.tableVal, i , c);
 }
 //simple
-void execute_jump(instruction *t){}
+void execute_jump(instruction *t){avm_jump(t);}
 void execute_nop(instruction *t){}
 
 void avm_assign(avm_memcell *lv, avm_memcell *rv){
@@ -111,12 +147,6 @@ void avm_assign(avm_memcell *lv, avm_memcell *rv){
     //avm_memcellclear(lv);  NOT IMPLEMENTED YET
 
     memcpy(lv, rv, sizeof(avm_memcell));
-    if(lv->type==number_m)
-        cout<<"contente << "<<lv->d.numVal<<endl;
-    else if(lv->type==string_m)
-        cout<<"contente << "<<lv->d.strVal<<endl;
-    else
-        cout<<"CYKA\n";
     if(lv->type==string_m)
         lv->d.strVal=string(rv->d.strVal);
     else if(lv->type==table_m)
@@ -169,7 +199,120 @@ void avm_setElem(avm_table *table, avm_memcell* index, avm_memcell *content){
         table->incrTotal();
     }
 }
+void avm_callsaveenvironment(){
+    avm_push_envvalue(totalActuals);
+    avm_push_envvalue(pc+1);
+    avm_push_envvalue(top+totalActuals+2);
+    avm_push_envvalue(topsp);
+}
+void avm_push_envvalue(unsigned val){
+    STACK[top].type=number_m;
+    STACK[top].d.numVal=val;
+    avm_dec_top();
+}
+void avm_dec_top(){
+    if(!top){
+        cout<<"STACK OVERFLOW\n";
+        executionFinished=1;
+    }
+    else{
+        --top;
+    }
+}
+void avm_calllibfunc(string func){
+    //TO DO IF NOT EXISTING
+    library_func_t f=libFuncMap[func];
+    if(!f){
+        cout<<"CALL LIB ERROR\n";
+        executionFinished=1;
+    }
+    else{
+        topsp=top;
+        totalActuals=0;
+        (*f)();
+        if(!executionFinished){
+            execute_funcexit(instructionVector[pc]);
+        }
+    }
+}
+string avm_tostring(avm_memcell* m){cout<<"HHEOOOO\n";
+    cout<<"TYPE "<<m->type<<endl;
+    assert(m->type>=0 && m->type<undef_m);
+    return (*toStringFuncs[m->type])(m);
+}
 
+unsigned avm_get_envvalue(unsigned i){
+    if(STACK[i].type!=number_m){cout<<"found nul\n";}
+    assert(STACK[i].type==number_m);
+    unsigned val=(unsigned) STACK[i].d.numVal;
+    assert(STACK[i].d.numVal==(double)val);
+    return val;
+}
+
+unsigned avm_totalactuals(){
+    return avm_get_envvalue(topsp+AVM_NUMACTUALS_OFFSET);
+}
+
+avm_memcell* avm_getactual(unsigned i){
+    assert(i<avm_totalactuals());
+    return &STACK[topsp+AVM_STACKENV_SIZE+1+i];
+}
+
+void libfunc_print(){cout<<"EDW EFTASA\n";
+    unsigned n=avm_totalactuals();
+    cout<<"total "<<n<<endl;
+    for(unsigned i=0; i<n; i++){
+        //cout<<"ARITHMOS\n"<<avm_getactual(i)->d.numVal<<endl;
+        cout<<avm_tostring(avm_getactual(i));
+    }
+    cout<<"kai perasa edw\n";
+}
+
+string number_toString(avm_memcell *m){
+    
+    if(fmod(m->d.numVal,1)==0){
+        cout<<"ena\n";
+        return to_string((int)m->d.numVal);
+    }cout<<fmod(m->d.numVal,1)<<" duo\n";
+    return to_string(m->d.numVal);
+}
+string string_toString(avm_memcell *m){
+    return m->d.strVal;
+}
+string bool_toString(avm_memcell *m){
+    if(m->d.boolVal==0)
+        return "TRUE";
+    else
+        return "FALSE";
+}
+string table_toString(avm_memcell *m){
+    string toReturn="";
+    toReturn+="[";
+    map<string, avm_table_bucket*> strMap=m->d.tableVal->getStrIndexed();
+    map<int, avm_table_bucket*> numMap=m->d.tableVal->getNumIndexed();
+    for(auto const &entry: strMap){
+        toReturn+="{";
+        toReturn+=entry.first;
+        toReturn+=":";
+        cout<<"TYPE OF CELL "<<entry.second->getValue()->type<<endl;
+        toReturn+=avm_tostring(entry.second->getValue());
+        toReturn+="}\n";
+    }
+    for(auto const &entry: numMap){
+        toReturn+="{";
+        toReturn+=to_string(entry.first);
+        toReturn+=":";
+        cout<<"TYPE OF CELL "<<entry.second->getValue()->type<<endl;
+        toReturn+=avm_tostring(entry.second->getValue());
+        toReturn+="}\n";
+    }
+    toReturn+="]\n";
+    return toReturn;
+}
+string userfunc_toString(avm_memcell *m){}
+string libfunc_toString(avm_memcell *m){}
+string nil_toString(avm_memcell *m){}
+string undef_toString(avm_memcell *m){}
 void execute_cycle(){
 
     if(executionFinished) return;
@@ -188,15 +331,26 @@ void execute_cycle(){
 
 void loadLibFuncs(){
     libFuncVector.push_back("print");
+    libFuncMap["print"]=libfunc_print;
     libFuncVector.push_back("input");
+    //libFuncMap["input"]=//libFuncMap.size();
     libFuncVector.push_back("objectmemberkeys");
+    //libFuncMap["objectmemberkeys"]=//libFuncMap.size();
     libFuncVector.push_back("objecttotalmembers");
+     //libFuncMap["objecttotalmembers"]=//libFuncMap.size();
     libFuncVector.push_back("objectcopy");
+    //libFuncMap["objectcopy"]=//libFuncMap.size();
     libFuncVector.push_back("totalarguments");
+    //libFuncMap["totalarguments"]=//libFuncMap.size();
     libFuncVector.push_back("argument");
+    //libFuncMap["argument"]=//libFuncMap.size();
     libFuncVector.push_back("typeof");
+    //libFuncMap["typeof"]=//libFuncMap.size();
     libFuncVector.push_back("sqrt");
-    libFuncVector.push_back("cos");
+    //libFuncMap["sqrt"]=//libFuncMap.size();
+    libFuncVector.push_back("sqrt");
+    //libFuncMap["sqrt"]=//libFuncMap.size();
     libFuncVector.push_back("sin");
+    //libFuncMap["sin"]=libFuncMap.size();
 }
 
