@@ -376,6 +376,8 @@ void generate_GETRETVAL(quad *quad){
 void generate_FUNCSTART(quad *quad){
     SymbolTableEntry* f=quad->getResult()->sym;
     f->setTaddress(functionVector.size());
+    f->setinID(instructionVector.size());
+    cout<<"f->getinid "<<f->getinID()<<endl;
     functionVector.push_back(f);
     quad->setTaddress(getInstructionLabel());
     function *aa=new function();
@@ -637,8 +639,8 @@ void writeBinary(){
     loop=functionVector.size();
     fwrite(&loop, sizeof(int), 1, f);
     for(int i=0; i<functionVector.size(); i++){
-        fwrite(&functionVector[i]->getTaddress(), sizeof(unsigned), 1, f);
-        cout<<"FUNCTION ADDRESS "<<functionVector[i]->getTaddress()<<endl;
+        fwrite(&functionVector[i]->getinID(), sizeof(unsigned), 1, f);
+        cout<<"FUNCTION ADDRESS "<<functionVector[i]->getinID()<<endl;
         fwrite(&functionVector[i]->getTotalLocalVariablesOffset(), sizeof(unsigned), 1,f);
         cout<<"TOTAL LOCAS "<<functionVector[i]->getTotalLocalVariablesOffset()<<endl;
         len=functionVector[i]->getName().length();

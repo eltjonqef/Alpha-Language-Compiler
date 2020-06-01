@@ -175,7 +175,6 @@ void avm_memcellclear(avm_memcell* m){
 
 
 avm_memcell* avm_translate_operand(vmarg* arg,avm_memcell* reg){
-    cout<<"ARG _ GET TYPE "<<arg->getType()<<endl;
     switch(arg->getType()){
         case global_a: return &STACK[AVM_STACKSIZE-1-arg->getVal()];
         case local_a: return &STACK[topsp-arg->getVal()];
@@ -207,8 +206,7 @@ avm_memcell* avm_translate_operand(vmarg* arg,avm_memcell* reg){
         }
         case userfunc_a:{
             reg->type = userfunc_m;
-            reg->d.funcVal = arg->getVal();
-            cout<<"FUNC VAL "<<reg->d.funcVal<<endl;
+            reg->d.funcVal = symboltable[arg->getVal()]->taddress;
             return reg;
         }
         case libfunc_a:{

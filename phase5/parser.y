@@ -916,7 +916,10 @@ call:             call '(' elist ')' {$$=make_call($1, $3);}
                                             t->setNext($2->getEList());
                                             $2->setEList(t);
                                         }
-                                        $1->setType(programfunc_e);    
+                                        if(libFunctions[$1->sym->getName()])
+                                            $1->setType(libraryfunc_e);
+                                        else
+                                            $1->setType(programfunc_e);    
                                         $$=make_call($1, $2->getEList());
                                     }
                 | '(' funcdef ')' '(' elist ')' {

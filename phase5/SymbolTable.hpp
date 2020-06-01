@@ -141,6 +141,7 @@ class SymbolTableEntry {
         unsigned offset;
         int UnionFlag; //0 for variable , 1 for function
         unsigned taddress;
+        unsigned inID;
         unsigned totalFormalArgumentsOffset;
         unsigned totalLocalVariablesOffset;
 
@@ -165,7 +166,12 @@ class SymbolTableEntry {
             value.funcValue=temp;
             type=USERFUNC;
         }
-
+        void setinID(unsigned _inID){
+            inID=_inID;
+        }
+        unsigned &getinID(){
+            return inID;
+        }
         unsigned &getTotalLocalVariablesOffset(){
             return totalLocalVariablesOffset;
         }
