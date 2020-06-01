@@ -16,7 +16,14 @@ using namespace std;
 #define PI 3.14159265
 typedef void (*library_func_t)(void);
 
-vector<SymbolTableEntry*> symboltable;
+class func{
+    public:
+        string id;
+        unsigned taddress;
+        unsigned localsSize;
+};
+vector<func*> symboltable;
+
 unsigned totalActuals=0;
 int globals=0;
 enum avm_memcell_t{
@@ -168,6 +175,7 @@ void avm_memcellclear(avm_memcell* m){
 
 
 avm_memcell* avm_translate_operand(vmarg* arg,avm_memcell* reg){
+    cout<<"ARG _ GET TYPE "<<arg->getType()<<endl;
     switch(arg->getType()){
         case global_a: return &STACK[AVM_STACKSIZE-1-arg->getVal()];
         case local_a: return &STACK[topsp-arg->getVal()];
@@ -200,6 +208,7 @@ avm_memcell* avm_translate_operand(vmarg* arg,avm_memcell* reg){
         case userfunc_a:{
             reg->type = userfunc_m;
             reg->d.funcVal = arg->getVal();
+            cout<<"FUNC VAL "<<reg->d.funcVal<<endl;
             return reg;
         }
         case libfunc_a:{
@@ -373,12 +382,18 @@ void readFile(){
     fread(&magicNumber, sizeof(int), 1, f);
     fread(&loop, sizeof(int), 1, f);
     for(int i=0; i<loop; i++){
+        int num;
+        func *sym=new func();
+        fread(&num, sizeof(unsigned), 1, f);
+        sym->taddress=num;
+        fread(&num, sizeof(unsigned), 1, f);
+        sym->localsSize=num;
         char *data;
         fread(&len, sizeof(size_t), 1, f);
         data=(char*)malloc(sizeof(char)*(len+1));
         fread(data, sizeof(char), len, f);
         data[len]='\0';
-        SymbolTableEntry *sym=new SymbolTableEntry(data);
+        sym->id=data;
         symboltable.push_back(sym);
     }
     fread(&loop, sizeof(int), 1, f);
@@ -783,9 +798,7 @@ void execute_arithmetic (instruction* instr){
         arithmetic_func_t op = arithmeticFuncs[instr->getOP()-add_vm];
         avm_memcellclear(lv);
         lv->type = number_m;
-        cout<<"rv1->d.numVal + rv2->d.numVal = "<<rv1->d.numVal+rv2->d.numVal<<"\n";
         lv->d.numVal = (*op)(rv1->d.numVal,rv2->d.numVal);
-        cout<<"val->"<<lv->d.numVal<<"\n";
         //arithmetic_func_t op = arithmeticFuncs[instr->getOP()-add_vm];
     }
 }

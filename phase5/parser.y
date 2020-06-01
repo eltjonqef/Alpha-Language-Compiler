@@ -915,7 +915,8 @@ call:             call '(' elist ')' {$$=make_call($1, $3);}
                                             $1=emit_if_table(member_item(t, strdup($2->getName().c_str())));
                                             t->setNext($2->getEList());
                                             $2->setEList(t);
-                                        }    
+                                        }
+                                        $1->setType(programfunc_e);    
                                         $$=make_call($1, $2->getEList());
                                     }
                 | '(' funcdef ')' '(' elist ')' {

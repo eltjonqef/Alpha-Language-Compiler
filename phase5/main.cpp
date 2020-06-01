@@ -55,9 +55,11 @@ void execute_jgt(instruction *t){avm_jgt(t);}//done not tested
 void execute_call(instruction *t){
     avm_memcell *func=avm_translate_operand(t->getResult(), ax);
     avm_callsaveenvironment(); //NOT IMPLEMENTED YET
+    cout<<"FUNC_>TYPE "<<func->type<<" "<<pc<<endl;
     switch(func->type){
         case userfunc_m:{
             pc=func->d.funcVal;
+            cout<<"PC "<<pc<<endl;
             assert(pc<AVM_ENDING_PC);
             assert(instructionVector[pc]->getOP()==funcenter_vm);
            break;
@@ -83,7 +85,21 @@ void execute_param(instruction *t){
 }
 void execute_ret(instruction *t){}
 void execute_getretval(instruction *t){}
-void execute_funcenter(instruction *t){}
+void execute_funcenter(instruction *t){
+    cout<<"PRIN TIN TRANLATE "<<t->getResult()->getType()<<" "<<t->getResult()->getVal()<<endl;
+    avm_memcell *function=avm_translate_operand(t->getResult(), ax);
+    assert(function);
+    assert(pc==function->d.numVal);
+    totalActuals=0;
+    func *f=NULL;
+    for(int i=0; i<symboltable.size(); i++){
+        if(symboltable[i]->taddress==pc){
+            f=symboltable[i];
+        }
+    }
+    topsp=top;
+    top=top-f->localsSize;    
+}
 void execute_funcexit(instruction *t){
     top=avm_get_envvalue(topsp+AVM_SAVEDTOP_OFFSET);
     pc=avm_get_envvalue(topsp+AVM_SAVEDPC_OFFSET);

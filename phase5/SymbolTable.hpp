@@ -166,7 +166,7 @@ class SymbolTableEntry {
             type=USERFUNC;
         }
 
-        unsigned getTotalLocalVariablesOffset(){
+        unsigned &getTotalLocalVariablesOffset(){
             return totalLocalVariablesOffset;
         }
         void setTotalLocalVariablesOffset(unsigned num){
@@ -181,7 +181,7 @@ class SymbolTableEntry {
         void setTaddress(unsigned _taddress){
             taddress=_taddress;
         }
-        unsigned getTaddress(){
+        unsigned &getTaddress(){
             return taddress;
         }
         symbol_t getType_t(){return type_t;}

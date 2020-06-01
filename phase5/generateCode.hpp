@@ -157,6 +157,7 @@ void make_operand(expr *e, vmarg *arg){
         }
         case programfunc_e:{
             arg->setType(userfunc_a);
+            cout<<"e -> sy,->getTaddress "<<e->sym->getTaddress()<<endl;
             arg->setVal(e->sym->getTaddress());
             break;
         }
@@ -636,6 +637,10 @@ void writeBinary(){
     loop=functionVector.size();
     fwrite(&loop, sizeof(int), 1, f);
     for(int i=0; i<functionVector.size(); i++){
+        fwrite(&functionVector[i]->getTaddress(), sizeof(unsigned), 1, f);
+        cout<<"FUNCTION ADDRESS "<<functionVector[i]->getTaddress()<<endl;
+        fwrite(&functionVector[i]->getTotalLocalVariablesOffset(), sizeof(unsigned), 1,f);
+        cout<<"TOTAL LOCAS "<<functionVector[i]->getTotalLocalVariablesOffset()<<endl;
         len=functionVector[i]->getName().length();
         fwrite(&len, sizeof(size_t), 1, f);
         char *ctext=const_cast<char*>(functionVector[i]->getName().c_str());
@@ -737,6 +742,7 @@ void writeBinary(){
                 break;
             }
             case call_vm:{
+                cout<<"CALL TO TYPE "<<instructionVector[i]->getResult()->getType()<<endl;
                 fwrite(&(instructionVector[i]->getResult()->getType()), sizeof(int), 1, f);
                 fwrite(&(instructionVector[i]->getResult()->getVal()), sizeof(int), 1, f);
                 break;
