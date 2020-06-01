@@ -266,7 +266,9 @@ void generate_relational(vmopcode_t op,quad *quad){
         make_operand(quad->getArg1(),t->getArg1());
         make_operand(quad->getArg2(),t->getArg2());
     }       
-    if(quad->getResult()->getJumpLab()<currentProssesedQuad){
+    t->getResult()->setVal(quad->getResult()->getJumpLab());
+    //make_operand(quad->getResult(), t->getResult());
+    /*if(quad->getResult()->getJumpLab()<currentProssesedQuad){
         if((quad->getTaddress() <= 0)){
             assert(0);
         }
@@ -276,9 +278,9 @@ void generate_relational(vmopcode_t op,quad *quad){
         ij->instrNo = instructionVector.size();
         ij->iaddress  = quad->getResult()->getJumpLab();
         incompleteJumps.push_back(ij);
-    }
+    }*/
     //quads[quad->getLabel()].setTaddress(instructionLabelLookahead());
-    quad->setTaddress(getInstructionLabel());
+    //quad->setTaddress(getInstructionLabel());
     instructionVector.push_back(t);
 }
      
