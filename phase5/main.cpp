@@ -269,22 +269,24 @@ void libfunc_objectmemberkeys(){
     if(n!=1)
         cout<<"ERROR typeof\n";
     else{
-        retval->type=string_m;
-        string toReturn="[";
         map<string, avm_table_bucket*> strMap=avm_getactual(0)->d.tableVal->getStrIndexed();
         map<int, avm_table_bucket*> numMap=avm_getactual(0)->d.tableVal->getNumIndexed();
+        int i=0;
+        retval->type=table_m;
+        retval->d.tableVal=new avm_table();
+        retval->d.tableVal->incrRefCounter();
         for(auto const &entry: strMap){
-            toReturn+="\"";
-            toReturn+=entry.second->getKey()->d.strVal;
-            toReturn+="\",";
+            avm_memcell *index=new avm_memcell();
+            index->type=number_m;
+            index->d.numVal=i++;
+            avm_setElem(retval->d.tableVal, index, entry.second->getKey());
         }
         for(auto const &entry: numMap){
-            toReturn+="\"";
-            toReturn+=entry.second->getKey()->d.numVal;
-            toReturn+="\",";
+            avm_memcell *index=new avm_memcell();
+            index->type=number_m;
+            index->d.numVal=i++;
+            avm_setElem(retval->d.tableVal, index, entry.second->getKey());
         }
-        toReturn+="]";
-        new(&retval->d.strVal) string(toReturn);
     }
 }
 void libfunc_objecttotalmembers(){
@@ -351,9 +353,9 @@ string string_toString(avm_memcell *m){
 }
 string bool_toString(avm_memcell *m){
     if(m->d.boolVal==0)
-        return "TRUE";
-    else
         return "FALSE";
+    else
+        return "TRUE";
 }
 string table_toString(avm_memcell *m){
     string toReturn="";
@@ -362,14 +364,14 @@ string table_toString(avm_memcell *m){
     map<int, avm_table_bucket*> numMap=m->d.tableVal->getNumIndexed();
     for(auto const &entry: strMap){
         toReturn+="{";
-        toReturn+=entry.first;
+        toReturn+=avm_tostring(entry.second->getKey());
         toReturn+=":";
         toReturn+=avm_tostring(entry.second->getValue());
         toReturn+="}\n";
     }
     for(auto const &entry: numMap){
         toReturn+="{";
-        toReturn+=to_string(entry.first);
+        toReturn+=avm_tostring(entry.second->getKey());
         toReturn+=":";
         toReturn+=avm_tostring(entry.second->getValue());
         toReturn+="}\n";
@@ -379,7 +381,9 @@ string table_toString(avm_memcell *m){
 }
 string userfunc_toString(avm_memcell *m){}
 string libfunc_toString(avm_memcell *m){}
-string nil_toString(avm_memcell *m){}
+string nil_toString(avm_memcell *m){
+    return "nil";
+}
 string undef_toString(avm_memcell *m){}
 void execute_cycle(){
 

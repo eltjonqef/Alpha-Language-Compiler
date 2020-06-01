@@ -593,6 +593,13 @@ void printInstructions(){
                 cout<<endl;
                 break;
             }
+            case if_greatereq_vm:{
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getResult()->getType())<<")"<<instructionVector[i]->getResult()->getVal();
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getArg1()->getType())<<")"<<instructionVector[i]->getArg1()->getVal();
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getArg2()->getType())<<")"<<instructionVector[i]->getArg2()->getVal();
+                cout<<endl;
+                break;
+            }
             case jump_vm:{
                 cout<<" ("<<vmarg_tToString(instructionVector[i]->getResult()->getType())<<")"<<instructionVector[i]->getResult()->getVal();
                 cout<<endl;
@@ -683,6 +690,15 @@ void writeBinary(){
                 break;
             }
             case mul_vm:{
+                fwrite(&(instructionVector[i]->getResult()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getResult()->getVal()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg1()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg1()->getVal()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg2()->getType()), sizeof(int), 1, f);
+                fwrite(&(instructionVector[i]->getArg2()->getVal()), sizeof(int), 1, f);
+                break;
+            }
+            case div_vm:{
                 fwrite(&(instructionVector[i]->getResult()->getType()), sizeof(int), 1, f);
                 fwrite(&(instructionVector[i]->getResult()->getVal()), sizeof(int), 1, f);
                 fwrite(&(instructionVector[i]->getArg1()->getType()), sizeof(int), 1, f);
