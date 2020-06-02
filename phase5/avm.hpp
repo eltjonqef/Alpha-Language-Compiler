@@ -787,17 +787,18 @@ void execute_arithmetic (instruction* instr){
     avm_memcell* rv1 = avm_translate_operand(instr->getArg1(),ax);
     avm_memcell* rv2 = avm_translate_operand(instr->getArg2(),bx);
 
-    //assert(lv && (&STACK[top] <= lv && &STACK[AVM_STACKSIZE] > lv || lv == &retval));
+    //assert(lv && (&stack_m[AVM_STACKSIZE - 1] >= lv && lv > &stack_m[top] ||lv == retval));
     assert(rv1 && rv2);
     if((rv1->type != number_m) ||(rv2->type != number_m)){
         cout<<"arithmetic error\n";
+        cout<<"pc->"<<pc<<endl;
         executionFinished = 1;
     }else{
         arithmetic_func_t op = arithmeticFuncs[instr->getOP()-add_vm];
         avm_memcellclear(lv);
         lv->type = number_m;
         lv->d.numVal = (*op)(rv1->d.numVal,rv2->d.numVal);
-        //arithmetic_func_t op = arithmeticFuncs[instr->getOP()-add_vm];
+       
     }
 }
 
@@ -828,7 +829,7 @@ void avm_jeq(instruction *t){
         cout<<"RUNTIME ERROR undefined type involved in equality\n";
     }else if((rv1->type == nil_m) || (rv2->type == nil_m)){
         result = ((rv1->type==nil_m) &&(rv2->type==nil_m));
-    }else if((rv1->type == bool_m)&&(rv2->type == bool_m)){
+    }else if((rv1->type == bool_m)||(rv2->type == bool_m)){
         result = (avm_tobool(rv1) == avm_tobool(rv2));
     }else if(rv1->type != rv2->type){
         //todo throw runtime error
@@ -847,9 +848,9 @@ void avm_jeq(instruction *t){
         }else if(rv1->type == libfunc_m){
             result = rv1->d.libFuncVal.compare(rv2->d.libFuncVal);
         }else if(rv1->type == table_m){//todo tables
-            result = 0; //must change
+            result = rv1->d.tableVal == rv2->d.tableVal;
         }else if(rv1->type == userfunc_m){//todo userfuncs
-            result = 0;
+            result = rv1->d.funcVal == rv2->d.funcVal;
         }
     }
     if(!executionFinished && result){
@@ -866,9 +867,9 @@ void avm_jne(instruction *t){
         executionFinished = 1;
         //todo runtime error
         cout<<"RUNTIME ERROR undefined type involved in jne\n";
-    }else if((rv1->type==nil_m)&&(rv2->type==nil_m)){
-        result = 0;
-    }else if(rv1->type == bool_m){
+    }else if((rv1->type==nil_m)||(rv2->type==nil_m)){
+        result = result = rv1->type != nil_m && rv2->type != nil_m;
+    }else if((rv1->type == bool_m)||(rv2->type == bool_m)){
         result = avm_tobool(rv1) != avm_tobool(rv2);
     }else if(((rv1->type==table_m) && (rv2->type==nil_m))||((rv2->type==table_m) && (rv1->type==nil_m))){
         result = 1; //dialeksi 9 slide 22
@@ -886,9 +887,9 @@ void avm_jne(instruction *t){
         }else if(rv1->type == libfunc_m){
             result = !(rv1->d.libFuncVal.compare(rv2->d.libFuncVal));
         }else if(rv1->type == table_m){
-            result = 0; //todo
+            result = rv1->d.tableVal != rv2->d.tableVal;
         }else if(rv1->type == userfunc_m){
-            result = 0; //todo
+            result = rv1->d.funcVal != rv2->d.funcVal;
         }
     }
     if(!executionFinished && result){
