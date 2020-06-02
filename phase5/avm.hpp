@@ -2,7 +2,7 @@
 #include "generateCode.hpp"
 #include "SymbolTable.hpp"
 #include <math.h>
-  
+#include <stack>
 #define AVM_STACKSIZE 32768
 #define AVM_STACKENV_SIZE 4
 #define AVM_MAXINSTRUCTIONS (unsigned) nop_v
@@ -11,7 +11,7 @@
 #define AVM_SAVEDTOP_OFFSET 2
 #define AVM_SAVEDTOPSP_OFFSET 2
 using namespace std;
-
+stack<unsigned> keepPC;
 #define AVM_ENDING_PC codeSize
 #define PI 3.14159265
 typedef void (*library_func_t)(void);

@@ -157,7 +157,6 @@ void make_operand(expr *e, vmarg *arg){
         }
         case programfunc_e:{
             arg->setType(userfunc_a);
-            cout<<"e -> sy,->getTaddress "<<e->sym->getTaddress()<<endl;
             arg->setVal(e->sym->getTaddress());
             break;
         }
@@ -377,7 +376,6 @@ void generate_FUNCSTART(quad *quad){
     SymbolTableEntry* f=quad->getResult()->sym;
     f->setTaddress(functionVector.size());
     f->setinID(instructionVector.size());
-    cout<<"f->getinid "<<f->getinID()<<endl;
     functionVector.push_back(f);
     quad->setTaddress(getInstructionLabel());
     function *aa=new function();
@@ -605,6 +603,34 @@ void printInstructions(){
                 cout<<endl;
                 break;
             }
+            case if_noteq_vm:{
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getResult()->getType())<<")"<<instructionVector[i]->getResult()->getVal();
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getArg1()->getType())<<")"<<instructionVector[i]->getArg1()->getVal();
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getArg2()->getType())<<")"<<instructionVector[i]->getArg2()->getVal();
+                cout<<endl;
+                break;
+            }
+            case if_lesseq_vm:{
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getResult()->getType())<<")"<<instructionVector[i]->getResult()->getVal();
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getArg1()->getType())<<")"<<instructionVector[i]->getArg1()->getVal();
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getArg2()->getType())<<")"<<instructionVector[i]->getArg2()->getVal();
+                cout<<endl;
+                break;
+            }
+            case if_greater_vm:{
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getResult()->getType())<<")"<<instructionVector[i]->getResult()->getVal();
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getArg1()->getType())<<")"<<instructionVector[i]->getArg1()->getVal();
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getArg2()->getType())<<")"<<instructionVector[i]->getArg2()->getVal();
+                cout<<endl;
+                break;
+            }
+            case if_less_vm:{
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getResult()->getType())<<")"<<instructionVector[i]->getResult()->getVal();
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getArg1()->getType())<<")"<<instructionVector[i]->getArg1()->getVal();
+                cout<<" ("<<vmarg_tToString(instructionVector[i]->getArg2()->getType())<<")"<<instructionVector[i]->getArg2()->getVal();
+                cout<<endl;
+                break;
+            }
             case jump_vm:{
                 cout<<" ("<<vmarg_tToString(instructionVector[i]->getResult()->getType())<<")"<<instructionVector[i]->getResult()->getVal();
                 cout<<endl;
@@ -640,9 +666,7 @@ void writeBinary(){
     fwrite(&loop, sizeof(int), 1, f);
     for(int i=0; i<functionVector.size(); i++){
         fwrite(&functionVector[i]->getinID(), sizeof(unsigned), 1, f);
-        cout<<"FUNCTION ADDRESS "<<functionVector[i]->getinID()<<endl;
         fwrite(&functionVector[i]->getTotalLocalVariablesOffset(), sizeof(unsigned), 1,f);
-        cout<<"TOTAL LOCAS "<<functionVector[i]->getTotalLocalVariablesOffset()<<endl;
         len=functionVector[i]->getName().length();
         fwrite(&len, sizeof(size_t), 1, f);
         char *ctext=const_cast<char*>(functionVector[i]->getName().c_str());
@@ -671,7 +695,6 @@ void writeBinary(){
     fwrite(&loop, sizeof(int), 1, f);
     for(int i=1; i<instructionVector.size(); i++){
         fwrite(&(instructionVector[i]->getOP()), sizeof(int), 1, f);
-        cout<<"\t"<<instructionVector[i]->getOP()<<endl;
         switch(instructionVector[i]->getOP()){
             case assign_vm:{
                 fwrite(&(instructionVector[i]->getResult()->getType()), sizeof(int), 1, f);
@@ -744,7 +767,6 @@ void writeBinary(){
                 break;
             }
             case call_vm:{
-                cout<<"CALL TO TYPE "<<instructionVector[i]->getResult()->getType()<<endl;
                 fwrite(&(instructionVector[i]->getResult()->getType()), sizeof(int), 1, f);
                 fwrite(&(instructionVector[i]->getResult()->getVal()), sizeof(int), 1, f);
                 break;

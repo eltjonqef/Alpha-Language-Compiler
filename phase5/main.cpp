@@ -57,10 +57,11 @@ void execute_call(instruction *t){
     avm_callsaveenvironment(); //NOT IMPLEMENTED YET
     switch(func->type){
         case userfunc_m:{
+            keepPC.push(pc);
             pc=func->d.funcVal;
             assert(pc<AVM_ENDING_PC);
             assert(instructionVector[pc]->getOP()==funcenter_vm);
-            break;
+           break;
         }
         case string_m:{
             avm_calllibfunc(func->d.strVal); //NOT IMPLEMENTED YET
@@ -93,9 +94,17 @@ void execute_funcenter(instruction *t){
     top=top-f->localsSize;
 }
 void execute_funcexit(instruction *t){
+    unsigned oldTop=top;
     top=avm_get_envvalue(topsp+AVM_SAVEDTOP_OFFSET);
-    pc=avm_get_envvalue(topsp+AVM_SAVEDPC_OFFSET);
+    if(t->getResult()->getType()==userfunc_a){
+        pc=keepPC.top()+1;
+        keepPC.pop();
+    }
+    else
+        pc=avm_get_envvalue(topsp+AVM_SAVEDPC_OFFSET);
     topsp=avm_get_envvalue(topsp+AVM_SAVEDTOPSP_OFFSET);
+    while(++oldTop<top)
+        avm_memcellclear(&STACK[oldTop]);
 }
 //table
 void execute_tableCreate(instruction *t){
@@ -295,6 +304,7 @@ void libfunc_objectmemberkeys(){
             index->d.numVal=i++;
             avm_setElem(retval->d.tableVal, index, entry.second->getKey());
         }
+        //new(&retval->d.strVal) string(toReturn);
     }
 }
 void libfunc_objecttotalmembers(){
