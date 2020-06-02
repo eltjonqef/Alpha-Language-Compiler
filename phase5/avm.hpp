@@ -232,12 +232,12 @@ void execute_mul(instruction *t);   //done
 void execute_div(instruction *t);   //done
 void execute_mod(instruction *t);   //done
 //relational
-void execute_jeq(instruction *t); //done not tested
-void execute_jne(instruction *t); //done not tested
-void execute_jle(instruction *t); //done not tested
-void execute_jge(instruction *t); //done not tested
-void execute_jlt(instruction *t); //done not tested
-void execute_jgt(instruction *t); //done not tested
+void execute_jeq(instruction *t); //done 
+void execute_jne(instruction *t); //done 
+void execute_jle(instruction *t); //done
+void execute_jge(instruction *t); //done 
+void execute_jlt(instruction *t); //done 
+void execute_jgt(instruction *t); //done 
 //function
 void execute_call(instruction *t);
 void execute_param(instruction *t);
