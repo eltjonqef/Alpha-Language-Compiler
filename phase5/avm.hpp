@@ -2,7 +2,7 @@
 #include "generateCode.hpp"
 #include "SymbolTable.hpp"
 #include <math.h>
-  
+#include <stack>
 #define AVM_STACKSIZE 32768
 #define AVM_STACKENV_SIZE 4
 #define AVM_MAXINSTRUCTIONS (unsigned) nop_v
@@ -11,7 +11,7 @@
 #define AVM_SAVEDTOP_OFFSET 2
 #define AVM_SAVEDTOPSP_OFFSET 2
 using namespace std;
-
+stack<unsigned> keepPC;
 #define AVM_ENDING_PC codeSize
 #define PI 3.14159265
 typedef void (*library_func_t)(void);
@@ -175,7 +175,6 @@ void avm_memcellclear(avm_memcell* m){
 
 
 avm_memcell* avm_translate_operand(vmarg* arg,avm_memcell* reg){
-    cout<<"ARG _ GET TYPE "<<arg->getType()<<endl;
     switch(arg->getType()){
         case global_a: return &STACK[AVM_STACKSIZE-1-arg->getVal()];
         case local_a: return &STACK[topsp-arg->getVal()];
@@ -207,8 +206,7 @@ avm_memcell* avm_translate_operand(vmarg* arg,avm_memcell* reg){
         }
         case userfunc_a:{
             reg->type = userfunc_m;
-            reg->d.funcVal = arg->getVal();
-            cout<<"FUNC VAL "<<reg->d.funcVal<<endl;
+            reg->d.funcVal = symboltable[arg->getVal()]->taddress;
             return reg;
         }
         case libfunc_a:{

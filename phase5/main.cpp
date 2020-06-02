@@ -55,11 +55,10 @@ void execute_jgt(instruction *t){avm_jgt(t);}//done not tested
 void execute_call(instruction *t){
     avm_memcell *func=avm_translate_operand(t->getResult(), ax);
     avm_callsaveenvironment(); //NOT IMPLEMENTED YET
-    cout<<"FUNC_>TYPE "<<func->type<<" "<<pc<<endl;
     switch(func->type){
         case userfunc_m:{
+            keepPC.push(pc);
             pc=func->d.funcVal;
-            cout<<"PC "<<pc<<endl;
             assert(pc<AVM_ENDING_PC);
             assert(instructionVector[pc]->getOP()==funcenter_vm);
            break;
@@ -86,24 +85,26 @@ void execute_param(instruction *t){
 void execute_ret(instruction *t){}
 void execute_getretval(instruction *t){}
 void execute_funcenter(instruction *t){
-    cout<<"PRIN TIN TRANLATE "<<t->getResult()->getType()<<" "<<t->getResult()->getVal()<<endl;
     avm_memcell *function=avm_translate_operand(t->getResult(), ax);
     assert(function);
-    assert(pc==function->d.numVal);
+    //assert(pc==function->d.numVal);
     totalActuals=0;
-    func *f=NULL;
-    for(int i=0; i<symboltable.size(); i++){
-        if(symboltable[i]->taddress==pc){
-            f=symboltable[i];
-        }
-    }
+    func *f=symboltable[t->getResult()->getVal()];
     topsp=top;
-    top=top-f->localsSize;    
+    top=top-f->localsSize;
 }
 void execute_funcexit(instruction *t){
+    unsigned oldTop=top;
     top=avm_get_envvalue(topsp+AVM_SAVEDTOP_OFFSET);
-    pc=avm_get_envvalue(topsp+AVM_SAVEDPC_OFFSET);
+    if(t->getResult()->getType()==userfunc_a){
+        pc=keepPC.top()+1;
+        keepPC.pop();
+    }
+    else
+        pc=avm_get_envvalue(topsp+AVM_SAVEDPC_OFFSET);
     topsp=avm_get_envvalue(topsp+AVM_SAVEDTOPSP_OFFSET);
+    while(++oldTop<top)
+        avm_memcellclear(&STACK[oldTop]);
 }
 //table
 void execute_tableCreate(instruction *t){
@@ -303,6 +304,7 @@ void libfunc_objectmemberkeys(){
             index->d.numVal=i++;
             avm_setElem(retval->d.tableVal, index, entry.second->getKey());
         }
+        //new(&retval->d.strVal) string(toReturn);
     }
 }
 void libfunc_objecttotalmembers(){
