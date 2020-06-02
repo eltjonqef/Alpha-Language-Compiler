@@ -9,7 +9,7 @@
 #define AVM_NUMACTUALS_OFFSET 4
 #define AVM_SAVEDPC_OFFSET 3
 #define AVM_SAVEDTOP_OFFSET 2
-#define AVM_SAVEDTOPSP_OFFSET 2
+#define AVM_SAVEDTOPSP_OFFSET 1
 using namespace std;
 stack<unsigned> keepPC;
 #define AVM_ENDING_PC codeSize
@@ -57,8 +57,8 @@ class avm_memcell{
 };
 class avm_table_bucket{
     private:
-        avm_memcell* key;
-        avm_memcell* value;
+        avm_memcell* key=NULL;
+        avm_memcell* value=NULL;
     public:
         avm_table_bucket(){
             key=new avm_memcell();
@@ -828,7 +828,7 @@ void avm_jeq(instruction *t){
         cout<<"RUNTIME ERROR undefined type involved in equality\n";
     }else if((rv1->type == nil_m) || (rv2->type == nil_m)){
         result = ((rv1->type==nil_m) &&(rv2->type==nil_m));
-    }else if((rv1->type == bool_m)&&(rv2->type == bool_m)){
+    }else if((rv1->type == bool_m)||(rv2->type == bool_m)){
         result = (avm_tobool(rv1) == avm_tobool(rv2));
     }else if(rv1->type != rv2->type){
         //todo throw runtime error
@@ -847,9 +847,9 @@ void avm_jeq(instruction *t){
         }else if(rv1->type == libfunc_m){
             result = rv1->d.libFuncVal.compare(rv2->d.libFuncVal);
         }else if(rv1->type == table_m){//todo tables
-            result = 0; //must change
+            result = rv1->d.tableVal == rv2->d.tableVal;
         }else if(rv1->type == userfunc_m){//todo userfuncs
-            result = 0;
+            result = rv1->d.funcVal == rv2->d.funcVal;
         }
     }
     if(!executionFinished && result){
@@ -866,9 +866,9 @@ void avm_jne(instruction *t){
         executionFinished = 1;
         //todo runtime error
         cout<<"RUNTIME ERROR undefined type involved in jne\n";
-    }else if((rv1->type==nil_m)&&(rv2->type==nil_m)){
-        result = 0;
-    }else if(rv1->type == bool_m){
+    }else if((rv1->type==nil_m)||(rv2->type==nil_m)){
+        result = result = rv1->type != nil_m && rv2->type != nil_m;
+    }else if((rv1->type == bool_m)||(rv2->type == bool_m)){
         result = avm_tobool(rv1) != avm_tobool(rv2);
     }else if(((rv1->type==table_m) && (rv2->type==nil_m))||((rv2->type==table_m) && (rv1->type==nil_m))){
         result = 1; //dialeksi 9 slide 22
@@ -886,9 +886,9 @@ void avm_jne(instruction *t){
         }else if(rv1->type == libfunc_m){
             result = !(rv1->d.libFuncVal.compare(rv2->d.libFuncVal));
         }else if(rv1->type == table_m){
-            result = 0; //todo
+            result = rv1->d.tableVal != rv2->d.tableVal;
         }else if(rv1->type == userfunc_m){
-            result = 0; //todo
+            result = rv1->d.funcVal != rv2->d.funcVal;
         }
     }
     if(!executionFinished && result){

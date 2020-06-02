@@ -96,14 +96,14 @@ void execute_funcenter(instruction *t){
 void execute_funcexit(instruction *t){
     unsigned oldTop=top;
     top=avm_get_envvalue(topsp+AVM_SAVEDTOP_OFFSET);
-    if(t->getResult()->getType()==userfunc_a){
+    /*if(t->getResult()->getType()==userfunc_a){
         pc=keepPC.top()+1;
         keepPC.pop();
     }
-    else
+    else*/
         pc=avm_get_envvalue(topsp+AVM_SAVEDPC_OFFSET);
     topsp=avm_get_envvalue(topsp+AVM_SAVEDTOPSP_OFFSET);
-    while(++oldTop<top)
+    while(oldTop++<top)
         avm_memcellclear(&STACK[oldTop]);
 }
 //table
@@ -116,7 +116,14 @@ void execute_tableCreate(instruction *t){
     lv->d.tableVal->incrRefCounter();
 }
 void execute_tableGet(instruction *t){
-    avm_memcell *lv=avm_translate_operand(t->getResult(), NULL);
+    avm_memcell *lv;
+    if(t->getResult()->getType()!=userfunc_a){
+        lv=avm_translate_operand(t->getResult(), NULL);
+
+    }
+    else{
+        lv=new avm_memcell();
+    }
     avm_memcell *u=avm_translate_operand(t->getArg1(), NULL);
     avm_memcell *i=avm_translate_operand(t->getArg2(), ax);
     
@@ -129,8 +136,12 @@ void execute_tableGet(instruction *t){
     }
     else{
         avm_memcell *content=avm_getElem(u->d.tableVal, i);
-        if(content)
+        if(content){
+            if(t->getResult()->getType()==userfunc_a){
+                symboltable[t->getResult()->getVal()]->taddress=content->d.funcVal;
+            }
             avm_assign(lv, content);
+        }
         else{
             cout<<"not found\n";
         }
@@ -157,7 +168,7 @@ void avm_assign(avm_memcell *lv, avm_memcell *rv){
         return;
     if(lv->type==table_m && rv->type==table_m && lv->d.tableVal==rv->d.tableVal)
         return;
-    if(lv->type==undef_m)
+    if(rv->type==undef_m)
         cout<<"ASSIGNING FROM UNDEF CONTENT"<<endl; //TO THELEI ME WARNIGN SUNARTISI
     
     //avm_memcellclear(lv);  NOT IMPLEMENTED YET
@@ -173,9 +184,11 @@ avm_memcell* avm_getElem(avm_table *table, avm_memcell* index){
     if(index->type==number_m){
         bucket=table->getTable_Bucket(index->d.numVal);
     }
-    else{
+    else if(index->type==string_m){
         bucket=table->getTable_Bucket(index->d.strVal);
     }
+    if(!bucket)
+        return NULL;
     return bucket->getValue();
 }
 void avm_setElem(avm_table *table, avm_memcell* index, avm_memcell *content){

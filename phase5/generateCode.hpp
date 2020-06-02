@@ -7,6 +7,7 @@ using namespace std;
 int quadIndex=0;
 vector<SymbolTableEntry*> functionVector;
 map<string, int> libMap;
+map<string, int> funcMap;
 int globalCounter=0;
 
 enum vmarg_t{
@@ -157,7 +158,7 @@ void make_operand(expr *e, vmarg *arg){
         }
         case programfunc_e:{
             arg->setType(userfunc_a);
-            arg->setVal(e->sym->getTaddress());
+            arg->setVal(funcMap[e->sym->getName()]);
             break;
         }
         case libraryfunc_e:{
@@ -250,6 +251,16 @@ void generate_Simple(vmopcode_t op,quad *quad){
 
     instruction *t=new instruction();
     t->setOpCode(op);
+    if(op==tablegetelem_vm && quad->getResult()->getType()==programfunc_e){
+        SymbolTableEntry* f=quad->getResult()->sym;
+        funcMap[quad->getResult()->sym->getName()]=functionVector.size();
+        f->setTaddress(functionVector.size());
+        f->setinID(instructionVector.size());
+        functionVector.push_back(f);
+    }
+    if(op==tablesetelem_vm && quad->getArg2()->getType()==var_e && funcMap[quad->getArg2()->sym->getName()]){
+        quad->getArg2()->setType(programfunc_e);
+    }
     make_operand(quad->getResult(), t->getResult());
     make_operand(quad->getArg1(), t->getArg1());
     make_operand(quad->getArg2(), t->getArg2());
@@ -374,7 +385,8 @@ void generate_GETRETVAL(quad *quad){
 
 void generate_FUNCSTART(quad *quad){
     SymbolTableEntry* f=quad->getResult()->sym;
-    f->setTaddress(functionVector.size());
+    funcMap[quad->getResult()->sym->getName()]=functionVector.size();
+    //f->setTaddress(functionVector.size());
     f->setinID(instructionVector.size());
     functionVector.push_back(f);
     quad->setTaddress(getInstructionLabel());
