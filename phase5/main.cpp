@@ -291,7 +291,7 @@ void libfunc_print(){
     for(unsigned i=0; i<n; i++){
         //cout<<"ARITHMOS\n"<<avm_getactual(i)->d.numVal<<endl;
         cout<<avm_tostring(avm_getactual(i));
-    }cout<<endl;
+    }
 }
 void libfunc_input(){}
 void libfunc_objectmemberkeys(){
