@@ -53,6 +53,8 @@ void execute_jlt(instruction *t){avm_jlt(t);}//done not tested
 void execute_jgt(instruction *t){avm_jgt(t);}//done not tested
 //function
 void execute_call(instruction *t){
+    //if(libMap[libFuncVector[t->getResult()->getVal()]])
+    //   t->getResult()->setType(libfunc_a);
     avm_memcell *func=avm_translate_operand(t->getResult(), ax);
     avm_callsaveenvironment(); //NOT IMPLEMENTED YET
     switch(func->type){
@@ -143,6 +145,7 @@ void execute_tableGet(instruction *t){
             avm_assign(lv, content);
         }
         else{
+            //avm_assign(lv, NULL);
             cout<<"not found\n";
         }
     }
@@ -397,25 +400,41 @@ string table_toString(avm_memcell *m){
         toReturn+="{";
         toReturn+=avm_tostring(entry.second->getKey());
         toReturn+=":";
-        toReturn+=avm_tostring(entry.second->getValue());
-        toReturn+="}\n";
+        if(entry.second->getValue()==m){
+            toReturn+="<<self>>";
+        }
+        else{
+            toReturn+=avm_tostring(entry.second->getValue());
+        }
+        toReturn+="}";
     }
     for(auto const &entry: numMap){
         toReturn+="{";
         toReturn+=avm_tostring(entry.second->getKey());
         toReturn+=":";
-        toReturn+=avm_tostring(entry.second->getValue());
-        toReturn+="}\n";
+        if(entry.second->getValue()==m){
+            toReturn+="<<self>>";
+        }
+        else{
+            toReturn+=avm_tostring(entry.second->getValue());
+        }
+        toReturn+="}";
     }
     toReturn+="]\n";
     return toReturn;
 }
-string userfunc_toString(avm_memcell *m){}
-string libfunc_toString(avm_memcell *m){}
+string userfunc_toString(avm_memcell *m){
+    return "User Function ["+to_string(m->d.funcVal)+"]";
+}
+string libfunc_toString(avm_memcell *m){
+    return m->d.libFuncVal;
+}
 string nil_toString(avm_memcell *m){
     return "nil";
 }
-string undef_toString(avm_memcell *m){}
+string undef_toString(avm_memcell *m){
+    return "undef";
+}
 void execute_cycle(){
 
     if(executionFinished) return;
@@ -425,8 +444,8 @@ void execute_cycle(){
     else{
         assert(pc<AVM_ENDING_PC);
         instruction *t=instructionVector[pc];
-        unsigned oldPc=pc;
-        (*executionFunctions[t->getOP()])(t);
+        unsigned oldPc=pc;//cout<<"PC PRIN "<<pc<<endl;
+        (*executionFunctions[t->getOP()])(t);//cout<<"PC META "<<pc<<endl;
         if(pc==oldPc)
             ++pc;
     }

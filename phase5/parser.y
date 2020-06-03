@@ -50,6 +50,7 @@
     expr* newexpr_constbool(bool a);
     expr* expressionHolder;
     expr* make_call(expr* lv, expr* reversed_elist);
+    map<string, int> funcmap;
 %}
 
 
@@ -851,6 +852,8 @@ lvalue:           IDENT {
                             expression->sym=LookUpVariable($1,0);
                             if(libFunctions[$1]){
                                 expression->setType(libraryfunc_e);
+                            }else if(funcmap[$1]){
+                                expression->setType(programfunc_e);
                             }
                             if(expression->sym==NULL){
                                 if(currentScope == 0){
@@ -918,8 +921,6 @@ call:             call '(' elist ')' {$$=make_call($1, $3);}
                                         }
                                         if(libFunctions[$1->sym->getName()])
                                             $1->setType(libraryfunc_e);
-                                        else
-                                            $1->setType(programfunc_e);    
                                         $$=make_call($1, $2->getEList());
                                     }
                 | '(' funcdef ')' '(' elist ')' {
@@ -1070,6 +1071,7 @@ block:            '{' {;currentScope++;} loopstmt {decreaseScope();} '}' {$$ = $
 
 funcdef:          FUNCTION N {
                                 nestedFunctionCounter++; expr *expression=new expr(programfunc_e); 
+                                funcmap["$"+to_string(anonymousFuntionCounter)]=funcmap.size();
                                 expression->sym=addToSymbolTable("$"+to_string(anonymousFuntionCounter++), currentScope, yylineno, USERFUNC,programfunc_s);
                                 expression->sym->setScopespace(getCurrentScopespace());
                                 expression->sym->setOffset(currentOffset());
@@ -1111,6 +1113,7 @@ funcdef:          FUNCTION N {
                 | FUNCTION IDENT N{
                                     if(LookUpFunction($2)) {
                                         expr *expression=new expr(programfunc_e);
+                                        funcmap[$2]=funcmap.size();
                                         expression->sym= addToSymbolTable($2, currentScope, yylineno, USERFUNC,programfunc_s);
                                         expression->sym->setScopespace(getCurrentScopespace()); 
                                         expression->sym->setOffset(currentOffset());
@@ -1402,7 +1405,7 @@ main(int argc, char** argv){
     emit(nop,NULL,NULL,NULL,getNextLabel(),0);
     yyparse();
     
-    printSymbolTable();
+    //printSymbolTable();
     printQuads();
     generate();
     printInstructions();
@@ -1631,9 +1634,12 @@ void printSymbolTable() {
 }
 
 void printQuads(){
+    ofstream fs;
+    fs.open("quads.txt");
     for(int i=1; i<quads.size(); i++){
-        cout<<quads[i].toString()<<endl;
+        fs<<quads[i].toString()<<endl;
     }
+    fs.close();
 }
 
 expr*
