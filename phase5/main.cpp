@@ -74,6 +74,7 @@ void execute_call(instruction *t){
             break;
         }
         default:{
+            cout<<"Run time error,execute_call cannot identify you\n";
             executionFinished=1;
         }
     }
@@ -234,7 +235,7 @@ void avm_setElem(avm_table *table, avm_memcell* index, avm_memcell *content){
 void avm_callsaveenvironment(){
     avm_push_envvalue(totalActuals);
     avm_push_envvalue(pc+1);
-    avm_push_envvalue(top+totalActuals+2);
+    avm_push_envvalue(top+totalActuals+1);
     avm_push_envvalue(topsp);
 }
 void avm_push_envvalue(unsigned val){
@@ -334,7 +335,17 @@ void libfunc_objecttotalmembers(){
     }
 }
 void libfunc_objectcopy(){}
-void libfunc_totalarguments(){}
+void libfunc_totalarguments(){
+    unsigned p_topsp = avm_get_envvalue(topsp + AVM_SAVEDTOPSP_OFFSET);
+    avm_memcellclear(retval);
+    if(p_topsp == 0){
+        cout<<"ERROR *total arguments* called outised of function\n";
+        retval->type=nil_m;
+    }else{
+        retval->type=number_m;
+        retval->d.numVal = avm_get_envvalue(p_topsp+AVM_NUMACTUALS_OFFSET);
+    }
+}
 void libfunc_argument(){}
 void libfunc_typeof(){
     unsigned n=avm_totalactuals();
