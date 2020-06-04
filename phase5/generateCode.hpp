@@ -330,7 +330,6 @@ void generate_IF_LESS(quad *quad){generate_relational(if_less_vm, quad);}
 void generate_IF_GREATER(quad *quad){generate_relational(if_greater_vm, quad);}
 
 void generate_CALL(quad *quad){
-    cout<<"CALL "<<quad->getResult()->sym->getName()<<" "<<quad->getResult()->sym->getScope()<<endl;
     quads[quad->getLabel()].setTaddress(instructionLabelLookahead());
     quad->setTaddress(getInstructionLabel());
     instruction *t = new instruction();

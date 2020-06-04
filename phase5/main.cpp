@@ -161,8 +161,8 @@ void execute_tableSet(instruction *t){
     //ASSERT
     if(r->type!=table_m)
         cout<<"ILLEGAL use of type\n";
-    else
-        avm_setElem(r->d.tableVal, i , c);
+    else if(c->type!=nil_m)
+        avm_setElem(r->d.tableVal, i , c);        
 }
 //simple
 void execute_jump(instruction *t){avm_jump(t);}
@@ -481,7 +481,7 @@ string table_toString(avm_memcell *m){
         }
         toReturn+="}";
     }
-    toReturn+="]\n";
+    toReturn+="]";
     return toReturn;
 }
 string userfunc_toString(avm_memcell *m){
