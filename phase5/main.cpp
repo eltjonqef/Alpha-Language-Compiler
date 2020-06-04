@@ -188,10 +188,22 @@ void avm_assign(avm_memcell *lv, avm_memcell *rv){
 avm_memcell* avm_getElem(avm_table *table, avm_memcell* index){
     avm_table_bucket *bucket;
     if(index->type==number_m){
-        bucket=table->getTable_Bucket(index->d.numVal);
+        bucket=table->getTable_Bucket(index->d.numVal, 0);
     }
     else if(index->type==string_m){
         bucket=table->getTable_Bucket(index->d.strVal);
+    }
+    else if(index->type==libfunc_m){
+        bucket=table->getTable_Bucket(index->d.libFuncVal);
+    }
+    else if(index->type==table_m){
+        bucket=table->getTable_Bucket(index->d.tableVal);
+    }
+    else if(index->type==bool_m){
+        bucket=table->getTable_Bucket(index->d.boolVal, 1);
+    }
+    else if(index->type==userfunc_m){
+        bucket=table->getTable_Bucket(index->d.funcVal, 2);
     }
     if(!bucket)
         return NULL;
@@ -201,18 +213,42 @@ void avm_setElem(avm_table *table, avm_memcell* index, avm_memcell *content){
 
     avm_table_bucket *bucket;
     if(index->type==number_m){
-        bucket=table->getTable_Bucket(index->d.numVal);
+        bucket=table->getTable_Bucket(index->d.numVal, 0);
     }
     else if(index->type==string_m){
         bucket=table->getTable_Bucket(index->d.strVal);
     }
+    else if(index->type==libfunc_m){
+        bucket=table->getTable_Bucket(index->d.libFuncVal);
+    }
+    else if(index->type==table_m){
+        bucket=table->getTable_Bucket(index->d.tableVal);
+    }
+    else if(index->type==bool_m){
+        bucket=table->getTable_Bucket(index->d.boolVal, 1);
+    }
+    else if(index->type==userfunc_m){
+        bucket=table->getTable_Bucket(index->d.funcVal, 2);
+    }
     if(bucket){
         if(content->type==nil_m){
             if(index->type==number_m){
-                table->deleteBucket(index->d.numVal);
+                table->deleteBucket(index->d.numVal, 0);
             }
             else if(index->type==string_m){
                 table->deleteBucket(index->d.strVal);
+            }
+            else if(index->type==libfunc_m){
+                table->deleteBucket(index->d.libFuncVal);
+            }
+            else if(index->type==table_m){
+                table->deleteBucket(index->d.tableVal);
+            }
+            else if(index->type==bool_m){
+                table->deleteBucket(index->d.boolVal, 1);
+            }
+            else if(index->type==userfunc_m){
+                table->deleteBucket(index->d.funcVal, 2);
             }
             table->decrTotal();
         }
@@ -226,10 +262,22 @@ void avm_setElem(avm_table *table, avm_memcell* index, avm_memcell *content){
         avm_assign(bucket->getKey(), index);
         avm_assign(bucket->getValue(), content);
         if(index->type==number_m){
-            table->setTable_Bucket(index->d.numVal, bucket);
+            table->setTable_Bucket(index->d.numVal, bucket, 0);
         }
         else if(index->type==string_m){
             table->setTable_Bucket(index->d.strVal, bucket);
+        }
+        else if(index->type==libfunc_m){
+            table->setTable_Bucket(index->d.libFuncVal, bucket);
+        }
+        else if(index->type==table_m){
+            table->setTable_Bucket(index->d.tableVal, bucket);
+        }
+        else if(index->type==bool_m){
+            table->setTable_Bucket(index->d.boolVal, bucket, 1);
+        }
+        else if(index->type==userfunc_m){
+            table->setTable_Bucket(index->d.funcVal, bucket, 2);
         }
         table->incrTotal();
     }

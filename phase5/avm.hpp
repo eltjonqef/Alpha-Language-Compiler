@@ -78,6 +78,10 @@ class avm_table{
         unsigned refCounter;
         map<int, avm_table_bucket*> numIndexed;
         map<string, avm_table_bucket*> strIndexed;
+        map<string, avm_table_bucket*> libIndexed;
+        map<avm_table*,avm_table_bucket*> tableIndexed;
+        map<bool, avm_table_bucket*> boolIndexed;
+        map<unsigned, avm_table_bucket*> funcIndexed;
         unsigned total;
     public:
         avm_table(){
@@ -91,23 +95,56 @@ class avm_table{
             assert(refCounter>0);
             --refCounter;
         }
-        avm_table_bucket *getTable_Bucket(int key){
-            return numIndexed[key];
+        avm_table_bucket *getTable_Bucket(int key, int type){
+            if(type==0)
+                return numIndexed[key];
+            else if(type==1)
+                return boolIndexed[key];
+            else
+                return funcIndexed[key];
         }
         avm_table_bucket *getTable_Bucket(string key){
-            return strIndexed[key];
+            if(libMap[key])
+                return libIndexed[key];
+            else
+                return strIndexed[key];
         }
-        void setTable_Bucket(int key, avm_table_bucket *bucket){
-            numIndexed[key]=bucket;
+        avm_table_bucket *getTable_Bucket(avm_table *key){
+            return tableIndexed[key];
+        }
+        void setTable_Bucket(int key, avm_table_bucket *bucket, int type){
+            if(type==0)
+                numIndexed[key]=bucket;
+            else if(type==1)
+                boolIndexed[key]=bucket;
+            else
+                funcIndexed[key]=bucket;
         }
         void setTable_Bucket(string key, avm_table_bucket *bucket){
-            strIndexed[key]=bucket;
+            if(libMap[key])
+                libIndexed[key]=bucket;        
+            else
+                strIndexed[key]=bucket;
         }
-        void deleteBucket(int key){
-            numIndexed.erase(key);
+        void setTable_Bucket(avm_table *key, avm_table_bucket *bucket){
+            tableIndexed[key]=bucket;
+        }
+        void deleteBucket(int key, int type){
+            if(type==0)
+                numIndexed.erase(key);
+            else if(type==1)
+                boolIndexed.erase(key);
+            else
+                funcIndexed.erase(key);
         }
         void deleteBucket(string key){
-            strIndexed.erase(key);
+            if(libMap[key])
+                libIndexed.erase(key);
+            else
+                strIndexed.erase(key);
+        }
+        void deleteBucket(avm_table *key){
+            tableIndexed.erase(key);
         }
         void incrTotal(){
             total++;
@@ -794,7 +831,6 @@ void execute_arithmetic (instruction* instr){
     assert(rv1 && rv2);
     if((rv1->type != number_m) ||(rv2->type != number_m)){
         cout<<"arithmetic error\n";
-        cout<<"pc->"<<pc<<endl;
         executionFinished = 1;
     }else{
         arithmetic_func_t op = arithmeticFuncs[instr->getOP()-add_vm];
