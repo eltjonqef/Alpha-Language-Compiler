@@ -8,17 +8,17 @@ Circle.acs        //PASSED
 
 delegation.acs    //FAILED
 
-err1.acs          //SEG FAULT
+err1.acs          //PASSED
 
-err2.acs          //printarei to prwto, den kserw ti ginetai meta
+err2.acs          //PASSED
 
 err3.acs          //PASSED
 
 err4.acs          //PASSED
 
-err5.acs          //NOT PASSED FOR SURE, logika epeidh prepei na vazoume oles tis parametrous(?)
+err5.acs          //PASSED
 
-err6.acs          //MAYBE PASSED
+err6.acs          //PASSED
 
 funcs.acs         //works till scope2 except Power(for some reason we are <<0)
 

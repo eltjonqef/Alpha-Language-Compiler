@@ -672,6 +672,7 @@ void writeBinary(){
     fwrite(&loop, sizeof(int), 1, f);
     for(int i=0; i<functionVector.size(); i++){
         fwrite(&functionVector[i]->getinID(), sizeof(unsigned), 1, f);
+        fwrite(&functionVector[i]->getTotalFormalArgumentsOffset(), sizeof(unsigned), 1, f);
         fwrite(&functionVector[i]->getTotalLocalVariablesOffset(), sizeof(unsigned), 1,f);
         len=functionVector[i]->getName().length();
         fwrite(&len, sizeof(size_t), 1, f);

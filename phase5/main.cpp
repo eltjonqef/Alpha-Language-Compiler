@@ -95,6 +95,10 @@ void execute_funcenter(instruction *t){
     func *f=symboltable[t->getResult()->getVal()];
     topsp=top;
     top=top-f->localsSize;
+    if(avm_totalactuals()<symboltable[t->getResult()->getVal()]->formalsSize){
+        cout<<"RUNTIME ERROR: Got less function arguments than expected\n";
+        executionFinished=1;
+    }
 }
 void execute_funcexit(instruction *t){
     unsigned oldTop=top;
@@ -145,10 +149,8 @@ void execute_tableGet(instruction *t){
             }
             avm_assign(lv, content);
         }
-        else{
             //avm_assign(lv, NULL);
-            cout<<"not found\n";
-        }
+            //cout<<"not found\n";
     }
 }
 void execute_tableSet(instruction *t){

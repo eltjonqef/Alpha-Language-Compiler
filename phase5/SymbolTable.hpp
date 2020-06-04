@@ -181,7 +181,7 @@ class SymbolTableEntry {
         void setTotalFormalArgumentsOffset(unsigned num){
             totalFormalArgumentsOffset = num;
         }
-        unsigned getTotalFormalArgumentsOffset(){
+        unsigned &getTotalFormalArgumentsOffset(){
             return totalFormalArgumentsOffset;
         }
         void setTaddress(unsigned _taddress){

@@ -21,6 +21,7 @@ class func{
         string id;
         unsigned taddress;
         unsigned localsSize;
+        unsigned formalsSize;
 };
 vector<func*> symboltable;
 
@@ -384,6 +385,8 @@ void readFile(){
         func *sym=new func();
         fread(&num, sizeof(unsigned), 1, f);
         sym->taddress=num;
+        fread(&num, sizeof(unsigned), 1,f);
+        sym->formalsSize=num;
         fread(&num, sizeof(unsigned), 1, f);
         sym->localsSize=num;
         char *data;
