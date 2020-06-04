@@ -888,13 +888,14 @@ lvalue:           IDENT {
                             }else if(funcmap[$2]){
                                 expression->setType(programfunc_e);
                             }
-                            expression->sym=LookUpVariable($2,0);
-                            if(expression->sym==NULL){
-                                    expression->sym=addToSymbolTable($2, currentScope, yylineno,GLOB,var_s);
+                            //expression->sym=LookUpVariable($2,0);
+                            //if(expression->sym==NULL){
+                                    expression->sym=addToSymbolTable($2, 0, yylineno,GLOB,var_s);
                                     expression->sym->setOffset(currentOffset());
                                     expression->sym->setScopespace(getCurrentScopespace());
                                     incCurScopeOffset();
-                            }
+                            //}
+                            //expression->sym->setScop
                             $$=expression;
                         } 
                 | member {$$=$1;}

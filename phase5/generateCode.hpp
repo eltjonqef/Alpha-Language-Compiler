@@ -8,6 +8,7 @@ int quadIndex=0;
 vector<SymbolTableEntry*> functionVector;
 map<string, int> libMap;
 map<string, int> funcMap;
+vector<map<string, int>> funcVectorMap;
 int globalCounter=0;
 
 enum vmarg_t{
@@ -158,7 +159,12 @@ void make_operand(expr *e, vmarg *arg){
         }
         case programfunc_e:{
             arg->setType(userfunc_a);
-            arg->setVal(funcMap[e->sym->getName()]);
+            for(int i=0; i<functionVector.size(); i++){
+                if(functionVector[i]->getName()==e->sym->getName() && functionVector[i]->getScope()==e->sym->getScope()){
+                    arg->setVal(i);
+                }
+            }
+            //arg->setVal(funcMap[e->sym->getName()]);
             break;
         }
         case libraryfunc_e:{
@@ -324,6 +330,7 @@ void generate_IF_LESS(quad *quad){generate_relational(if_less_vm, quad);}
 void generate_IF_GREATER(quad *quad){generate_relational(if_greater_vm, quad);}
 
 void generate_CALL(quad *quad){
+    cout<<"CALL "<<quad->getResult()->sym->getName()<<" "<<quad->getResult()->sym->getScope()<<endl;
     quads[quad->getLabel()].setTaddress(instructionLabelLookahead());
     quad->setTaddress(getInstructionLabel());
     instruction *t = new instruction();
@@ -376,7 +383,7 @@ void generate_GETRETVAL(quad *quad){
 
 void generate_FUNCSTART(quad *quad){
     SymbolTableEntry* f=quad->getResult()->sym;
-    funcMap[quad->getResult()->sym->getName()]=functionVector.size();
+    //funcMap[quad->getResult()->sym->getName()]=functionVector.size();
     //f->setTaddress(functionVector.size());
     f->setinID(instructionVector.size());
     functionVector.push_back(f);
@@ -511,7 +518,7 @@ void printInstructions(){
     fs.open("./instructions.txt");
     fs<<"-------------Functions---------------\n";
     for(int i=0; i<functionVector.size(); i++){
-        fs<<i<<" "<<functionVector[i]->getName()<<endl;
+        fs<<i<<" "<<functionVector[i]->getName()<<" "<<functionVector[i]->getScope()<<endl;
     }
     fs<<"--------------Int Map----------------\n";
     for(int i=0; i<intVector.size(); i++){
