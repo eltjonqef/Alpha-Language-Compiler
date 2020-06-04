@@ -883,6 +883,11 @@ lvalue:           IDENT {
                         } 
                 | COLON_COLON IDENT {   
                             expr *expression=new expr(var_e);
+                            if(libFunctions[$2]){
+                                expression->setType(libraryfunc_e);
+                            }else if(funcmap[$2]){
+                                expression->setType(programfunc_e);
+                            }
                             expression->sym=LookUpVariable($2,0);
                             if(expression->sym==NULL){
                                     expression->sym=addToSymbolTable($2, currentScope, yylineno,GLOB,var_s);
