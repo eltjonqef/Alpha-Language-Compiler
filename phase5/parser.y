@@ -1469,6 +1469,7 @@ InitilizeLibraryFunctions(){
     addToSymbolTable("sqrt",0,0,LIBFUNC,libraryfunc_s);
     addToSymbolTable("cos",0,0,LIBFUNC,libraryfunc_s);
     addToSymbolTable("sin",0,0,LIBFUNC,libraryfunc_s);
+    addToSymbolTable("strtonum", 0, 0, LIBFUNC, libraryfunc_s);
     libFunctions["print"]=1;
     libFunctions["input"]=1;
     libFunctions["objectmemberkeys"]=1;
@@ -1481,6 +1482,7 @@ InitilizeLibraryFunctions(){
     libFunctions["sqrt"]=1;
     libFunctions["cos"]=1;
     libFunctions["sin"]=1;
+    libFunctions["strtonum"]=1;
     libMap["print"]=libMap.size();
     libMap["input"]=libMap.size();
     libMap["objectmemberkeys"]=libMap.size();
@@ -1492,6 +1494,7 @@ InitilizeLibraryFunctions(){
     libMap["sqrt"]=libMap.size();
     libMap["cos"]=libMap.size();
     libMap["sin"]=libMap.size();
+    libMap["strtonum"]=libMap.size();
 }
 
 void

@@ -436,6 +436,28 @@ void libfunc_sin(){
         //new(&retval->d.strVal) string(typeStrings[avm_getactual(0)->type]);
     }
 }
+bool checkNum(string s){
+    for(int i=0; i<s.length(); i++){
+        if(!isdigit(s[i])){
+            return false;
+        }
+    }
+    return true;
+}
+void libfunc_strtonum(){
+    unsigned n=avm_totalactuals();
+    if(n!=1)
+        cout<<"ERROR strtonum\n";
+    else{
+        if(checkNum(avm_getactual(0)->d.strVal)){
+            retval->type=number_m;
+            retval->d.numVal=stod(avm_getactual(0)->d.strVal);
+        }
+        else{
+            retval->type=nil_m;
+        }
+    }
+}
 string number_toString(avm_memcell *m){
     
     if(fmod(m->d.numVal,1)==0){
@@ -535,5 +557,7 @@ void loadLibFuncs(){
     libFuncMap["cos"]=libfunc_cos;
     libFuncVector.push_back("sin");
     libFuncMap["sin"]=libfunc_sin;
+    libFuncVector.push_back("strtonum");
+    libFuncMap["strtonum"]=libfunc_strtonum;
 }
 

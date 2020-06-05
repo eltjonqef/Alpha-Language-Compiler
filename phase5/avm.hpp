@@ -320,6 +320,7 @@ void libfunc_typeof();
 void libfunc_sqrt();
 void libfunc_cos();
 void libfunc_sin();
+void libfunc_strtonum();
 /*useful functions*/
 typedef unsigned char (*tobool_func_t)(avm_memcell *);
 
@@ -416,6 +417,10 @@ void readFile(){
     FILE *f;
     f=fopen("binary.abc", "rb");
     fread(&magicNumber, sizeof(int), 1, f);
+    if(magicNumber!=4567978){
+        cout<<"Not alpha binary\n";
+        executionFinished=1;
+    }
     fread(&loop, sizeof(int), 1, f);
     for(int i=0; i<loop; i++){
         int num;
@@ -819,7 +824,8 @@ library_func_t libfuncs[]={
     libfunc_typeof,
     libfunc_sqrt,
     libfunc_cos,
-    libfunc_sin
+    libfunc_sin,
+    libfunc_strtonum
 };
 
 void execute_arithmetic (instruction* instr){

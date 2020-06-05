@@ -670,7 +670,7 @@ void printInstructions(){
 void writeBinary(){
     FILE *f;
     f=fopen("binary.abc", "wb");
-    int magicNumber=45679;
+    int magicNumber=4567978;
     fwrite(&magicNumber, sizeof(int), 1, f);
     int loop;
     size_t len;
