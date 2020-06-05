@@ -1,0 +1,40 @@
+label: 1 jump 31
+label: 2 funcstart Power
+label: 3 if_less exponent 0 5
+label: 4 jump 7
+label: 5 assign ^0 'true'
+label: 6 jump 8
+label: 7 assign ^0 'false'
+label: 8 if_eq ^0 'true' 10
+label: 9 jump 13
+label: 10 uminus ^1 1
+label: 11 return ^1
+label: 12 jump 30
+label: 13 if_eq exponent 0 15
+label: 14 jump 17
+label: 15 assign ^2 'true'
+label: 16 jump 18
+label: 17 assign ^2 'false'
+label: 18 if_eq ^2 'true' 20
+label: 19 jump 22
+label: 20 return 1
+label: 21 jump 30
+label: 22 sub ^3 exponent 1
+label: 23 param ^3
+label: 24 param base
+label: 25 call Power
+label: 26 getretval ^4
+label: 27 mul ^5 base ^4
+label: 28 return ^5
+label: 29 jump 30
+label: 30 funcend Power
+label: 31 param 32
+label: 32 param 2
+label: 33 call Power
+label: 34 getretval ^6
+label: 35 param "<
+"
+label: 36 param ^6
+label: 37 param "2^32 must be 4,294,967,296: >"
+label: 38 call print
+label: 39 getretval ^7
